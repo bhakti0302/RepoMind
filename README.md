@@ -14,6 +14,7 @@ RepoMind is a VS Code extension that provides an AI-powered coding assistant int
 - Node.js (v14 or later)
 - VS Code (v1.80 or later)
 - npm (v6 or later)
+- Git
 
 ## Setup Instructions
 
@@ -23,7 +24,7 @@ git clone https://github.com/yourusername/repomind.git
 cd repomind
 ```
 
-2. Install dependencies:
+2. Install project dependencies:
 ```bash
 cd extension-v1
 npm install
@@ -35,11 +36,27 @@ npm run compile
 ```
 
 4. Run the extension in development mode:
-```bash
-npm run start
-```
+   - Press F5 in VS Code, or
+   - Use the Run and Debug view (Ctrl+Shift+D), or
+   - Run `npm run start` in the terminal
 
 This will open a new VS Code window with the extension loaded.
+
+### Additional Setup (Optional)
+
+If you plan to develop the extension further, you might want to install:
+
+1. Global tools:
+```bash
+npm install -g yo generator-code typescript @vscode/vsce
+```
+
+2. VS Code extensions:
+```bash
+code --install-extension dbaeumer.vscode-eslint
+code --install-extension amodio.tsl-problem-matcher
+code --install-extension ms-vscode.extension-test-runner
+```
 
 ## Development
 
