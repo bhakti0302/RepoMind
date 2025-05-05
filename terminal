@@ -1,0 +1,13 @@
+# Rename the folder
+mv v1 extension-v1
+
+# Navigate to the renamed folder
+cd extension-v1
+
+# Install dependencies if needed
+npm install
+
+# Compile the extension
+npm run compile
+
+# Test the extension by pressing F5 in VS Code
