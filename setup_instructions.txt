@@ -1,0 +1,22 @@
+# Clone the repo (assuming it's on GitHub)
+git clone https://github.com/your-username/ai-code-assistant.git
+cd ai-code-assistant
+
+# Set up Node dependencies (VS Code Extension)
+npm install --legacy-peer-deps
+
+# Set up Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+# Run the backend FastAPI server
+uvicorn backend.server:app --reload --port 8000
+
+# (In a separate terminal) Run chunk loader (optional if embedding DB not preloaded)
+python backend/load_chunks.py
+
+# (Optional) Build the VS Code extension
+npm run build
+
+# Press F5 in VS Code to launch Extension Development Host

@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+lancedb
+pydantic
+numpy
+openai
+tqdm
+python-dotenv
+langchain
+langchainhub
