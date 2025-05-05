@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+      "target": "ES2020",                          // Modern JS support
+      "module": "commonjs",                        // VS Code extensions use CommonJS
+      "lib": ["ES2020"],                           // Include modern JS features
+      "outDir": "out",                             // Compiled JS output
+      "rootDir": "src",                            // Your source code lives here
+      "strict": true,                              // Enable strict type checking
+      "esModuleInterop": true,                     // Allow default imports from CommonJS
+      "skipLibCheck": true,                        // Skip checking node_modules types
+      "forceConsistentCasingInFileNames": true     // Case-sensitive imports
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", ".vscode", "out", "test"]
+  }
+  

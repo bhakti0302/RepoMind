@@ -1,0 +1,21 @@
+{
+  "id": "51fda689-22ad-4f6a-b9a7-3d6026ad99df",
+  "language": "javascript",
+  "startLine": 1,
+  "endLine": 7,
+  "functions": [
+    {
+      "name": "function",
+      "startLine": 1,
+      "endLine": 3,
+      "code": "function hello() {\n    console.log(\"Hello\");\n  }"
+    },
+    {
+      "name": "function",
+      "startLine": 5,
+      "endLine": 7,
+      "code": "function world() {\n    console.log(\"World\");\n  }"
+    }
+  ],
+  "imports": []
+}
