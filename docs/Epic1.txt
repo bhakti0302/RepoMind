@@ -23,8 +23,7 @@ Launch VS Code to verify installation
 Install Helpful VS Code Extensions for Extension Development
 Open VS Code
 Install "ESLint" extension
-Install "Debugger for Chrome" extension
-Install "TypeScript TSLint Plugin" extension
+Install "JavaScript Debugger" extension
 Create a Development Workspace
 Create a new folder for your extension development
 Open the folder in VS Code
@@ -33,3 +32,7 @@ Create a simple TypeScript file to test TypeScript compilation
 Run a simple npm command to verify npm is working correctly
 Mark Task as Complete
 Update your project plan to mark task 1.1.1 as complete
+
+
+npm init -y  # Create package.json if you don't have one
+npm install --save-dev jest ts-jest @types/jest typescript
