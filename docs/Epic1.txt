@@ -1,0 +1,52 @@
+Story 1.1.1
+
+Step-by-Step Instructions to Complete Story 1.1.1: Install VS Code Extension Development Tools
+Install Node.js and npm
+Download and install Node.js (version 14.19.0 or higher) from nodejs.org
+Verify installation with: node -v and npm -v
+Install Git
+Download and install Git from git-scm.com
+Verify installation with: git --version
+Install Yeoman and VS Code Extension Generator
+Open a terminal/command prompt
+Run: npm install -g yo generator-code
+Verify installation with: yo --version
+Install TypeScript
+Run: npm install -g typescript
+Verify installation with: tsc --version
+Install VS Code Extension Manager (vsce)
+Run: npm install -g @vscode/vsce
+Verify installation with: vsce --version
+Install VS Code
+Download and install VS Code from code.visualstudio.com
+Launch VS Code to verify installation
+Install Helpful VS Code Extensions for Extension Development
+Open VS Code
+Install "ESLint" extension
+Install "JavaScript Debugger" extension
+Create a Development Workspace
+Create a new folder for your extension development
+Open the folder in VS Code
+Verify Development Environment
+Create a simple TypeScript file to test TypeScript compilation
+Run a simple npm command to verify npm is working correctly
+Mark Task as Complete
+Update your project plan to mark task 1.1.1 as complete
+
+
+npm init -y  # Create package.json if you don't have one
+npm install --save-dev jest ts-jest @types/jest typescript
+yo code
+? What type of extension do you want to create? New Extension (TypeScript)
+? What's the name of your extension? vscode-agentic-ai-assistant
+? What's the identifier of your extension? vscode-agentic-ai-assistant
+? What's the description of your extension? An agentic AI coding assistant for VS Code
+? Initialize a git repository? Yes
+? Which bundler to use? webpack
+? Which package manager to use? npm
+
+code ./vscode-agentic-ai-assistant
+ npm install --save-dev @types/node @types/vscode
+ npm install --save-dev eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
+ cd vscode-agentic-ai-assistant
+ npm run compile
