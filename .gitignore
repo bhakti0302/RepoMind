@@ -86,3 +86,31 @@ lancedb/
 # Project specific
 .langchain.db/
 .langchain/
+
+# VS Code Extension specific
+*.vsix
+.vscode-test/
+.vscode-test-workspace/
+.vscode-test-workspace-storage/
+.vscode-test-workspace-state/
+.vscode-test-workspace-settings/
+.vscode-test-workspace-extensions/
+.vscode-test-workspace-memento/
+.vscode-test-workspace-globalStorage/
+.vscode-test-workspace-workspaceStorage/
+.vscode-test-workspace-workspaceState/
+.vscode-test-workspace-workspaceSettings/
+.vscode-test-workspace-workspaceExtensions/
+.vscode-test-workspace-workspaceMemento/
+.vscode-test-workspace-workspaceGlobalStorage/
+.vscode-test-workspace-workspaceWorkspaceStorage/
+.vscode-test-workspace-workspaceWorkspaceState/
+.vscode-test-workspace-workspaceWorkspaceSettings/
+.vscode-test-workspace-workspaceWorkspaceExtensions/
+.vscode-test-workspace-workspaceWorkspaceMemento/
+.vscode-test-workspace-workspaceWorkspaceWorkspaceStorage/
+.vscode-test-workspace-workspaceWorkspaceWorkspaceState/
+.vscode-test-workspace-workspaceWorkspaceWorkspaceSettings/
+.vscode-test-workspace-workspaceWorkspaceWorkspaceExtensions/
+.vscode-test-workspace-workspaceWorkspaceWorkspaceMemento/
+.vscode-test-workspace-workspaceWorkspaceWorkspaceGlobalStorage/
