@@ -123,6 +123,12 @@ python test_dependency_analysis.py /path/to/your/file.ext
 
 # Visualization utilities
 python test_simple_visualization.py /path/to/your/file.ext
+
+# End-to-end integration test
+python test_end_to_end_integration.py --clear-db
+
+# Custom relevance scoring test
+python test_custom_relevance.py --clear-db --alpha 0.7 --beta 0.3
 ```
 
 ## Database Operations
@@ -159,61 +165,26 @@ python test_embed_chunks.py --model microsoft/codebert-base
 
 ## Dependency Graph Operations
 
-The dependency graph functionality provides insights into code relationships and dependencies. The graph metadata includes dependency counts, graph position, cycle detection, and relationship types.
-
-### Building Dependency Graphs
-
 ```bash
-# Build a graph from code chunks
+# Build graph
 python -m codebase_analyser.graph.cli build samples/sample_chunks.json --output-file samples/dependency_graph.json
-
-# Store dependencies in the database
 python -m codebase_analyser.graph.cli build samples/sample_chunks.json --db-path codebase-analyser/.lancedb --store-in-db
-```
 
-### Visualizing Dependency Graphs
-
-```bash
-# Generate a PNG visualization
+# Visualize graph
 python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --output-file samples/dependency_graph.png
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --format dot --layout circular --node-size 1500
 
-# Generate a DOT file for Graphviz
-python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --format dot --output-file samples/dependency_graph.dot
-
-# Customize the visualization
-python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --layout circular --node-size 1500
-```
-
-### Querying Dependencies
-
-```bash
-# Query all dependencies
+# Query dependencies
 python -m codebase_analyser.graph.cli query
+python -m codebase_analyser.graph.cli query --source-id "file:sample1.java" --type "CONTAINS"
 
-# Query by source node
-python -m codebase_analyser.graph.cli query --source-id "file:sample1.java"
-
-# Query by dependency type
-python -m codebase_analyser.graph.cli query --type "CONTAINS"
-```
-
-### Testing Graph Construction
-
-```bash
-# Run the full test pipeline
-python test_dependency_graph.py
-
-# Specify input and output
+# Test graph construction
 python test_dependency_graph.py --input samples/sample_chunks.json --output-dir samples/graphs
 ```
 
 
 
 ## Large Project Support
-
-The codebase analyzer is optimized for large projects:
-
-### Hierarchical Structure
 
 ```
 Project
@@ -226,78 +197,37 @@ Project
     └── Function Z
 ```
 
-- **Structural Relationships**: Parent-child links, root references, and depth indicators
-- **Dependency Tracking**: Source-target relationships with type and strength information
-- **Optimizations**:
-  - Minimal schema option for reduced storage
-  - Batch processing for embedding generation
-  - Caching to avoid regenerating embeddings
-  - Optional dimensionality reduction for very large codebases
+**Optimizations**:
+- Minimal schema option for reduced storage
+- Batch processing for embedding generation
+- Caching to avoid regenerating embeddings
+- Optional dimensionality reduction (PCA) for very large codebases
 
 ## Database Management
 
-### LanceDB Compatibility
-
-- **Version Compatibility**: Works with different LanceDB versions with adaptive API handling
-- **Schema Options**: Supports both minimal and full schema versions
-- **Best Practices**:
-  - Pin LanceDB version in requirements.txt
-  - Use consistent schema across components
-  - Clear and recreate tables when upgrading
-
-### Database Utilities
-
 ```bash
-# View database information
+# Database utilities
 python -m codebase_analyser.database.db_utils --info
-
-# Clear and recreate tables
-python -m codebase_analyser.database.db_utils --clear
-
-# Use full schema
-python -m codebase_analyser.database.db_utils --full
-
-# Specify database path
-python -m codebase_analyser.database.db_utils --db-path codebase-analyser/.lancedb
+python -m codebase_analyser.database.db_utils --clear --full --db-path codebase-analyser/.lancedb
 ```
-
-### Programmatic Database Management
 
 ```python
+# Direct database API
 from codebase_analyser.database import open_db_connection, close_db_connection
 
-# Open connection
 db_manager = open_db_connection(db_path="codebase-analyser/.lancedb", use_minimal_schema=True)
-
-try:
-    # Add data
-    db_manager.add_code_chunks(code_chunks)
-    db_manager.add_dependencies(dependencies)
-
-    # Search
-    results = db_manager.search_code_chunks(query_embedding, limit=10)
-finally:
-    # Close connection
-    close_db_connection(db_manager)
+db_manager.add_code_chunks(code_chunks)
+db_manager.add_dependencies(dependencies)
+results = db_manager.search_code_chunks(query_embedding, limit=10)
+close_db_connection(db_manager)
 ```
 
+### LanceDB Options
+- **Schema**: Minimal (default) or full schema with additional metadata
+- **Compatibility**: Works with different LanceDB versions via adaptive API handling
+- **Storage**: Default path is `codebase-analyser/.lancedb`
+
 ## Embedding Generation
-
-The system uses CodeBERT to generate code embeddings:
-
-### Performance Considerations
-
-- **Dimensions**: 768 dimensions (CodeBERT default) for most codebases
-- **Storage**: ~3KB per embedding (768 dimensions with float32)
-- **Scaling**:
-  - 100,000 chunks: ~300MB for embeddings
-  - 1 million chunks: ~3GB for embeddings
-- **Optimization Options**:
-  - PCA: Reduce to 384-512 dimensions with minimal information loss
-  - Batch processing: Process multiple chunks at once
-  - Caching: Avoid regenerating embeddings for the same code
-
-### Embedding API
 
 ```python
 from codebase_analyser.embeddings import EmbeddingGenerator
@@ -309,13 +239,8 @@ generator = EmbeddingGenerator(
     batch_size=8
 )
 
-# Single embedding
-code = "def hello_world():\n    print('Hello, World!')"
+# Generate embeddings
 embedding = generator.generate_embedding(code, language="python")
-
-# Batch processing
-codes = ["public class Hello {}", "function hello() {}"]
-languages = ["java", "javascript"]
 embeddings = generator.generate_embeddings_batch(codes, languages)
 
 # Store in database
@@ -323,75 +248,59 @@ from codebase_analyser.embeddings import embed_and_store_chunks
 embed_and_store_chunks(chunks=code_chunks, db_path="codebase-analyser/.lancedb")
 ```
 
-## Unified Storage for Vectors and Graph Metadata
+### Performance Options
+- **Dimensions**: 768 (default) or reduce to 384-512 with PCA for large codebases
+- **Batch Processing**: Process multiple chunks at once (8-16 recommended)
+- **Caching**: Avoid regenerating embeddings for unchanged code
 
-The codebase analyzer includes a unified storage system that integrates code embeddings with dependency graph metadata. This allows for more efficient querying and better integration between vector search and graph-based filtering.
-
-### Using the Unified Storage
-
-To use the unified storage system:
-
-```bash
-python test_unified_storage.py
-```
-
-To clear the database before testing:
+## Unified Storage
 
 ```bash
+# Test unified storage
 python test_unified_storage.py --clear-db
+
+# Options
+python test_unified_storage.py --db-path codebase-analyser/.lancedb --full-schema
 ```
 
-To use a specific database path:
-
-```bash
-python test_unified_storage.py --db-path codebase-analyser/.lancedb
-```
-
-To use the full schema with additional metadata:
-
-```bash
-python test_unified_storage.py --full-schema
-```
-
-### Programmatic Usage of Unified Storage
-
-You can also use the unified storage system programmatically in your Python code:
+### Unified Storage API
 
 ```python
 from codebase_analyser import open_unified_storage, close_unified_storage
 
-# Open a unified storage connection
 storage_manager = open_unified_storage(
     db_path="codebase-analyser/.lancedb",
     embedding_dim=768,
     use_minimal_schema=True
 )
 
-try:
-    # Add code chunks with graph metadata
-    storage_manager.add_code_chunks_with_graph_metadata(
-        chunks=code_chunks,
-        dependencies=dependencies  # Optional, will be extracted from chunks if not provided
-    )
+# Add chunks with graph metadata
+storage_manager.add_code_chunks_with_graph_metadata(chunks=code_chunks)
 
-    # Search with dependency filtering
-    results = storage_manager.search_with_dependencies(
-        query_embedding=query_vector,
-        dependency_filter={"has_imports": True},
-        limit=10
-    )
+# Search with dependency filtering
+results = storage_manager.search_with_dependencies(
+    query_embedding=query_vector,
+    dependency_filter={"has_imports": True},
+    limit=10
+)
 
-    # Get a chunk with its dependencies
-    chunk = storage_manager.get_chunk_with_dependencies(node_id)
+# Search with combined scoring
+results = storage_manager.search_with_combined_scoring(
+    query_embedding=query_vector,
+    query_node_id="file:path/to/file.py",
+    alpha=0.7,  # Semantic weight
+    beta=0.3,   # Graph weight
+    limit=10
+)
 
-finally:
-    # Close the connection
-    close_unified_storage(storage_manager)
+# Get chunk with dependencies
+chunk = storage_manager.get_chunk_with_dependencies(node_id)
+
+# Close connection
+close_unified_storage(storage_manager)
 ```
 
-### Graph Metadata in Code Chunks
-
-When code chunks are stored in the database, they automatically include graph metadata in their `metadata` field. This metadata includes:
+### Graph Metadata Schema
 
 ```json
 {
@@ -413,4 +322,36 @@ When code chunks are stored in the database, they automatically include graph me
 }
 ```
 
-This metadata can be used for filtering and analysis without requiring a separate graph database.
+## Custom Relevance Scoring
+
+```bash
+# Test with default weights (α=0.7, β=0.3)
+python test_custom_relevance.py --clear-db
+
+# Customize weights
+python test_custom_relevance.py --alpha 0.5 --beta 0.5
+```
+
+Formula: `final_score = α * semantic_similarity + β * (1 / (1 + graph_distance))`
+
+- Combines vector similarity with graph proximity
+- Adjustable weights to prioritize semantic or structural relevance
+- Uses NetworkX for graph distance calculations
+
+## End-to-End Integration Testing
+
+```bash
+# Basic test
+python test_end_to_end_integration.py --clear-db
+
+# Options
+python test_end_to_end_integration.py --db-path /path/to/db --real-embeddings --full-schema
+python test_end_to_end_integration.py --test-dir /path/to/test/files --keep-test-dir
+```
+
+Tests the complete pipeline:
+- Parses files in multiple languages (Java, Python, JavaScript)
+- Generates chunks and embeddings
+- Stores in database with graph metadata
+- Tests search methods (vector, dependency-filtered, combined scoring)
+- Validates chunk retrieval with dependencies
