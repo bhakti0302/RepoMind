@@ -1,0 +1,541 @@
+[
+  {
+    "node_id": "samples/SimpleClass.java:file:1-139",
+    "content": "package com.example.test;\n\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.io.IOException;\n\n/**\n * A simple Java class for testing the Tree-sitter parser\n */\npublic class SimpleClass extends BaseClass implements TestInterface {\n    // Fields\n    private String name;\n    private int count;\n    protected List<String> items;\n    public static final String VERSION = \"1.0.0\";\n    \n    /**\n     * Default constructor\n     */\n    public SimpleClass() {\n        this.name = \"Default\";\n        this.count = 0;\n        this.items = new ArrayList<>();\n    }\n    \n    /**\n     * Constructor with parameters\n     */\n    public SimpleClass(String name, int count) {\n        this.name = name;\n        this.count = count;\n        this.items = new ArrayList<>();\n    }\n    \n    /**\n     * Get the name\n     */\n    public String getName() {\n        return name;\n    }\n    \n    /**\n     * Set the name\n     */\n    public void setName(String name) {\n        this.name = name;\n    }\n    \n    /**\n     * Get the count\n     */\n    public int getCount() {\n        return count;\n    }\n    \n    /**\n     * Set the count\n     */\n    public void setCount(int count) {\n        this.count = count;\n    }\n    \n    /**\n     * Add an item to the list\n     */\n    public void addItem(String item) {\n        items.add(item);\n    }\n    \n    /**\n     * Get all items\n     */\n    public List<String> getItems() {\n        return items;\n    }\n    \n    /**\n     * Process items with exception handling\n     */\n    public void processItems() throws IOException {\n        for (String item : items) {\n            if (item == null) {\n                throw new IOException(\"Null item found\");\n            }\n            System.out.println(\"Processing: \" + item);\n        }\n    }\n    \n    /**\n     * Static utility method\n     */\n    public static int calculateSum(int a, int b) {\n        return a + b;\n    }\n    \n    /**\n     * Main method for testing\n     */\n    public static void main(String[] args) {\n        SimpleClass obj = new SimpleClass(\"Test\", 5);\n        obj.addItem(\"Item 1\");\n        obj.addItem(\"Item 2\");\n        \n        System.out.println(\"Name: \" + obj.getName());\n        System.out.println(\"Count: \" + obj.getCount());\n        System.out.println(\"Items: \" + obj.getItems());\n        \n        try {\n            obj.processItems();\n        } catch (IOException e) {\n            System.err.println(\"Error: \" + e.getMessage());\n        }\n        \n        System.out.println(\"Sum: \" + calculateSum(10, 20));\n    }\n}\n\n/**\n * Base class for testing inheritance\n */\nclass BaseClass {\n    protected String baseField;\n    \n    public BaseClass() {\n        this.baseField = \"Base\";\n    }\n    \n    public String getBaseField() {\n        return baseField;\n    }\n}\n\n/**\n * Interface for testing implementation\n */\ninterface TestInterface {\n    void processItems() throws IOException;\n}\n",
+    "start_line": 1,
+    "end_line": 139,
+    "language": "java",
+    "file_path": "samples/SimpleClass.java",
+    "chunk_type": "file",
+    "metadata": {
+      "level": "file",
+      "imports": [
+        "java.util.List",
+        "java.util.ArrayList",
+        "java.io.IOException"
+      ],
+      "package": "com.example.test"
+    },
+    "line_count": 139,
+    "parent_id": null,
+    "children_ids": [
+      "samples/SimpleClass.java:package_declaration:1-1",
+      "samples/SimpleClass.java:import_declaration:3-3",
+      "samples/SimpleClass.java:import_declaration:4-4",
+      "samples/SimpleClass.java:import_declaration:5-5",
+      "samples/SimpleClass.java:class_declaration:10-116",
+      "samples/SimpleClass.java:class_declaration:121-131",
+      "samples/SimpleClass.java:interface_declaration:136-138"
+    ],
+    "children": [
+      {
+        "node_id": "samples/SimpleClass.java:package_declaration:1-1",
+        "content": "package com.example.test;",
+        "start_line": 1,
+        "end_line": 1,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "package_declaration",
+        "metadata": {
+          "level": "context",
+          "node_type": "package_declaration"
+        },
+        "line_count": 1,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [],
+        "children": []
+      },
+      {
+        "node_id": "samples/SimpleClass.java:import_declaration:3-3",
+        "content": "import java.util.List;",
+        "start_line": 3,
+        "end_line": 3,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "import_declaration",
+        "metadata": {
+          "level": "context",
+          "node_type": "import_declaration"
+        },
+        "line_count": 1,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [],
+        "children": []
+      },
+      {
+        "node_id": "samples/SimpleClass.java:import_declaration:4-4",
+        "content": "import java.util.ArrayList;",
+        "start_line": 4,
+        "end_line": 4,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "import_declaration",
+        "metadata": {
+          "level": "context",
+          "node_type": "import_declaration"
+        },
+        "line_count": 1,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [],
+        "children": []
+      },
+      {
+        "node_id": "samples/SimpleClass.java:import_declaration:5-5",
+        "content": "import java.io.IOException;",
+        "start_line": 5,
+        "end_line": 5,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "import_declaration",
+        "metadata": {
+          "level": "context",
+          "node_type": "import_declaration"
+        },
+        "line_count": 1,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [],
+        "children": []
+      },
+      {
+        "node_id": "samples/SimpleClass.java:class_declaration:10-116",
+        "content": "public class SimpleClass extends BaseClass implements TestInterface {\n    // Fields\n    private String name;\n    private int count;\n    protected List<String> items;\n    public static final String VERSION = \"1.0.0\";\n    \n    /**\n     * Default constructor\n     */\n    public SimpleClass() {\n        this.name = \"Default\";\n        this.count = 0;\n        this.items = new ArrayList<>();\n    }\n    \n    /**\n     * Constructor with parameters\n     */\n    public SimpleClass(String name, int count) {\n        this.name = name;\n        this.count = count;\n        this.items = new ArrayList<>();\n    }\n    \n    /**\n     * Get the name\n     */\n    public String getName() {\n        return name;\n    }\n    \n    /**\n     * Set the name\n     */\n    public void setName(String name) {\n        this.name = name;\n    }\n    \n    /**\n     * Get the count\n     */\n    public int getCount() {\n        return count;\n    }\n    \n    /**\n     * Set the count\n     */\n    public void setCount(int count) {\n        this.count = count;\n    }\n    \n    /**\n     * Add an item to the list\n     */\n    public void addItem(String item) {\n        items.add(item);\n    }\n    \n    /**\n     * Get all items\n     */\n    public List<String> getItems() {\n        return items;\n    }\n    \n    /**\n     * Process items with exception handling\n     */\n    public void processItems() throws IOException {\n        for (String item : items) {\n            if (item == null) {\n                throw new IOException(\"Null item found\");\n            }\n            System.out.println(\"Processing: \" + item);\n        }\n    }\n    \n    /**\n     * Static utility method\n     */\n    public static int calculateSum(int a, int b) {\n        return a + b;\n    }\n    \n    /**\n     * Main method for testing\n     */\n    public static void main(String[] args) {\n        SimpleClass obj = new SimpleClass(\"Test\", 5);\n        obj.addItem(\"Item 1\");\n        obj.addItem(\"Item 2\");\n        \n        System.out.println(\"Name: \" + obj.getName());\n        System.out.println(\"Count: \" + obj.getCount());\n        System.out.println(\"Items: \" + obj.getItems());\n        \n        try {\n            obj.processItems();\n        } catch (IOException e) {\n            System.err.println(\"Error: \" + e.getMessage());\n        }\n        \n        System.out.println(\"Sum: \" + calculateSum(10, 20));\n    }\n}",
+        "start_line": 10,
+        "end_line": 116,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "class_declaration",
+        "metadata": {
+          "context": "package com.example.test;\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.io.IOException;\n",
+          "node_type": "class_declaration",
+          "level": "container"
+        },
+        "line_count": 107,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [
+          "samples/SimpleClass.java:class_declaration_declaration:10-20",
+          "samples/SimpleClass.java:constructor_declaration:20-24",
+          "samples/SimpleClass.java:constructor_declaration:29-33",
+          "samples/SimpleClass.java:method_declaration:38-40",
+          "samples/SimpleClass.java:method_declaration:45-47",
+          "samples/SimpleClass.java:method_declaration:52-54",
+          "samples/SimpleClass.java:method_declaration:59-61",
+          "samples/SimpleClass.java:method_declaration:66-68",
+          "samples/SimpleClass.java:method_declaration:73-75",
+          "samples/SimpleClass.java:method_declaration:80-87",
+          "samples/SimpleClass.java:method_declaration:92-94",
+          "samples/SimpleClass.java:method_declaration:99-115",
+          "samples/SimpleClass.java:class_declaration_closing:115-116"
+        ],
+        "children": [
+          {
+            "node_id": "samples/SimpleClass.java:class_declaration_declaration:10-20",
+            "content": "public class SimpleClass extends BaseClass implements TestInterface {\n    // Fields\n    private String name;\n    private int count;\n    protected List<String> items;\n    public static final String VERSION = \"1.0.0\";\n    \n    /**\n     * Default constructor\n     */\n    ",
+            "start_line": 10,
+            "end_line": 20,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "class_declaration_declaration",
+            "metadata": {
+              "is_declaration": true,
+              "node_type": "class_declaration",
+              "level": "declaration"
+            },
+            "line_count": 11,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+            "content": "public SimpleClass() {\n        this.name = \"Default\";\n        this.count = 0;\n        this.items = new ArrayList<>();\n    }",
+            "start_line": 20,
+            "end_line": 24,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "constructor_declaration",
+            "metadata": {
+              "node_type": "constructor_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 5,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+            "content": "public SimpleClass(String name, int count) {\n        this.name = name;\n        this.count = count;\n        this.items = new ArrayList<>();\n    }",
+            "start_line": 29,
+            "end_line": 33,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "constructor_declaration",
+            "metadata": {
+              "node_type": "constructor_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 5,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:38-40",
+            "content": "public String getName() {\n        return name;\n    }",
+            "start_line": 38,
+            "end_line": 40,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:45-47",
+            "content": "public void setName(String name) {\n        this.name = name;\n    }",
+            "start_line": 45,
+            "end_line": 47,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:52-54",
+            "content": "public int getCount() {\n        return count;\n    }",
+            "start_line": 52,
+            "end_line": 54,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:59-61",
+            "content": "public void setCount(int count) {\n        this.count = count;\n    }",
+            "start_line": 59,
+            "end_line": 61,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:66-68",
+            "content": "public void addItem(String item) {\n        items.add(item);\n    }",
+            "start_line": 66,
+            "end_line": 68,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:73-75",
+            "content": "public List<String> getItems() {\n        return items;\n    }",
+            "start_line": 73,
+            "end_line": 75,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:80-87",
+            "content": "public void processItems() throws IOException {\n        for (String item : items) {\n            if (item == null) {\n                throw new IOException(\"Null item found\");\n            }\n            System.out.println(\"Processing: \" + item);\n        }\n    }",
+            "start_line": 80,
+            "end_line": 87,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 8,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:92-94",
+            "content": "public static int calculateSum(int a, int b) {\n        return a + b;\n    }",
+            "start_line": 92,
+            "end_line": 94,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "content": "public static void main(String[] args) {\n        SimpleClass obj = new SimpleClass(\"Test\", 5);\n        obj.addItem(\"Item 1\");\n        obj.addItem(\"Item 2\");\n        \n        System.out.println(\"Name: \" + obj.getName());\n        System.out.println(\"Count: \" + obj.getCount());\n        System.out.println(\"Items: \" + obj.getItems());\n        \n        try {\n            obj.processItems();\n        } catch (IOException e) {\n            System.err.println(\"Error: \" + e.getMessage());\n        }\n        \n        System.out.println(\"Sum: \" + calculateSum(10, 20));\n    }",
+            "start_line": 99,
+            "end_line": 115,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 17,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:class_declaration_closing:115-116",
+            "content": "\n}",
+            "start_line": 115,
+            "end_line": 116,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "class_declaration_closing",
+            "metadata": {
+              "is_closing": true,
+              "node_type": "class_declaration",
+              "level": "closing"
+            },
+            "line_count": 2,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "children": []
+          }
+        ]
+      },
+      {
+        "node_id": "samples/SimpleClass.java:class_declaration:121-131",
+        "content": "class BaseClass {\n    protected String baseField;\n    \n    public BaseClass() {\n        this.baseField = \"Base\";\n    }\n    \n    public String getBaseField() {\n        return baseField;\n    }\n}",
+        "start_line": 121,
+        "end_line": 131,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "class_declaration",
+        "metadata": {
+          "context": "package com.example.test;\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.io.IOException;\n",
+          "node_type": "class_declaration",
+          "level": "container"
+        },
+        "line_count": 11,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [
+          "samples/SimpleClass.java:class_declaration_declaration:121-124",
+          "samples/SimpleClass.java:constructor_declaration:124-126",
+          "samples/SimpleClass.java:method_declaration:128-130",
+          "samples/SimpleClass.java:class_declaration_closing:130-131"
+        ],
+        "children": [
+          {
+            "node_id": "samples/SimpleClass.java:class_declaration_declaration:121-124",
+            "content": "class BaseClass {\n    protected String baseField;\n    \n    ",
+            "start_line": 121,
+            "end_line": 124,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "class_declaration_declaration",
+            "metadata": {
+              "is_declaration": true,
+              "node_type": "class_declaration",
+              "level": "declaration"
+            },
+            "line_count": 4,
+            "parent_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:constructor_declaration:124-126",
+            "content": "public BaseClass() {\n        this.baseField = \"Base\";\n    }",
+            "start_line": 124,
+            "end_line": 126,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "constructor_declaration",
+            "metadata": {
+              "node_type": "constructor_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:128-130",
+            "content": "public String getBaseField() {\n        return baseField;\n    }",
+            "start_line": 128,
+            "end_line": 130,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:class_declaration_closing:130-131",
+            "content": "\n}",
+            "start_line": 130,
+            "end_line": 131,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "class_declaration_closing",
+            "metadata": {
+              "is_closing": true,
+              "node_type": "class_declaration",
+              "level": "closing"
+            },
+            "line_count": 2,
+            "parent_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "children_ids": [],
+            "children": []
+          }
+        ]
+      },
+      {
+        "node_id": "samples/SimpleClass.java:interface_declaration:136-138",
+        "content": "interface TestInterface {\n    void processItems() throws IOException;\n}",
+        "start_line": 136,
+        "end_line": 138,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "interface_declaration",
+        "metadata": {
+          "context": "package com.example.test;\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.io.IOException;\n",
+          "node_type": "interface_declaration",
+          "level": "container"
+        },
+        "line_count": 3,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [
+          "samples/SimpleClass.java:interface_declaration_declaration:136-137",
+          "samples/SimpleClass.java:method_declaration:137-137",
+          "samples/SimpleClass.java:interface_declaration_closing:137-138"
+        ],
+        "children": [
+          {
+            "node_id": "samples/SimpleClass.java:interface_declaration_declaration:136-137",
+            "content": "interface TestInterface {\n    ",
+            "start_line": 136,
+            "end_line": 137,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "interface_declaration_declaration",
+            "metadata": {
+              "is_declaration": true,
+              "node_type": "interface_declaration",
+              "level": "declaration"
+            },
+            "line_count": 2,
+            "parent_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:137-137",
+            "content": "void processItems() throws IOException;",
+            "start_line": 137,
+            "end_line": 137,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "interface_declaration",
+              "level": "method"
+            },
+            "line_count": 1,
+            "parent_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "children_ids": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:interface_declaration_closing:137-138",
+            "content": "\n}",
+            "start_line": 137,
+            "end_line": 138,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "interface_declaration_closing",
+            "metadata": {
+              "is_closing": true,
+              "node_type": "interface_declaration",
+              "level": "closing"
+            },
+            "line_count": 2,
+            "parent_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "children_ids": [],
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+]

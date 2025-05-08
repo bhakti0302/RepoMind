@@ -69,35 +69,59 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 **Dependencies**: Story 1.1
 
 ##### Tasks:
-- [ ] 2.1.1: Install Tree-sitter and language-specific grammars
-- [ ] 2.1.2: Create parser for extracting functions, classes, and methods
-- [ ] 2.1.3: Implement context preservation (imports, dependencies)
-- [ ] 2.1.4: Add error handling for parsing failures
-- [ ] 2.1.5: Create utility functions for AST traversal
+- [x] 2.1.1: Install Tree-sitter and language-specific grammars
+- [x] 2.1.2: Create parser for extracting functions, classes, and methods
+- [x] 2.1.3: Implement context preservation (imports, dependencies)
+- [x] 2.1.4: Add error handling for parsing failures
+- [x] 2.1.5: Create utility functions for AST traversal
 
-#### Story 2.2: Code Chunking Implementation
-**Description**: Implement AST-aware code chunking
+#### Story 2.2: Semantic Code Chunking Implementation
+**Description**: Implement AST-aware semantic code chunking
 **Complexity**: Medium
 **Dependencies**: Story 2.1
 
 ##### Tasks:
-- [ ] 2.2.1: Design chunking algorithm based on AST structure
-- [ ] 2.2.2: Implement logic to divide code into 150-300 line chunks
-- [ ] 2.2.3: Ensure structural integrity is maintained during chunking
-- [ ] 2.2.4: Add metadata to chunks for context preservation
-- [ ] 2.2.5: Create utility for chunk visualization/debugging
+- [x] 2.2.1: Design semantic chunking algorithm based on AST structure
+- [x] 2.2.2: Implement hierarchical chunking (fine-grained and container-level)
+- [x] 2.2.3: Ensure structural integrity and context preservation
+- [x] 2.2.4: Add metadata for dependency relationships
+- [x] 2.2.5: Create visualization utility for chunk hierarchy
 
-#### Story 2.3: Vector Database Setup
-**Description**: Set up LanceDB for storing code embeddings
+#### Story 2.3: Vector Database and Dependency Graph Setup
+**Description**: Set up LanceDB for storing code embeddings and dependency graph
 **Complexity**: Medium
 **Dependencies**: Story 2.2
 
 ##### Tasks:
-- [ ] 2.3.1: Install and configure LanceDB
-- [ ] 2.3.2: Create schema for code embeddings
-- [ ] 2.3.3: Implement embedding generation using appropriate model
-- [ ] 2.3.4: Set up storage and retrieval functions
-- [ ] 2.3.5: Create indexing pipeline for efficient retrieval
+- [x] 2.3.1: Install and configure LanceDB
+- [x] 2.3.2: Create schema for code embeddings with metadata
+- [x] 2.3.3: Implement embedding generation using CodeBERT
+- [ ] 2.3.4: Build dependency graph construction
+- [ ] 2.3.5: Create unified storage for vectors and graph metadata
+
+###### Completed:
+- Installed and configured LanceDB for storing code embeddings
+- Created comprehensive schema for code chunks and dependency relationships
+- Implemented version-compatible database manager with schema validation
+- Added robust error handling and logging
+- Designed flexible schema with minimal and full versions
+- Created test scripts to verify schema functionality
+- Implemented embedding generation using CodeBERT
+- Added batch processing for efficient embedding generation
+- Implemented caching to avoid regenerating embeddings for the same code
+- Created utility scripts for embedding code chunks and storing them in the database
+
+#### Story 2.4: Relevance Scoring and Testing
+**Description**: Implement custom scoring and comprehensive testing
+**Complexity**: Medium
+**Dependencies**: Story 2.3
+
+##### Tasks:
+- [ ] 2.4.1: Develop custom relevance scoring combining semantic similarity and graph proximity
+- [ ] 2.4.2: Create test suite for chunking component
+- [ ] 2.4.3: Implement tests for embedding generation
+- [ ] 2.4.4: Design test cases for dependency graph construction
+- [ ] 2.4.5: Build end-to-end integration tests for the entire codebase analysis system
 
 ### Epic 3: Business Requirements Processing
 **Goal**: Implement the system to process and understand business requirements
@@ -306,25 +330,26 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 
 ### Iteration 2: Codebase Analysis (3 weeks)
 - Story 2.1: Tree-sitter Integration
-- Story 2.2: Code Chunking Implementation
-- Story 2.3: Vector Database Setup
-- Story 4.2: MCP Client Integration
+- Story 2.2: Semantic Code Chunking Implementation
+- Story 2.3: Vector Database and Dependency Graph Setup
+- Story 2.4: Relevance Scoring and Testing
 
-### Iteration 3: Requirements Processing (2 weeks)
+### Iteration 3: Requirements Processing and MCP Integration (2 weeks)
 - Story 3.1: Natural Language Processing Setup
 - Story 3.2: RAG Implementation
 - Story 3.3: Code Synthesis System
-- Story 5.2: LLM Abstraction Layer
+- Story 4.2: MCP Client Integration
 
-### Iteration 4: Agent Implementation (3 weeks)
+### Iteration 4: Agent Implementation and LLM Integration (3 weeks)
+- Story 5.2: LLM Abstraction Layer
 - Story 6.1: Instruction Parser
 - Story 6.2: Code Generation Agent
 - Story 6.3: File Operation Agent
-- Story 7.3: Human-in-the-Loop Integration
 
 ### Iteration 5: VS Code Integration and Refinement (2 weeks)
 - Story 7.1: Command Integration
 - Story 7.2: Chat Interface Implementation
+- Story 7.3: Human-in-the-Loop Integration
 - Story 8.1: Change Detection
 - Story 8.2: Automatic Vector Database Updates
 
