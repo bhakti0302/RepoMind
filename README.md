@@ -100,7 +100,7 @@ You can specify a different location using the `--db-path` parameter in most com
 ```bash
 python test_parser.py <file_path>
 ```
-
+You may use paths from sample. 
 #### Generating Embeddings
 
 ```bash
