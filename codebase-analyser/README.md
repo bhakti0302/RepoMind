@@ -31,21 +31,21 @@ pip install -r requirements.txt
 
 ```bash
 # Parse a Java file and generate chunks
-python test_parser.py samples/SimpleClass.java
+python tests/test_parser.py samples/SimpleClass.java
 ```
 
 ### Generating Embeddings
 
 ```bash
 # Generate embeddings for code chunks
-python test_embeddings.py
+python tests/test_embeddings.py
 ```
 
 ### Building Dependency Graphs
 
 ```bash
 # Build a dependency graph from code chunks
-python test_dependency_graph.py
+python tests/test_dependency_graph.py
 ```
 
 ### Visualizing Dependency Graphs
@@ -94,73 +94,75 @@ The analyser includes specialized support for Java files, extracting:
 To test Java parsing:
 
 ```bash
-python test_java_parser.py /path/to/your/JavaFile.java
+python tests/test_java_parser.py /path/to/your/JavaFile.java
 ```
 
 ## Testing
 
+All tests are located in the `tests` folder. Run them from the project root:
+
 ```bash
 # Basic parsing test
-python test_parser.py /path/to/your/file.ext
+python tests/test_parser.py /path/to/your/file.ext
 
 # Java-specific parsing
-python test_java_parser.py /path/to/your/JavaFile.java
+python tests/test_java_parser.py /path/to/your/JavaFile.java
 
 # Comprehensive Java parsing with AST analysis
-python test_java_parser_comprehensive.py /path/to/your/JavaFile.java
+python tests/test_java_parser_comprehensive.py /path/to/your/JavaFile.java
 
 # AST utility functions
-python test_ast_utils.py /path/to/your/file.ext
+python tests/test_ast_utils.py /path/to/your/file.ext
 
 # Hierarchical code chunking
-python test_hierarchical_chunking.py /path/to/your/file.ext
+python tests/test_hierarchical_chunking.py /path/to/your/file.ext
 
 # Context preservation and structural integrity
-python test_context_preservation.py /path/to/your/file.ext
+python tests/test_context_preservation.py /path/to/your/file.ext
 
 # Dependency analysis and relationship mapping
-python test_dependency_analysis.py /path/to/your/file.ext
+python tests/test_dependency_analysis.py /path/to/your/file.ext
 
 # Visualization utilities
-python test_simple_visualization.py /path/to/your/file.ext
+python tests/test_simple_visualization.py /path/to/your/file.ext
 
 # End-to-end integration test
-python test_end_to_end_integration.py --clear-db
+python tests/test_end_to_end_integration.py --clear-db
 
 # Custom relevance scoring test
-python test_custom_relevance.py --clear-db --alpha 0.7 --beta 0.3
+python tests/test_custom_relevance.py --clear-db --alpha 0.7 --beta 0.3
 ```
 
 ## Database Operations
 
 ```bash
 # Test LanceDB installation and configuration
-python test_lancedb.py
+python tests/test_lancedb.py
 
 # Clear and recreate tables
-python test_lancedb.py --clear
+python tests/test_lancedb.py --clear
 
 # Use a custom database path
-python test_lancedb.py --db-path codebase-analyser/.lancedb
+python tests/test_lancedb.py --db-path codebase-analyser/.lancedb
 ```
 
 ## Embedding Operations
 
 ```bash
 # Test the embedding generator
-python test_embeddings.py
+python tests/test_embeddings.py
 
 # Visualize embeddings
-python test_embeddings.py --visualize
+python tests/test_embeddings.py --visualize
 
 # Embed chunks and store in database
-python test_embed_chunks.py
+python tests/test_embed_chunks.py
 
 # Clear database before embedding
-python test_embed_chunks.py --clear-db
+python tests/test_embed_chunks.py --clear-db
 
 # Use a specific model
-python test_embed_chunks.py --model microsoft/codebert-base
+python tests/test_embed_chunks.py --model microsoft/codebert-base
 ```
 
 ## Dependency Graph Operations
@@ -179,7 +181,7 @@ python -m codebase_analyser.graph.cli query
 python -m codebase_analyser.graph.cli query --source-id "file:sample1.java" --type "CONTAINS"
 
 # Test graph construction
-python test_dependency_graph.py --input samples/sample_chunks.json --output-dir samples/graphs
+python tests/test_dependency_graph.py --input samples/sample_chunks.json --output-dir samples/graphs
 ```
 
 
@@ -257,10 +259,10 @@ embed_and_store_chunks(chunks=code_chunks, db_path="codebase-analyser/.lancedb")
 
 ```bash
 # Test unified storage
-python test_unified_storage.py --clear-db
+python tests/test_unified_storage.py --clear-db
 
 # Options
-python test_unified_storage.py --db-path codebase-analyser/.lancedb --full-schema
+python tests/test_unified_storage.py --db-path codebase-analyser/.lancedb --full-schema
 ```
 
 ### Unified Storage API
@@ -326,10 +328,10 @@ close_unified_storage(storage_manager)
 
 ```bash
 # Test with default weights (α=0.7, β=0.3)
-python test_custom_relevance.py --clear-db
+python tests/test_custom_relevance.py --clear-db
 
 # Customize weights
-python test_custom_relevance.py --alpha 0.5 --beta 0.5
+python tests/test_custom_relevance.py --alpha 0.5 --beta 0.5
 ```
 
 Formula: `final_score = α * semantic_similarity + β * (1 / (1 + graph_distance))`
@@ -342,11 +344,11 @@ Formula: `final_score = α * semantic_similarity + β * (1 / (1 + graph_distance
 
 ```bash
 # Basic test
-python test_end_to_end_integration.py --clear-db
+python tests/test_end_to_end_integration.py --clear-db
 
 # Options
-python test_end_to_end_integration.py --db-path /path/to/db --real-embeddings --full-schema
-python test_end_to_end_integration.py --test-dir /path/to/test/files --keep-test-dir
+python tests/test_end_to_end_integration.py --db-path /path/to/db --real-embeddings --full-schema
+python tests/test_end_to_end_integration.py --test-dir /path/to/test/files --keep-test-dir
 ```
 
 Tests the complete pipeline:
