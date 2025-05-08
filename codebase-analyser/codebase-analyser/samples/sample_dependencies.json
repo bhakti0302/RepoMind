@@ -1,0 +1,47 @@
+[
+  {
+    "source_id": "file:samples/SimpleClass.java",
+    "target_id": "class:SimpleClass",
+    "type": "CONTAINS",
+    "strength": 1.0,
+    "is_direct": true,
+    "is_required": true,
+    "description": "File contains class SimpleClass"
+  },
+  {
+    "source_id": "class:SimpleClass",
+    "target_id": "method:SimpleClass.main",
+    "type": "CONTAINS",
+    "strength": 1.0,
+    "is_direct": true,
+    "is_required": true,
+    "description": "Class SimpleClass contains method main"
+  },
+  {
+    "source_id": "class:SimpleClass",
+    "target_id": "method:SimpleClass.sayHello",
+    "type": "CONTAINS",
+    "strength": 1.0,
+    "is_direct": true,
+    "is_required": true,
+    "description": "Class SimpleClass contains method sayHello"
+  },
+  {
+    "source_id": "method:SimpleClass.main",
+    "target_id": "method:SimpleClass.sayHello",
+    "type": "CALLS",
+    "strength": 0.8,
+    "is_direct": true,
+    "is_required": true,
+    "description": "Method main calls method sayHello"
+  },
+  {
+    "source_id": "file:samples/SimpleClass.java",
+    "target_id": "file:java.io.PrintStream",
+    "type": "IMPORTS",
+    "strength": 0.7,
+    "is_direct": true,
+    "is_required": true,
+    "description": "File imports java.io.PrintStream"
+  }
+]

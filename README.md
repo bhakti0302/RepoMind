@@ -1,14 +1,8 @@
 # RepoMind - Intelligent Coding Assistant
 
-RepoMind is an AI-powered coding assistant that provides intelligent code understanding and generation capabilities. The project consists of a VS Code extension for the user interface and a codebase analysis system for deep code understanding.
+RepoMind is an AI-powered coding assistant that provides intelligent code understanding and generation capabilities. The project consists of a codebase analysis system for deep code understanding and a VS Code extension for the user interface.
 
-## Features (Implemented)
-
-### VS Code Extension
-- Basic chat interface with modern UI
-- Status bar integration
-- Command palette integration
-- Welcome message with suggestions
+## Features
 
 ### Codebase Analysis System
 - AST parsing with Tree-sitter for multiple languages
@@ -17,74 +11,60 @@ RepoMind is an AI-powered coding assistant that provides intelligent code unders
 - Structural integrity and context preservation
 - Comprehensive metadata for code understanding
 - Memory-optimized processing for large codebases
-- Visualization utilities for code structure
+- Vector database integration with LanceDB
+- Code embedding generation using CodeBERT
+- Optional dependency graph visualization
+- Unified storage for vectors and graph metadata
+- Command-line interface for various operations
 
-## Epic 2: Codebase Analysis (Completed Stories)
+## Completed Components
 
-### Story 2.1: Tree-sitter Integration
+### 1. Tree-sitter Integration
 - Integrated Tree-sitter for AST parsing
 - Added support for multiple programming languages
 - Implemented utility functions for AST traversal and analysis
 - Created specialized Java parser for detailed analysis
 
-### Story 2.2: Semantic Code Chunking
+### 2. Semantic Code Chunking
 - Designed and implemented semantic chunking algorithm based on AST structure
 - Created hierarchical chunking with fine-grained and container-level chunks
 - Ensured structural integrity and context preservation
 - Added comprehensive metadata for dependency relationships
 - Implemented visualization utilities for chunk hierarchy
 
-### Story 2.3: Vector Database and Dependency Graph Setup (In Progress)
+### 3. Vector Database Integration
 - Installed and configured LanceDB for storing code embeddings
 - Created comprehensive schema for code chunks and dependency relationships
 - Implemented version-compatible database manager with schema validation
 - Added robust error handling and logging
 - Designed flexible schema with minimal and full versions
-- Created database utility scripts for connection management and schema updates
+- Created database utility scripts for connection management
+
+### 4. Code Embedding Generation
 - Implemented embedding generation using CodeBERT
 - Added batch processing for efficient embedding generation
 - Implemented caching to avoid regenerating embeddings for the same code
+- Created utility scripts for embedding code chunks and storing them in the database
+
+### 5. Dependency Graph Construction
+- Built dependency graph construction system
+- Implemented visualization utilities for code relationships
+- Created command-line interface for dependency graph operations
+- Added database integration for storing and querying dependencies
 
 ## Prerequisites
 
-- Node.js (v14 or later)
-- VS Code (v1.80 or later)
-- npm (v6 or later)
+- Python 3.8 or later
 - Git
 
 ## Setup Instructions
 
-### VS Code Extension Setup
+### Codebase Analyser Setup
 
 1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/repomind.git
-cd repomind
-```
-
-2. Install project dependencies:
-```bash
-cd extension-v1
-npm install
-```
-
-3. Compile the extension:
-```bash
-npm run compile
-```
-
-4. Run the extension in development mode:
-   - Press F5 in VS Code, or
-   - Use the Run and Debug view (Ctrl+Shift+D), or
-   - Run `npm run start` in the terminal
-
-This will open a new VS Code window with the extension loaded.
-
-### Codebase Analyser Setup
-
-1. Navigate to the codebase-analyser directory:
-```bash
-cd codebase-analyser
+cd repomind/codebase-analyser
 ```
 
 2. Create a Python virtual environment:
@@ -103,58 +83,85 @@ pip install -r requirements.txt
 python test_parser.py samples/SimpleClass.java
 ```
 
-### Additional Setup (Optional)
+### Database Location
 
-If you plan to develop the extension further, you might want to install:
+The codebase analyzer uses LanceDB to store code embeddings and dependencies. By default, the database is stored in:
 
-1. Global tools:
+```
+codebase-analyser/.lancedb
+```
+
+You can specify a different location using the `--db-path` parameter in most commands.
+
+### Running the Codebase Analyser
+
+#### Parsing and Chunking
+
 ```bash
-npm install -g yo generator-code typescript @vscode/vsce
+python test_parser.py <file_path>
 ```
 
-2. VS Code extensions:
+#### Generating Embeddings
+
 ```bash
-code --install-extension dbaeumer.vscode-eslint
-code --install-extension amodio.tsl-problem-matcher
-code --install-extension ms-vscode.extension-test-runner
+python test_embeddings.py
 ```
 
-## Development
+#### Building Dependency Graphs
 
-The project is structured as follows:
-
-```
-RepoMind/
-├── extension-v1/          # VS Code Extension
-│   ├── src/
-│   │   ├── extension.ts   # Main extension entry point
-│   │   ├── ui/            # UI components
-│   │   └── test/          # Test files
-│   ├── media/             # UI assets
-│   └── package.json       # Extension manifest
-│
-├── codebase-analyser/     # Codebase Analysis System
-│   ├── codebase_analyser/
-│   │   ├── parsers/       # Language-specific parsers
-│   │   ├── chunking/      # Code chunking and dependency analysis
-│   │   └── utils/         # Utility functions
-│   ├── test_*.py          # Test scripts
-│   └── requirements.txt   # Python dependencies
-│
-└── docs/                  # Project documentation
-    └── PLAN.MD            # Project plan and roadmap
-```
-
-## Testing
-
-To run the tests:
 ```bash
-npm test
+python test_dependency_graph.py
 ```
 
-## Contributing
+#### Visualizing Dependency Graphs
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to this project.
+```bash
+# Generate a PNG visualization
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --output-file samples/graph.png
+
+# Generate a DOT file for Graphviz
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --format dot --output-file samples/dependency_graph.dot
+
+# Customize the visualization
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --layout circular --node-size 1500
+```
+
+The dependency graph visualization provides insights into code relationships:
+
+![Dependency Graph Example](samples/dependency_graph.png)
+
+## Project Structure
+
+```
+codebase-analyser/
+├── codebase_analyser/           # Main package
+│   ├── parsing/                 # Code parsing and chunking
+│   │   ├── analyser.py          # Main analyzer class
+│   │   ├── ast_utils.py         # AST utility functions
+│   │   ├── code_chunk.py        # Code chunk data model
+│   │   ├── chunker.py           # Code chunking logic
+│   │   ├── dependency_analyzer.py # Dependency analysis
+│   │   ├── dependency_types.py  # Dependency type definitions
+│   │   └── java_parser.py       # Java-specific parser
+│   ├── database/                # Database integration with LanceDB
+│   ├── embeddings/              # Code embedding generation
+│   └── graph/                   # Dependency graph functionality
+├── tests/                       # Test directory
+│   ├── test_parsing.py          # Tests for parsing and chunking
+│   ├── test_database.py         # Tests for database functionality
+│   ├── test_embeddings.py       # Tests for embedding generation
+│   ├── test_graph.py            # Tests for graph functionality
+│   └── fixtures/                # Test fixtures
+├── samples/                     # Sample files and outputs
+└── requirements.txt             # Python dependencies
+```
+
+## Documentation
+
+For more detailed information, see the following documentation:
+
+- [Project Plan](docs/PLAN.MD) - Detailed project plan and roadmap
+- [Codebase Analyser README](codebase-analyser/README.md) - Detailed documentation for the codebase analyser
 
 ## License
 

@@ -607,6 +607,75 @@ class LanceDBManager:
             logger.error(f"Error searching code chunks: {e}")
             raise
 
+    def get_all_code_chunks(self) -> List[Dict[str, Any]]:
+        """Get all code chunks from the database.
+
+        Returns:
+            List of all code chunks
+        """
+        try:
+            # Open the code_chunks table if not already open
+            if "code_chunks" not in self.tables:
+                try:
+                    self.tables["code_chunks"] = self.db.open_table("code_chunks")
+                except AttributeError:
+                    # Older versions might use a different API
+                    self.tables["code_chunks"] = self.db["code_chunks"]
+
+            # Get all chunks
+            results = self.tables["code_chunks"].to_pandas()
+
+            # Convert results to dictionaries
+            return results.to_dict('records')
+
+        except Exception as e:
+            logger.error(f"Error getting all code chunks: {e}")
+            return []
+
+    def get_code_chunk(self, node_id: str) -> Optional[Dict[str, Any]]:
+        """Get a code chunk by its node ID.
+
+        Args:
+            node_id: The node ID of the chunk to retrieve
+
+        Returns:
+            The code chunk dictionary, or None if not found
+        """
+        try:
+            # Open the code_chunks table if not already open
+            if "code_chunks" not in self.tables:
+                try:
+                    self.tables["code_chunks"] = self.db.open_table("code_chunks")
+                except AttributeError:
+                    # Older versions might use a different API
+                    self.tables["code_chunks"] = self.db["code_chunks"]
+
+            try:
+                # Build the where clause
+                where_clause = f"node_id = '{node_id}'"
+
+                # Execute the query
+                results = self.tables["code_chunks"].to_pandas(filter=where_clause)
+            except (AttributeError, TypeError):
+                # Older versions might not support filtering
+                logger.warning("Using legacy API for code chunks (filtering in memory)")
+
+                # Get all chunks
+                results = self.tables["code_chunks"].to_pandas()
+
+                # Filter in memory
+                results = results[results["node_id"] == node_id]
+
+            # Convert results to dictionary
+            if len(results) > 0:
+                return results.iloc[0].to_dict()
+            else:
+                return None
+
+        except Exception as e:
+            logger.error(f"Error getting code chunk: {e}")
+            return None
+
     def get_dependencies(
         self,
         source_id: Optional[str] = None,

@@ -1,0 +1,15 @@
+digraph Sample_Dependency_Graph {
+  label="Sample Dependency Graph";
+  node [shape=box, style=filled, fillcolor=skyblue];
+  "file:sample1.java" [label="HelloWorld.java\n(file)"];
+  "class:HelloWorld" [label="HelloWorld\n(class_declaration)"];
+  "method:HelloWorld.main" [label="main\n(method_declaration)"];
+  "file:sample2.py" [label="sample2.py\n(file)"];
+  "function:hello_world" [label="hello_world\n(function_declaration)"];
+  "file:sample3.js" [label="sample3.js\n(file)"];
+  "function:helloWorld" [label="helloWorld\n(function_declaration)"];
+  "file:sample1.java" -> "class:HelloWorld" [label="CONTAINS", color=blue, style=solid, penwidth=3.0];
+  "class:HelloWorld" -> "method:HelloWorld.main" [label="CONTAINS", color=blue, style=solid, penwidth=3.0];
+  "file:sample2.py" -> "function:hello_world" [label="CONTAINS", color=blue, style=solid, penwidth=3.0];
+  "file:sample3.js" -> "function:helloWorld" [label="CONTAINS", color=blue, style=solid, penwidth=3.0];
+}

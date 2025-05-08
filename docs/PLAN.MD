@@ -96,8 +96,8 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 - [x] 2.3.1: Install and configure LanceDB
 - [x] 2.3.2: Create schema for code embeddings with metadata
 - [x] 2.3.3: Implement embedding generation using CodeBERT
-- [ ] 2.3.4: Build dependency graph construction
-- [ ] 2.3.5: Create unified storage for vectors and graph metadata
+- [x] 2.3.4: Build dependency graph construction
+- [x] 2.3.5: Create unified storage for vectors and graph metadata
 
 ###### Completed:
 - Installed and configured LanceDB for storing code embeddings
@@ -110,6 +110,14 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 - Added batch processing for efficient embedding generation
 - Implemented caching to avoid regenerating embeddings for the same code
 - Created utility scripts for embedding code chunks and storing them in the database
+- Built dependency graph construction system
+- Implemented visualization utilities for dependency graphs
+- Created command-line interface for dependency graph operations
+- Added database integration for storing and querying dependencies
+- Created unified storage for vectors and graph metadata
+- Implemented combined search for code by both vector similarity and graph relationships
+- Added graph metadata to code chunks for efficient querying
+- Created utility functions for working with the unified storage
 
 #### Story 2.4: Relevance Scoring and Testing
 **Description**: Implement custom scoring and comprehensive testing
@@ -117,11 +125,48 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 **Dependencies**: Story 2.3
 
 ##### Tasks:
-- [ ] 2.4.1: Develop custom relevance scoring combining semantic similarity and graph proximity
-- [ ] 2.4.2: Create test suite for chunking component
-- [ ] 2.4.3: Implement tests for embedding generation
-- [ ] 2.4.4: Design test cases for dependency graph construction
-- [ ] 2.4.5: Build end-to-end integration tests for the entire codebase analysis system
+- [x] 2.4.1: Develop custom relevance scoring combining semantic similarity and graph proximity
+- [x] 2.4.2: Create test suite for chunking component
+- [x] 2.4.3: Implement tests for embedding generation
+- [x] 2.4.4: Design test cases for dependency graph construction
+- [x] 2.4.5: Build end-to-end integration tests for the entire codebase analysis system
+
+###### Completed in 2.4.1:
+- Implemented weighted scoring formula: final_score = α * semantic_similarity + β * (1 / (1 + graph_distance))
+- Added NetworkX integration for graph distance calculations
+- Implemented bidirectional path finding for comprehensive graph traversal
+- Created methods for building graphs from dependencies and calculating distances
+- Added configurable weights for balancing semantic vs. structural relevance
+- Created comprehensive test script with different weight configurations
+- Verified that graph proximity influences search results as expected
+
+###### Completed in 2.4.2:
+- Created test_chunking.py for basic code chunking functionality
+- Implemented test_hierarchical_chunking.py for parent-child relationships
+- Added test_context_preservation.py to verify context is maintained
+- Created visualization and output options for chunk inspection
+- Implemented comprehensive validation of chunk properties and metadata
+
+###### Completed in 2.4.3:
+- Created test_embeddings.py with sample code in multiple languages
+- Implemented test_embed_chunks.py for embedding code chunks
+- Added similarity calculation between different code samples
+- Implemented visualization options using PCA and t-SNE
+- Added batch processing tests for efficient embedding generation
+
+###### Completed in 2.4.4:
+- Created test_dependency_analysis.py for dependency analysis
+- Implemented test_graph.py for dependency graph construction and visualization
+- Added tests for dependency metrics (fan-in, fan-out, instability)
+- Implemented tests for graph visualization (PNG, DOT files)
+- Added tests for dependency database storage and retrieval
+
+###### Completed in 2.4.5:
+- Created test_end_to_end_integration.py for complete system testing
+- Implemented full flow from parsing source code to querying results
+- Added tests for vector similarity search, dependency-filtered search, and combined scoring
+- Created test files in multiple languages (Java, Python, JavaScript)
+- Implemented validation of search results and dependency metadata
 
 ### Epic 3: Business Requirements Processing
 **Goal**: Implement the system to process and understand business requirements
@@ -321,37 +366,52 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 - [ ] 8.2.4: Add progress indication for updates
 - [ ] 8.2.5: Implement error recovery for failed updates
 
-## Iteration Plan
+### Epic 9: Multi-Project Support and Incremental Indexing
+**Goal**: Enhance the system to support multiple projects and efficient incremental indexing
 
-### Iteration 1: Foundation (2 weeks)
-- Epic 1: Project Setup and Infrastructure
-- Story 4.1: MCP Server Implementation
-- Story 5.1: Llama Integration via OpenRouter
+#### Story 9.1: Project-Specific Context
+**Description**: Implement project-specific context for queries and results
+**Complexity**: Medium
+**Dependencies**: Story 2.3, Story 3.2
 
-### Iteration 2: Codebase Analysis (3 weeks)
-- Story 2.1: Tree-sitter Integration
-- Story 2.2: Semantic Code Chunking Implementation
-- Story 2.3: Vector Database and Dependency Graph Setup
-- Story 2.4: Relevance Scoring and Testing
+##### Tasks:
+- [ ] 9.1.1: Update database schema to include project_id field
+- [ ] 9.1.2: Modify search functions to accept project filter
+- [ ] 9.1.3: Implement project path capture in VS Code extension
+- [ ] 9.1.4: Create project ID generation based on normalized path
+- [ ] 9.1.5: Add project context to all RAG queries
 
-### Iteration 3: Requirements Processing and MCP Integration (2 weeks)
-- Story 3.1: Natural Language Processing Setup
-- Story 3.2: RAG Implementation
-- Story 3.3: Code Synthesis System
-- Story 4.2: MCP Client Integration
 
-### Iteration 4: Agent Implementation and LLM Integration (3 weeks)
-- Story 5.2: LLM Abstraction Layer
-- Story 6.1: Instruction Parser
-- Story 6.2: Code Generation Agent
-- Story 6.3: File Operation Agent
 
-### Iteration 5: VS Code Integration and Refinement (2 weeks)
-- Story 7.1: Command Integration
-- Story 7.2: Chat Interface Implementation
-- Story 7.3: Human-in-the-Loop Integration
-- Story 8.1: Change Detection
-- Story 8.2: Automatic Vector Database Updates
+#### Story 9.2: Efficient Incremental Indexing
+**Description**: Implement efficient incremental indexing for large projects
+**Complexity**: High
+**Dependencies**: Story 8.1, Story 9.1
+
+##### Tasks:
+- [ ] 9.2.1: Design file change tracking system
+- [ ] 9.2.2: Implement content-based change detection
+- [ ] 9.2.3: Create dependency-aware update mechanism
+- [ ] 9.2.4: Implement partial graph updates
+- [ ] 9.2.5: Add performance optimizations for large projects
+
+
+
+#### Story 9.3: Multi-Project Management
+**Description**: Implement tools for managing multiple projects
+**Complexity**: Medium
+**Dependencies**: Story 9.1
+
+##### Tasks:
+- [ ] 9.3.1: Create project selection UI in VS Code extension
+- [ ] 9.3.2: Implement project metadata storage
+- [ ] 9.3.3: Add project-specific configuration options
+- [ ] 9.3.4: Create project initialization workflow
+- [ ] 9.3.5: Implement project status indicators
+
+
+
+
 
 ## Key Components Reference
 
