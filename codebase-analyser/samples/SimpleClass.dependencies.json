@@ -1,0 +1,2487 @@
+[
+  {
+    "node_id": "samples/SimpleClass.java:file:1-139",
+    "name": "SimpleClass",
+    "qualified_name": "com.example.test.SimpleClass",
+    "content": "package com.example.test;\n\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.io.IOException;\n\n/**\n * A simple Java class for testing the Tree-sitter parser\n */\npublic class SimpleClass extends BaseClass implements TestInterface {\n    // Fields\n    private String name;\n    private int count;\n    protected List<String> items;\n    public static final String VERSION = \"1.0.0\";\n    \n    /**\n     * Default constructor\n     */\n    public SimpleClass() {\n        this.name = \"Default\";\n        this.count = 0;\n        this.items = new ArrayList<>();\n    }\n    \n    /**\n     * Constructor with parameters\n     */\n    public SimpleClass(String name, int count) {\n        this.name = name;\n        this.count = count;\n        this.items = new ArrayList<>();\n    }\n    \n    /**\n     * Get the name\n     */\n    public String getName() {\n        return name;\n    }\n    \n    /**\n     * Set the name\n     */\n    public void setName(String name) {\n        this.name = name;\n    }\n    \n    /**\n     * Get the count\n     */\n    public int getCount() {\n        return count;\n    }\n    \n    /**\n     * Set the count\n     */\n    public void setCount(int count) {\n        this.count = count;\n    }\n    \n    /**\n     * Add an item to the list\n     */\n    public void addItem(String item) {\n        items.add(item);\n    }\n    \n    /**\n     * Get all items\n     */\n    public List<String> getItems() {\n        return items;\n    }\n    \n    /**\n     * Process items with exception handling\n     */\n    public void processItems() throws IOException {\n        for (String item : items) {\n            if (item == null) {\n                throw new IOException(\"Null item found\");\n            }\n            System.out.println(\"Processing: \" + item);\n        }\n    }\n    \n    /**\n     * Static utility method\n     */\n    public static int calculateSum(int a, int b) {\n        return a + b;\n    }\n    \n    /**\n     * Main method for testing\n     */\n    public static void main(String[] args) {\n        SimpleClass obj = new SimpleClass(\"Test\", 5);\n        obj.addItem(\"Item 1\");\n        obj.addItem(\"Item 2\");\n        \n        System.out.println(\"Name: \" + obj.getName());\n        System.out.println(\"Count: \" + obj.getCount());\n        System.out.println(\"Items: \" + obj.getItems());\n        \n        try {\n            obj.processItems();\n        } catch (IOException e) {\n            System.err.println(\"Error: \" + e.getMessage());\n        }\n        \n        System.out.println(\"Sum: \" + calculateSum(10, 20));\n    }\n}\n\n/**\n * Base class for testing inheritance\n */\nclass BaseClass {\n    protected String baseField;\n    \n    public BaseClass() {\n        this.baseField = \"Base\";\n    }\n    \n    public String getBaseField() {\n        return baseField;\n    }\n}\n\n/**\n * Interface for testing implementation\n */\ninterface TestInterface {\n    void processItems() throws IOException;\n}\n",
+    "start_line": 1,
+    "end_line": 139,
+    "language": "java",
+    "file_path": "samples/SimpleClass.java",
+    "chunk_type": "file",
+    "metadata": {
+      "level": "file",
+      "is_valid": true,
+      "dependency_metrics": {
+        "fan_in": 0,
+        "fan_out": 7,
+        "instability": 1.0,
+        "abstractness": 0.0,
+        "distance_from_main_sequence": 0.0,
+        "incoming_dependencies": [],
+        "outgoing_dependencies": [
+          {
+            "chunk_id": "samples/SimpleClass.java:package_declaration:1-1",
+            "type": "CONTAINS",
+            "strength": 1.0
+          },
+          {
+            "chunk_id": "samples/SimpleClass.java:import_declaration:3-3",
+            "type": "CONTAINS",
+            "strength": 1.0
+          },
+          {
+            "chunk_id": "samples/SimpleClass.java:import_declaration:4-4",
+            "type": "CONTAINS",
+            "strength": 1.0
+          },
+          {
+            "chunk_id": "samples/SimpleClass.java:import_declaration:5-5",
+            "type": "CONTAINS",
+            "strength": 1.0
+          },
+          {
+            "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "type": "CONTAINS",
+            "strength": 1.0
+          },
+          {
+            "chunk_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "type": "CONTAINS",
+            "strength": 1.0
+          },
+          {
+            "chunk_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "type": "CONTAINS",
+            "strength": 1.0
+          }
+        ]
+      },
+      "dependency_graph": {
+        "nodes": [
+          {
+            "id": "samples/SimpleClass.java:file:1-139",
+            "type": "file",
+            "name": "SimpleClass",
+            "qualified_name": "com.example.test.SimpleClass"
+          },
+          {
+            "id": "samples/SimpleClass.java:package_declaration:1-1",
+            "type": "package_declaration",
+            "name": "",
+            "qualified_name": ""
+          },
+          {
+            "id": "samples/SimpleClass.java:import_declaration:3-3",
+            "type": "import_declaration",
+            "name": "",
+            "qualified_name": ""
+          },
+          {
+            "id": "samples/SimpleClass.java:import_declaration:4-4",
+            "type": "import_declaration",
+            "name": "",
+            "qualified_name": ""
+          },
+          {
+            "id": "samples/SimpleClass.java:import_declaration:5-5",
+            "type": "import_declaration",
+            "name": "",
+            "qualified_name": ""
+          },
+          {
+            "id": "samples/SimpleClass.java:class_declaration:10-116",
+            "type": "class_declaration",
+            "name": "SimpleClass",
+            "qualified_name": "com.example.test.SimpleClass"
+          },
+          {
+            "id": "samples/SimpleClass.java:class_declaration_declaration:10-20",
+            "type": "class_declaration_declaration",
+            "name": "SimpleClass_declaration",
+            "qualified_name": "com.example.test.SimpleClass.SimpleClass_declaration"
+          },
+          {
+            "id": "samples/SimpleClass.java:constructor_declaration:20-24",
+            "type": "constructor_declaration",
+            "name": "SimpleClass",
+            "qualified_name": "com.example.test.SimpleClass.SimpleClass"
+          },
+          {
+            "id": "samples/SimpleClass.java:constructor_declaration:29-33",
+            "type": "constructor_declaration",
+            "name": "SimpleClass",
+            "qualified_name": "com.example.test.SimpleClass.SimpleClass"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:38-40",
+            "type": "method_declaration",
+            "name": "getName",
+            "qualified_name": "com.example.test.SimpleClass.getName"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:45-47",
+            "type": "method_declaration",
+            "name": "setName",
+            "qualified_name": "com.example.test.SimpleClass.setName"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:52-54",
+            "type": "method_declaration",
+            "name": "getCount",
+            "qualified_name": "com.example.test.SimpleClass.getCount"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:59-61",
+            "type": "method_declaration",
+            "name": "setCount",
+            "qualified_name": "com.example.test.SimpleClass.setCount"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:66-68",
+            "type": "method_declaration",
+            "name": "addItem",
+            "qualified_name": "com.example.test.SimpleClass.addItem"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:73-75",
+            "type": "method_declaration",
+            "name": "getItems",
+            "qualified_name": "com.example.test.SimpleClass.getItems"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:80-87",
+            "type": "method_declaration",
+            "name": "processItems",
+            "qualified_name": "com.example.test.SimpleClass.processItems"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:92-94",
+            "type": "method_declaration",
+            "name": "calculateSum",
+            "qualified_name": "com.example.test.SimpleClass.calculateSum"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:99-115",
+            "type": "method_declaration",
+            "name": "main",
+            "qualified_name": "com.example.test.SimpleClass.main"
+          },
+          {
+            "id": "samples/SimpleClass.java:class_declaration_closing:115-116",
+            "type": "class_declaration_closing",
+            "name": "SimpleClass_closing",
+            "qualified_name": "com.example.test.SimpleClass.SimpleClass_closing"
+          },
+          {
+            "id": "samples/SimpleClass.java:class_declaration:121-131",
+            "type": "class_declaration",
+            "name": "BaseClass",
+            "qualified_name": "com.example.test.BaseClass"
+          },
+          {
+            "id": "samples/SimpleClass.java:class_declaration_declaration:121-124",
+            "type": "class_declaration_declaration",
+            "name": "BaseClass_declaration",
+            "qualified_name": "com.example.test.BaseClass.BaseClass_declaration"
+          },
+          {
+            "id": "samples/SimpleClass.java:constructor_declaration:124-126",
+            "type": "constructor_declaration",
+            "name": "BaseClass",
+            "qualified_name": "com.example.test.BaseClass.BaseClass"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:128-130",
+            "type": "method_declaration",
+            "name": "getBaseField",
+            "qualified_name": "com.example.test.BaseClass.getBaseField"
+          },
+          {
+            "id": "samples/SimpleClass.java:class_declaration_closing:130-131",
+            "type": "class_declaration_closing",
+            "name": "BaseClass_closing",
+            "qualified_name": "com.example.test.BaseClass.BaseClass_closing"
+          },
+          {
+            "id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "type": "interface_declaration",
+            "name": "TestInterface",
+            "qualified_name": "com.example.test.TestInterface"
+          },
+          {
+            "id": "samples/SimpleClass.java:interface_declaration_declaration:136-137",
+            "type": "interface_declaration_declaration",
+            "name": "TestInterface_declaration",
+            "qualified_name": "com.example.test.TestInterface.TestInterface_declaration"
+          },
+          {
+            "id": "samples/SimpleClass.java:method_declaration:137-137",
+            "type": "method_declaration",
+            "name": "processItems",
+            "qualified_name": "com.example.test.TestInterface.processItems"
+          },
+          {
+            "id": "samples/SimpleClass.java:interface_declaration_closing:137-138",
+            "type": "interface_declaration_closing",
+            "name": "TestInterface_closing",
+            "qualified_name": "com.example.test.TestInterface.TestInterface_closing"
+          }
+        ],
+        "edges": [
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "type": "EXTENDS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass extends BaseClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+            "target_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 20,
+                "column": 7,
+                "snippet": "SimpleClass("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass calls SimpleClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+            "target_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 29,
+                "column": 7,
+                "snippet": "SimpleClass("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass calls SimpleClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:80-87",
+            "target_id": "samples/SimpleClass.java:method_declaration:137-137",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 80,
+                "column": 12,
+                "snippet": "processItems("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "processItems calls processItems"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 100,
+                "column": 71,
+                "snippet": "SimpleClass("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls SimpleClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 100,
+                "column": 71,
+                "snippet": "SimpleClass("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls SimpleClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:method_declaration:38-40",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 104,
+                "column": 208,
+                "snippet": "getName("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls getName"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:method_declaration:52-54",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 105,
+                "column": 263,
+                "snippet": "getCount("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls getCount"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:method_declaration:66-68",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 101,
+                "column": 107,
+                "snippet": "addItem("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls addItem"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:method_declaration:66-68",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 101,
+                "column": 138,
+                "snippet": "addItem("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls addItem"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:method_declaration:73-75",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 106,
+                "column": 319,
+                "snippet": "getItems("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls getItems"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:method_declaration:80-87",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 109,
+                "column": 371,
+                "snippet": "processItems("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls processItems"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:method_declaration:92-94",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 114,
+                "column": 537,
+                "snippet": "calculateSum("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls calculateSum"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "target_id": "samples/SimpleClass.java:method_declaration:137-137",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 109,
+                "column": 371,
+                "snippet": "processItems("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "main calls processItems"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:method_declaration:137-137",
+            "target_id": "samples/SimpleClass.java:method_declaration:80-87",
+            "type": "CALLS",
+            "strength": 0.8,
+            "locations": [
+              {
+                "line": 137,
+                "column": 5,
+                "snippet": "processItems("
+              }
+            ],
+            "is_direct": true,
+            "is_required": true,
+            "description": "processItems calls processItems"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:file:1-139",
+            "target_id": "samples/SimpleClass.java:package_declaration:1-1",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains Child"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:file:1-139",
+            "target_id": "samples/SimpleClass.java:import_declaration:3-3",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains Child"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:file:1-139",
+            "target_id": "samples/SimpleClass.java:import_declaration:4-4",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains Child"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:file:1-139",
+            "target_id": "samples/SimpleClass.java:import_declaration:5-5",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains Child"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:file:1-139",
+            "target_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains SimpleClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:class_declaration_declaration:10-20",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains SimpleClass_declaration"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains SimpleClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains SimpleClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:38-40",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains getName"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:45-47",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains setName"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:52-54",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains getCount"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:59-61",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains setCount"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:66-68",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains addItem"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:73-75",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains getItems"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:80-87",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains processItems"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:92-94",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains calculateSum"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains main"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "target_id": "samples/SimpleClass.java:class_declaration_closing:115-116",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains SimpleClass_closing"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:file:1-139",
+            "target_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains BaseClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "target_id": "samples/SimpleClass.java:class_declaration_declaration:121-124",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "BaseClass contains BaseClass_declaration"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "target_id": "samples/SimpleClass.java:constructor_declaration:124-126",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "BaseClass contains BaseClass"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "target_id": "samples/SimpleClass.java:method_declaration:128-130",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "BaseClass contains getBaseField"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "target_id": "samples/SimpleClass.java:class_declaration_closing:130-131",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "BaseClass contains BaseClass_closing"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:file:1-139",
+            "target_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "SimpleClass contains TestInterface"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "target_id": "samples/SimpleClass.java:interface_declaration_declaration:136-137",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "TestInterface contains TestInterface_declaration"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "target_id": "samples/SimpleClass.java:method_declaration:137-137",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "TestInterface contains processItems"
+          },
+          {
+            "source_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "target_id": "samples/SimpleClass.java:interface_declaration_closing:137-138",
+            "type": "CONTAINS",
+            "strength": 1.0,
+            "locations": [],
+            "is_direct": true,
+            "is_required": true,
+            "description": "TestInterface contains TestInterface_closing"
+          }
+        ],
+        "metrics": {
+          "coupling_score": 0.05555555555555555,
+          "cohesion_score": 1.0,
+          "dependency_depth": 5,
+          "cyclic_dependencies": [
+            [
+              "samples/SimpleClass.java:constructor_declaration:20-24",
+              "samples/SimpleClass.java:constructor_declaration:29-33",
+              "samples/SimpleClass.java:constructor_declaration:20-24"
+            ],
+            [
+              "samples/SimpleClass.java:method_declaration:80-87",
+              "samples/SimpleClass.java:method_declaration:137-137",
+              "samples/SimpleClass.java:method_declaration:80-87"
+            ]
+          ]
+        }
+      },
+      "imports": [
+        "java.util.List",
+        "java.util.ArrayList",
+        "java.io.IOException"
+      ],
+      "package": "com.example.test"
+    },
+    "context": {
+      "package": "com.example.test",
+      "imports": [
+        "java.util.List",
+        "java.util.ArrayList",
+        "java.io.IOException"
+      ]
+    },
+    "line_count": 139,
+    "parent_id": null,
+    "children_ids": [
+      "samples/SimpleClass.java:package_declaration:1-1",
+      "samples/SimpleClass.java:import_declaration:3-3",
+      "samples/SimpleClass.java:import_declaration:4-4",
+      "samples/SimpleClass.java:import_declaration:5-5",
+      "samples/SimpleClass.java:class_declaration:10-116",
+      "samples/SimpleClass.java:class_declaration:121-131",
+      "samples/SimpleClass.java:interface_declaration:136-138"
+    ],
+    "references": [],
+    "referenced_by": [
+      "samples/SimpleClass.java:constructor_declaration:20-24",
+      "samples/SimpleClass.java:constructor_declaration:29-33",
+      "samples/SimpleClass.java:method_declaration:99-115"
+    ],
+    "children": [
+      {
+        "node_id": "samples/SimpleClass.java:package_declaration:1-1",
+        "name": null,
+        "qualified_name": null,
+        "content": "package com.example.test;",
+        "start_line": 1,
+        "end_line": 1,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "package_declaration",
+        "metadata": {
+          "level": "context",
+          "node_type": "package_declaration",
+          "is_valid": true,
+          "dependency_metrics": {
+            "fan_in": 1,
+            "fan_out": 0,
+            "instability": 0.0,
+            "abstractness": 0.0,
+            "distance_from_main_sequence": 1.0,
+            "incoming_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:file:1-139",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ],
+            "outgoing_dependencies": []
+          }
+        },
+        "context": {
+          "package": "com.example.test",
+          "imports": [
+            "java.util.List",
+            "java.util.ArrayList",
+            "java.io.IOException"
+          ]
+        },
+        "line_count": 1,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [],
+        "references": [],
+        "referenced_by": [],
+        "children": []
+      },
+      {
+        "node_id": "samples/SimpleClass.java:import_declaration:3-3",
+        "name": null,
+        "qualified_name": null,
+        "content": "import java.util.List;",
+        "start_line": 3,
+        "end_line": 3,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "import_declaration",
+        "metadata": {
+          "level": "context",
+          "node_type": "import_declaration",
+          "is_valid": true,
+          "dependency_metrics": {
+            "fan_in": 1,
+            "fan_out": 0,
+            "instability": 0.0,
+            "abstractness": 0.0,
+            "distance_from_main_sequence": 1.0,
+            "incoming_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:file:1-139",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ],
+            "outgoing_dependencies": []
+          }
+        },
+        "context": {
+          "package": "com.example.test",
+          "imports": [
+            "java.util.List",
+            "java.util.ArrayList",
+            "java.io.IOException"
+          ]
+        },
+        "line_count": 1,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [],
+        "references": [],
+        "referenced_by": [],
+        "children": []
+      },
+      {
+        "node_id": "samples/SimpleClass.java:import_declaration:4-4",
+        "name": null,
+        "qualified_name": null,
+        "content": "import java.util.ArrayList;",
+        "start_line": 4,
+        "end_line": 4,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "import_declaration",
+        "metadata": {
+          "level": "context",
+          "node_type": "import_declaration",
+          "is_valid": true,
+          "dependency_metrics": {
+            "fan_in": 1,
+            "fan_out": 0,
+            "instability": 0.0,
+            "abstractness": 0.0,
+            "distance_from_main_sequence": 1.0,
+            "incoming_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:file:1-139",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ],
+            "outgoing_dependencies": []
+          }
+        },
+        "context": {
+          "package": "com.example.test",
+          "imports": [
+            "java.util.List",
+            "java.util.ArrayList",
+            "java.io.IOException"
+          ]
+        },
+        "line_count": 1,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [],
+        "references": [],
+        "referenced_by": [],
+        "children": []
+      },
+      {
+        "node_id": "samples/SimpleClass.java:import_declaration:5-5",
+        "name": null,
+        "qualified_name": null,
+        "content": "import java.io.IOException;",
+        "start_line": 5,
+        "end_line": 5,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "import_declaration",
+        "metadata": {
+          "level": "context",
+          "node_type": "import_declaration",
+          "is_valid": true,
+          "dependency_metrics": {
+            "fan_in": 1,
+            "fan_out": 0,
+            "instability": 0.0,
+            "abstractness": 0.0,
+            "distance_from_main_sequence": 1.0,
+            "incoming_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:file:1-139",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ],
+            "outgoing_dependencies": []
+          }
+        },
+        "context": {
+          "package": "com.example.test",
+          "imports": [
+            "java.util.List",
+            "java.util.ArrayList",
+            "java.io.IOException"
+          ]
+        },
+        "line_count": 1,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [],
+        "references": [],
+        "referenced_by": [],
+        "children": []
+      },
+      {
+        "node_id": "samples/SimpleClass.java:class_declaration:10-116",
+        "name": "SimpleClass",
+        "qualified_name": "com.example.test.SimpleClass",
+        "content": "public class SimpleClass extends BaseClass implements TestInterface {\n    // Fields\n    private String name;\n    private int count;\n    protected List<String> items;\n    public static final String VERSION = \"1.0.0\";\n    \n    /**\n     * Default constructor\n     */\n    public SimpleClass() {\n        this.name = \"Default\";\n        this.count = 0;\n        this.items = new ArrayList<>();\n    }\n    \n    /**\n     * Constructor with parameters\n     */\n    public SimpleClass(String name, int count) {\n        this.name = name;\n        this.count = count;\n        this.items = new ArrayList<>();\n    }\n    \n    /**\n     * Get the name\n     */\n    public String getName() {\n        return name;\n    }\n    \n    /**\n     * Set the name\n     */\n    public void setName(String name) {\n        this.name = name;\n    }\n    \n    /**\n     * Get the count\n     */\n    public int getCount() {\n        return count;\n    }\n    \n    /**\n     * Set the count\n     */\n    public void setCount(int count) {\n        this.count = count;\n    }\n    \n    /**\n     * Add an item to the list\n     */\n    public void addItem(String item) {\n        items.add(item);\n    }\n    \n    /**\n     * Get all items\n     */\n    public List<String> getItems() {\n        return items;\n    }\n    \n    /**\n     * Process items with exception handling\n     */\n    public void processItems() throws IOException {\n        for (String item : items) {\n            if (item == null) {\n                throw new IOException(\"Null item found\");\n            }\n            System.out.println(\"Processing: \" + item);\n        }\n    }\n    \n    /**\n     * Static utility method\n     */\n    public static int calculateSum(int a, int b) {\n        return a + b;\n    }\n    \n    /**\n     * Main method for testing\n     */\n    public static void main(String[] args) {\n        SimpleClass obj = new SimpleClass(\"Test\", 5);\n        obj.addItem(\"Item 1\");\n        obj.addItem(\"Item 2\");\n        \n        System.out.println(\"Name: \" + obj.getName());\n        System.out.println(\"Count: \" + obj.getCount());\n        System.out.println(\"Items: \" + obj.getItems());\n        \n        try {\n            obj.processItems();\n        } catch (IOException e) {\n            System.err.println(\"Error: \" + e.getMessage());\n        }\n        \n        System.out.println(\"Sum: \" + calculateSum(10, 20));\n    }\n}",
+        "start_line": 10,
+        "end_line": 116,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "class_declaration",
+        "metadata": {
+          "context": "package com.example.test;\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.io.IOException;\n",
+          "node_type": "class_declaration",
+          "level": "container",
+          "extends": "extends BaseClass",
+          "implements": null,
+          "is_valid": true,
+          "dependency_metrics": {
+            "fan_in": 1,
+            "fan_out": 14,
+            "instability": 0.9333333333333333,
+            "abstractness": 0.0,
+            "distance_from_main_sequence": 0.06666666666666665,
+            "incoming_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:file:1-139",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ],
+            "outgoing_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:class_declaration:121-131",
+                "type": "EXTENDS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:class_declaration_declaration:10-20",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:38-40",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:45-47",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:52-54",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:59-61",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:66-68",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:73-75",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:80-87",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:92-94",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:class_declaration_closing:115-116",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ]
+          }
+        },
+        "context": {
+          "package": "com.example.test",
+          "imports": [
+            "java.util.List",
+            "java.util.ArrayList",
+            "java.io.IOException"
+          ],
+          "container_name": "SimpleClass",
+          "extends": "extends BaseClass"
+        },
+        "line_count": 107,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [
+          "samples/SimpleClass.java:class_declaration_declaration:10-20",
+          "samples/SimpleClass.java:constructor_declaration:20-24",
+          "samples/SimpleClass.java:constructor_declaration:29-33",
+          "samples/SimpleClass.java:method_declaration:38-40",
+          "samples/SimpleClass.java:method_declaration:45-47",
+          "samples/SimpleClass.java:method_declaration:52-54",
+          "samples/SimpleClass.java:method_declaration:59-61",
+          "samples/SimpleClass.java:method_declaration:66-68",
+          "samples/SimpleClass.java:method_declaration:73-75",
+          "samples/SimpleClass.java:method_declaration:80-87",
+          "samples/SimpleClass.java:method_declaration:92-94",
+          "samples/SimpleClass.java:method_declaration:99-115",
+          "samples/SimpleClass.java:class_declaration_closing:115-116"
+        ],
+        "references": [],
+        "referenced_by": [
+          "samples/SimpleClass.java:constructor_declaration:20-24",
+          "samples/SimpleClass.java:constructor_declaration:29-33",
+          "samples/SimpleClass.java:method_declaration:99-115"
+        ],
+        "children": [
+          {
+            "node_id": "samples/SimpleClass.java:class_declaration_declaration:10-20",
+            "name": "SimpleClass_declaration",
+            "qualified_name": "com.example.test.SimpleClass.SimpleClass_declaration",
+            "content": "public class SimpleClass extends BaseClass implements TestInterface {\n    // Fields\n    private String name;\n    private int count;\n    protected List<String> items;\n    public static final String VERSION = \"1.0.0\";\n    \n    /**\n     * Default constructor\n     */\n    ",
+            "start_line": 10,
+            "end_line": 20,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "class_declaration_declaration",
+            "metadata": {
+              "is_declaration": true,
+              "node_type": "class_declaration",
+              "level": "declaration",
+              "is_valid": false,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass"
+            },
+            "line_count": 11,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+            "name": "SimpleClass",
+            "qualified_name": "com.example.test.SimpleClass.SimpleClass",
+            "content": "public SimpleClass() {\n        this.name = \"Default\";\n        this.count = 0;\n        this.items = new ArrayList<>();\n    }",
+            "start_line": 20,
+            "end_line": 24,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "constructor_declaration",
+            "metadata": {
+              "node_type": "constructor_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 3,
+                "fan_out": 1,
+                "instability": 0.25,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 0.75,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  }
+                ]
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "SimpleClass"
+            },
+            "line_count": 5,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [
+              "samples/SimpleClass.java:file:1-139",
+              "samples/SimpleClass.java:class_declaration:10-116",
+              "samples/SimpleClass.java:constructor_declaration:29-33"
+            ],
+            "referenced_by": [
+              "samples/SimpleClass.java:constructor_declaration:29-33",
+              "samples/SimpleClass.java:method_declaration:99-115"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+            "name": "SimpleClass",
+            "qualified_name": "com.example.test.SimpleClass.SimpleClass",
+            "content": "public SimpleClass(String name, int count) {\n        this.name = name;\n        this.count = count;\n        this.items = new ArrayList<>();\n    }",
+            "start_line": 29,
+            "end_line": 33,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "constructor_declaration",
+            "metadata": {
+              "node_type": "constructor_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [
+                "String name",
+                "int count"
+              ],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 3,
+                "fan_out": 1,
+                "instability": 0.25,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 0.75,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  }
+                ]
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "SimpleClass",
+              "parameters": [
+                "String name",
+                "int count"
+              ]
+            },
+            "line_count": 5,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [
+              "samples/SimpleClass.java:file:1-139",
+              "samples/SimpleClass.java:class_declaration:10-116",
+              "samples/SimpleClass.java:constructor_declaration:20-24"
+            ],
+            "referenced_by": [
+              "samples/SimpleClass.java:constructor_declaration:20-24",
+              "samples/SimpleClass.java:method_declaration:99-115"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:38-40",
+            "name": "getName",
+            "qualified_name": "com.example.test.SimpleClass.getName",
+            "content": "public String getName() {\n        return name;\n    }",
+            "start_line": 38,
+            "end_line": 40,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [],
+              "return_type": "String",
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 2,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "getName",
+              "return_type": "String"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [
+              "samples/SimpleClass.java:method_declaration:99-115"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:45-47",
+            "name": "setName",
+            "qualified_name": "com.example.test.SimpleClass.setName",
+            "content": "public void setName(String name) {\n        this.name = name;\n    }",
+            "start_line": 45,
+            "end_line": 47,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [
+                "String name"
+              ],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "setName",
+              "parameters": [
+                "String name"
+              ]
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:52-54",
+            "name": "getCount",
+            "qualified_name": "com.example.test.SimpleClass.getCount",
+            "content": "public int getCount() {\n        return count;\n    }",
+            "start_line": 52,
+            "end_line": 54,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 2,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "getCount"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [
+              "samples/SimpleClass.java:method_declaration:99-115"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:59-61",
+            "name": "setCount",
+            "qualified_name": "com.example.test.SimpleClass.setCount",
+            "content": "public void setCount(int count) {\n        this.count = count;\n    }",
+            "start_line": 59,
+            "end_line": 61,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [
+                "int count"
+              ],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "setCount",
+              "parameters": [
+                "int count"
+              ]
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:66-68",
+            "name": "addItem",
+            "qualified_name": "com.example.test.SimpleClass.addItem",
+            "content": "public void addItem(String item) {\n        items.add(item);\n    }",
+            "start_line": 66,
+            "end_line": 68,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [
+                "String item"
+              ],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 3,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "addItem",
+              "parameters": [
+                "String item"
+              ]
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [
+              "samples/SimpleClass.java:method_declaration:99-115"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:73-75",
+            "name": "getItems",
+            "qualified_name": "com.example.test.SimpleClass.getItems",
+            "content": "public List<String> getItems() {\n        return items;\n    }",
+            "start_line": 73,
+            "end_line": 75,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 2,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "getItems"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [
+              "samples/SimpleClass.java:method_declaration:99-115"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:80-87",
+            "name": "processItems",
+            "qualified_name": "com.example.test.SimpleClass.processItems",
+            "content": "public void processItems() throws IOException {\n        for (String item : items) {\n            if (item == null) {\n                throw new IOException(\"Null item found\");\n            }\n            System.out.println(\"Processing: \" + item);\n        }\n    }",
+            "start_line": 80,
+            "end_line": 87,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 3,
+                "fan_out": 1,
+                "instability": 0.25,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 0.75,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:137-137",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:137-137",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  }
+                ]
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "processItems"
+            },
+            "line_count": 8,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [
+              "samples/SimpleClass.java:method_declaration:137-137"
+            ],
+            "referenced_by": [
+              "samples/SimpleClass.java:method_declaration:99-115",
+              "samples/SimpleClass.java:method_declaration:137-137"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:92-94",
+            "name": "calculateSum",
+            "qualified_name": "com.example.test.SimpleClass.calculateSum",
+            "content": "public static int calculateSum(int a, int b) {\n        return a + b;\n    }",
+            "start_line": 92,
+            "end_line": 94,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [
+                "int a",
+                "int b"
+              ],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 2,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "calculateSum",
+              "parameters": [
+                "int a",
+                "int b"
+              ]
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [
+              "samples/SimpleClass.java:method_declaration:99-115"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:99-115",
+            "name": "main",
+            "qualified_name": "com.example.test.SimpleClass.main",
+            "content": "public static void main(String[] args) {\n        SimpleClass obj = new SimpleClass(\"Test\", 5);\n        obj.addItem(\"Item 1\");\n        obj.addItem(\"Item 2\");\n        \n        System.out.println(\"Name: \" + obj.getName());\n        System.out.println(\"Count: \" + obj.getCount());\n        System.out.println(\"Items: \" + obj.getItems());\n        \n        try {\n            obj.processItems();\n        } catch (IOException e) {\n            System.err.println(\"Error: \" + e.getMessage());\n        }\n        \n        System.out.println(\"Sum: \" + calculateSum(10, 20));\n    }",
+            "start_line": 99,
+            "end_line": 115,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [
+                "String[] args"
+              ],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 10,
+                "instability": 0.9090909090909091,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 0.09090909090909094,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:constructor_declaration:20-24",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:constructor_declaration:29-33",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:38-40",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:52-54",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:66-68",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:66-68",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:73-75",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:80-87",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:92-94",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:137-137",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  }
+                ]
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass",
+              "method_name": "main",
+              "parameters": [
+                "String[] args"
+              ]
+            },
+            "line_count": 17,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [
+              "samples/SimpleClass.java:file:1-139",
+              "samples/SimpleClass.java:class_declaration:10-116",
+              "samples/SimpleClass.java:constructor_declaration:20-24",
+              "samples/SimpleClass.java:constructor_declaration:29-33",
+              "samples/SimpleClass.java:method_declaration:38-40",
+              "samples/SimpleClass.java:method_declaration:52-54",
+              "samples/SimpleClass.java:method_declaration:66-68",
+              "samples/SimpleClass.java:method_declaration:73-75",
+              "samples/SimpleClass.java:method_declaration:80-87",
+              "samples/SimpleClass.java:method_declaration:92-94",
+              "samples/SimpleClass.java:method_declaration:137-137"
+            ],
+            "referenced_by": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:class_declaration_closing:115-116",
+            "name": "SimpleClass_closing",
+            "qualified_name": "com.example.test.SimpleClass.SimpleClass_closing",
+            "content": "\n}",
+            "start_line": 115,
+            "end_line": 116,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "class_declaration_closing",
+            "metadata": {
+              "is_closing": true,
+              "node_type": "class_declaration",
+              "level": "closing",
+              "is_valid": false,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "SimpleClass",
+              "extends": "extends BaseClass"
+            },
+            "line_count": 2,
+            "parent_id": "samples/SimpleClass.java:class_declaration:10-116",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          }
+        ]
+      },
+      {
+        "node_id": "samples/SimpleClass.java:class_declaration:121-131",
+        "name": "BaseClass",
+        "qualified_name": "com.example.test.BaseClass",
+        "content": "class BaseClass {\n    protected String baseField;\n    \n    public BaseClass() {\n        this.baseField = \"Base\";\n    }\n    \n    public String getBaseField() {\n        return baseField;\n    }\n}",
+        "start_line": 121,
+        "end_line": 131,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "class_declaration",
+        "metadata": {
+          "context": "package com.example.test;\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.io.IOException;\n",
+          "node_type": "class_declaration",
+          "level": "container",
+          "extends": null,
+          "implements": null,
+          "is_valid": true,
+          "dependency_metrics": {
+            "fan_in": 2,
+            "fan_out": 4,
+            "instability": 0.6666666666666666,
+            "abstractness": 0.0,
+            "distance_from_main_sequence": 0.33333333333333337,
+            "incoming_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:class_declaration:10-116",
+                "type": "EXTENDS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:file:1-139",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ],
+            "outgoing_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:class_declaration_declaration:121-124",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:constructor_declaration:124-126",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:128-130",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:class_declaration_closing:130-131",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ]
+          }
+        },
+        "context": {
+          "package": "com.example.test",
+          "imports": [
+            "java.util.List",
+            "java.util.ArrayList",
+            "java.io.IOException"
+          ],
+          "container_name": "BaseClass"
+        },
+        "line_count": 11,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [
+          "samples/SimpleClass.java:class_declaration_declaration:121-124",
+          "samples/SimpleClass.java:constructor_declaration:124-126",
+          "samples/SimpleClass.java:method_declaration:128-130",
+          "samples/SimpleClass.java:class_declaration_closing:130-131"
+        ],
+        "references": [],
+        "referenced_by": [
+          "samples/SimpleClass.java:constructor_declaration:124-126"
+        ],
+        "children": [
+          {
+            "node_id": "samples/SimpleClass.java:class_declaration_declaration:121-124",
+            "name": "BaseClass_declaration",
+            "qualified_name": "com.example.test.BaseClass.BaseClass_declaration",
+            "content": "class BaseClass {\n    protected String baseField;\n    \n    ",
+            "start_line": 121,
+            "end_line": 124,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "class_declaration_declaration",
+            "metadata": {
+              "is_declaration": true,
+              "node_type": "class_declaration",
+              "level": "declaration",
+              "is_valid": false,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:121-131",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "BaseClass"
+            },
+            "line_count": 4,
+            "parent_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:constructor_declaration:124-126",
+            "name": "BaseClass",
+            "qualified_name": "com.example.test.BaseClass.BaseClass",
+            "content": "public BaseClass() {\n        this.baseField = \"Base\";\n    }",
+            "start_line": 124,
+            "end_line": 126,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "constructor_declaration",
+            "metadata": {
+              "node_type": "constructor_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:121-131",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "BaseClass",
+              "method_name": "BaseClass"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "children_ids": [],
+            "references": [
+              "samples/SimpleClass.java:class_declaration:121-131"
+            ],
+            "referenced_by": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:128-130",
+            "name": "getBaseField",
+            "qualified_name": "com.example.test.BaseClass.getBaseField",
+            "content": "public String getBaseField() {\n        return baseField;\n    }",
+            "start_line": 128,
+            "end_line": 130,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "class_declaration",
+              "level": "method",
+              "parameters": [],
+              "return_type": "String",
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:121-131",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "BaseClass",
+              "method_name": "getBaseField",
+              "return_type": "String"
+            },
+            "line_count": 3,
+            "parent_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:class_declaration_closing:130-131",
+            "name": "BaseClass_closing",
+            "qualified_name": "com.example.test.BaseClass.BaseClass_closing",
+            "content": "\n}",
+            "start_line": 130,
+            "end_line": 131,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "class_declaration_closing",
+            "metadata": {
+              "is_closing": true,
+              "node_type": "class_declaration",
+              "level": "closing",
+              "is_valid": false,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:class_declaration:121-131",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "BaseClass"
+            },
+            "line_count": 2,
+            "parent_id": "samples/SimpleClass.java:class_declaration:121-131",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          }
+        ]
+      },
+      {
+        "node_id": "samples/SimpleClass.java:interface_declaration:136-138",
+        "name": "TestInterface",
+        "qualified_name": "com.example.test.TestInterface",
+        "content": "interface TestInterface {\n    void processItems() throws IOException;\n}",
+        "start_line": 136,
+        "end_line": 138,
+        "language": "java",
+        "file_path": "samples/SimpleClass.java",
+        "chunk_type": "interface_declaration",
+        "metadata": {
+          "context": "package com.example.test;\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.io.IOException;\n",
+          "node_type": "interface_declaration",
+          "level": "container",
+          "extends": null,
+          "implements": null,
+          "is_valid": true,
+          "dependency_metrics": {
+            "fan_in": 1,
+            "fan_out": 3,
+            "instability": 0.75,
+            "abstractness": 1.0,
+            "distance_from_main_sequence": 0.75,
+            "incoming_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:file:1-139",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ],
+            "outgoing_dependencies": [
+              {
+                "chunk_id": "samples/SimpleClass.java:interface_declaration_declaration:136-137",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:method_declaration:137-137",
+                "type": "CONTAINS",
+                "strength": 1.0
+              },
+              {
+                "chunk_id": "samples/SimpleClass.java:interface_declaration_closing:137-138",
+                "type": "CONTAINS",
+                "strength": 1.0
+              }
+            ]
+          }
+        },
+        "context": {
+          "package": "com.example.test",
+          "imports": [
+            "java.util.List",
+            "java.util.ArrayList",
+            "java.io.IOException"
+          ],
+          "container_name": "TestInterface"
+        },
+        "line_count": 3,
+        "parent_id": "samples/SimpleClass.java:file:1-139",
+        "children_ids": [
+          "samples/SimpleClass.java:interface_declaration_declaration:136-137",
+          "samples/SimpleClass.java:method_declaration:137-137",
+          "samples/SimpleClass.java:interface_declaration_closing:137-138"
+        ],
+        "references": [],
+        "referenced_by": [],
+        "children": [
+          {
+            "node_id": "samples/SimpleClass.java:interface_declaration_declaration:136-137",
+            "name": "TestInterface_declaration",
+            "qualified_name": "com.example.test.TestInterface.TestInterface_declaration",
+            "content": "interface TestInterface {\n    ",
+            "start_line": 136,
+            "end_line": 137,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "interface_declaration_declaration",
+            "metadata": {
+              "is_declaration": true,
+              "node_type": "interface_declaration",
+              "level": "declaration",
+              "is_valid": false,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:interface_declaration:136-138",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "TestInterface"
+            },
+            "line_count": 2,
+            "parent_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:method_declaration:137-137",
+            "name": "processItems",
+            "qualified_name": "com.example.test.TestInterface.processItems",
+            "content": "void processItems() throws IOException;",
+            "start_line": 137,
+            "end_line": 137,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "method_declaration",
+            "metadata": {
+              "node_type": "method_declaration",
+              "container_type": "interface_declaration",
+              "level": "method",
+              "parameters": [],
+              "return_type": null,
+              "is_valid": true,
+              "dependency_metrics": {
+                "fan_in": 3,
+                "fan_out": 1,
+                "instability": 0.25,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 0.75,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:80-87",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:99-115",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  },
+                  {
+                    "chunk_id": "samples/SimpleClass.java:interface_declaration:136-138",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:method_declaration:80-87",
+                    "type": "CALLS",
+                    "strength": 0.8
+                  }
+                ]
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "TestInterface",
+              "method_name": "processItems"
+            },
+            "line_count": 1,
+            "parent_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "children_ids": [],
+            "references": [
+              "samples/SimpleClass.java:method_declaration:80-87"
+            ],
+            "referenced_by": [
+              "samples/SimpleClass.java:method_declaration:80-87",
+              "samples/SimpleClass.java:method_declaration:99-115"
+            ],
+            "children": []
+          },
+          {
+            "node_id": "samples/SimpleClass.java:interface_declaration_closing:137-138",
+            "name": "TestInterface_closing",
+            "qualified_name": "com.example.test.TestInterface.TestInterface_closing",
+            "content": "\n}",
+            "start_line": 137,
+            "end_line": 138,
+            "language": "java",
+            "file_path": "samples/SimpleClass.java",
+            "chunk_type": "interface_declaration_closing",
+            "metadata": {
+              "is_closing": true,
+              "node_type": "interface_declaration",
+              "level": "closing",
+              "is_valid": false,
+              "dependency_metrics": {
+                "fan_in": 1,
+                "fan_out": 0,
+                "instability": 0.0,
+                "abstractness": 0.0,
+                "distance_from_main_sequence": 1.0,
+                "incoming_dependencies": [
+                  {
+                    "chunk_id": "samples/SimpleClass.java:interface_declaration:136-138",
+                    "type": "CONTAINS",
+                    "strength": 1.0
+                  }
+                ],
+                "outgoing_dependencies": []
+              }
+            },
+            "context": {
+              "package": "com.example.test",
+              "imports": [
+                "java.util.List",
+                "java.util.ArrayList",
+                "java.io.IOException"
+              ],
+              "container_name": "TestInterface"
+            },
+            "line_count": 2,
+            "parent_id": "samples/SimpleClass.java:interface_declaration:136-138",
+            "children_ids": [],
+            "references": [],
+            "referenced_by": [],
+            "children": []
+          }
+        ]
+      }
+    ]
+  }
+]

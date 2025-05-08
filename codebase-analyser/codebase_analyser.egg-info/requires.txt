@@ -1,0 +1,8 @@
+tree-sitter>=0.20.1
+tree-sitter-languages>=1.5.0
+lancedb>=0.3.3
+numpy>=1.24.3
+pydantic>=2.4.2
+transformers>=4.34.0
+torch>=2.0.1
+tqdm>=4.66.1
