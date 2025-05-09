@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+Setup script for the codebase analyser package.
+"""
+
 from setuptools import setup, find_packages
 
 setup(
@@ -5,19 +10,28 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "tree-sitter>=0.20.1",
-        "tree-sitter-languages>=1.5.0",
-        "lancedb>=0.3.3",
-        "numpy>=1.24.3",
-        "pydantic>=2.4.2",
-        "transformers>=4.34.0",
-        "torch>=2.0.1",
-        "tqdm>=4.66.1",
+        "tree-sitter",
+        "numpy",
+        "pandas",
+        "transformers",
+        "torch",
+        "lancedb",
+        "pyarrow",
+        "matplotlib",
+        "networkx",
+        "pydot"
     ],
     python_requires=">=3.8",
     author="RepoMind Team",
-    author_email="team@repomind.example.com",
-    description="Codebase analysis service for RepoMind",
-    keywords="code-analysis, tree-sitter, embeddings",
+    author_email="example@example.com",
+    description="A tool for analyzing codebases and generating embeddings",
+    keywords="code, analysis, embeddings, ast, parsing",
     url="https://github.com/yourusername/repomind",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+    ],
 )

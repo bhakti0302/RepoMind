@@ -168,6 +168,28 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 - Created test files in multiple languages (Java, Python, JavaScript)
 - Implemented validation of search results and dependency metadata
 
+#### Story 2.5: Enhanced Java Parsing and Multi-File Support
+**Description**: Improve Java parsing with granular chunking and better dependency analysis
+**Complexity**: High
+**Dependencies**: Story 2.2, Story 2.3
+
+##### Tasks:
+- [x] 2.5.1: Implement enhanced Java parser with granular chunking
+- [x] 2.5.2: Add support for extracting classes, methods, and fields as separate chunks
+- [x] 2.5.3: Implement hierarchical structure with parent-child relationships
+- [x] 2.5.4: Enhance dependency detection between chunks
+- [x] 2.5.5: Create end-to-end service for running the complete analysis pipeline
+
+###### Completed in 2.5:
+- Created enhanced Java parser using Tree-sitter for more granular code extraction
+- Implemented extraction of classes, methods, and fields as separate chunks
+- Added hierarchical structure with parent-child relationships between code elements
+- Enhanced dependency detection between chunks (imports, inheritance, method calls)
+- Created end-to-end service for running the complete analysis pipeline
+- Added support for project-specific context with project_id
+- Implemented visualization of dependency graphs
+- Added comprehensive documentation in README
+
 ### Epic 3: Business Requirements Processing
 **Goal**: Implement the system to process and understand business requirements
 

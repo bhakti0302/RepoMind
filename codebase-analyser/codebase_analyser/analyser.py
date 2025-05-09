@@ -3,6 +3,7 @@ from typing import Dict, List, Optional, Set, Union, Any
 
 from tree_sitter import Language, Parser
 from .parsers.java_parser import JavaParser
+from .parsing.enhanced_java_parser import EnhancedJavaParser
 from .chunking.chunker import CodeChunker, CodeChunk
 
 class CodebaseAnalyser:
@@ -20,6 +21,7 @@ class CodebaseAnalyser:
         self.parser = None
         self.languages = {}
         self.java_parser = None
+        self.enhanced_java_parser = None
         self.chunker = CodeChunker(min_chunk_size=min_chunk_size, max_chunk_size=max_chunk_size)
         self._setup_parser()
 
@@ -46,7 +48,8 @@ class CodebaseAnalyser:
             # Ensure Java is loaded
             if 'java' in self.languages:
                 self.java_parser = JavaParser(self.languages['java'])
-                print("Java parser initialized successfully")
+                self.enhanced_java_parser = EnhancedJavaParser(self.languages['java'])
+                print("Java parsers initialized successfully")
             else:
                 print("WARNING: Java grammar not found in tree-sitter-languages")
 
@@ -74,8 +77,13 @@ class CodebaseAnalyser:
         extension = file_path.suffix.lower()
 
         # Special handling for Java files
-        if extension == '.java' and self.java_parser:
-            return self.java_parser.parse_file(file_path)
+        if extension == '.java':
+            if self.enhanced_java_parser:
+                # Use the enhanced Java parser for better chunking
+                return self.enhanced_java_parser.parse_file(file_path)
+            elif self.java_parser:
+                # Fall back to the original Java parser if enhanced parser fails
+                return self.java_parser.parse_file(file_path)
 
         # For other languages, use the generic parser
         language = self._get_language_for_extension(extension)
@@ -158,8 +166,8 @@ class CodebaseAnalyser:
         Returns:
             List of parsed Java files with their structure
         """
-        if not self.java_parser:
-            print("Java parser not initialized. Make sure tree-sitter-languages is installed with Java support.")
+        if not self.enhanced_java_parser and not self.java_parser:
+            print("Java parsers not initialized. Make sure tree-sitter-languages is installed with Java support.")
             return []
 
         results = []
@@ -176,11 +184,22 @@ class CodebaseAnalyser:
         # Parse each Java file
         for file_path in java_files:
             try:
-                result = self.java_parser.parse_file(file_path)
-                if result:
-                    results.append(result)
-                else:
-                    errors += 1
+                # Try enhanced parser first
+                if self.enhanced_java_parser:
+                    result = self.enhanced_java_parser.parse_file(file_path)
+                    if result:
+                        results.append(result)
+                        continue
+
+                # Fall back to original parser if enhanced parser fails
+                if self.java_parser:
+                    result = self.java_parser.parse_file(file_path)
+                    if result:
+                        results.append(result)
+                        continue
+
+                # If both parsers fail
+                errors += 1
             except Exception as e:
                 print(f"Unexpected error parsing {file_path}: {e}")
                 errors += 1
@@ -198,8 +217,75 @@ class CodebaseAnalyser:
             List of code chunks
         """
         if parsed_file:
-            # Chunk a single file
-            return self.chunker.chunk_file(parsed_file)
+            # Check if this is from the enhanced Java parser
+            if parsed_file.get('chunks') and isinstance(parsed_file.get('chunks'), list):
+                # Convert the enhanced parser's chunks to CodeChunk objects
+                chunks = []
+                chunk_map = {}  # Map of node_id to CodeChunk objects
+
+                # First pass: create all chunks
+                for chunk_data in parsed_file['chunks']:
+                    # Remove parent_id if present (we'll set parent relationships later)
+                    if 'parent_id' in chunk_data:
+                        parent_id = chunk_data.pop('parent_id')
+                    else:
+                        parent_id = None
+
+                    # Create the chunk
+                    chunk = CodeChunk(
+                        node_id=chunk_data['node_id'],
+                        chunk_type=chunk_data['chunk_type'],
+                        content=chunk_data['content'],
+                        file_path=chunk_data['file_path'],
+                        start_line=chunk_data['start_line'],
+                        end_line=chunk_data['end_line'],
+                        language=chunk_data['language'],
+                        name=chunk_data.get('name'),
+                        qualified_name=chunk_data.get('qualified_name')
+                    )
+
+                    # Add metadata and context
+                    if 'metadata' in chunk_data:
+                        chunk.metadata = chunk_data['metadata']
+                    if 'context' in chunk_data:
+                        chunk.context = chunk_data['context']
+
+                    # Store in map and list
+                    chunk_map[chunk.node_id] = chunk
+                    chunks.append(chunk)
+
+                # Second pass: set parent-child relationships
+                for chunk_data in parsed_file['chunks']:
+                    if 'parent_id' in chunk_data and chunk_data['parent_id'] is not None:
+                        child = chunk_map.get(chunk_data['node_id'])
+                        parent = chunk_map.get(chunk_data['parent_id'])
+                        if child and parent:
+                            parent.add_child(child)
+
+                # Third pass: add dependencies if available
+                if 'dependencies' in parsed_file and parsed_file['dependencies']:
+                    for dep in parsed_file['dependencies']:
+                        source = chunk_map.get(dep['source_id'])
+                        target = chunk_map.get(dep['target_id'])
+                        if source and target:
+                            # Add reference relationship
+                            source.references.append(target)
+                            target.referenced_by.append(source)
+
+                            # Add dependency information to context
+                            if 'dependencies' not in source.context:
+                                source.context['dependencies'] = []
+                            source.context['dependencies'].append({
+                                'target': target.node_id,
+                                'type': dep.get('type', 'UNKNOWN'),
+                                'description': dep.get('description', ''),
+                                'strength': dep.get('strength', 0.5)
+                            })
+
+                return chunks
+            else:
+                # Use the regular chunker for other parsers
+                return self.chunker.chunk_file(parsed_file)
 
         # Chunk all files in the repository
         all_chunks = []

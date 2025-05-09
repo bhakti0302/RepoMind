@@ -1,13 +1,13 @@
 """
-Code chunk module for representing code chunks.
+CodeChunk class for representing code chunks.
 """
 
-from typing import Dict, List, Set, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
 
 
 class CodeChunk:
-    """Represents a chunk of code with metadata."""
+    """Class for representing code chunks."""
     
     def __init__(
         self,
@@ -21,34 +21,37 @@ class CodeChunk:
         name: Optional[str] = None,
         qualified_name: Optional[str] = None
     ):
-        """Initialize a code chunk.
+        """Initialize a CodeChunk.
         
         Args:
             node_id: Unique identifier for the chunk
             chunk_type: Type of the chunk (file, class, method, etc.)
-            content: Code content
+            content: Content of the chunk
             file_path: Path to the file containing the chunk
-            start_line: Start line number (1-based)
-            end_line: End line number (1-based)
-            language: Programming language
+            start_line: Start line of the chunk
+            end_line: End line of the chunk
+            language: Programming language of the chunk
             name: Name of the chunk
             qualified_name: Fully qualified name of the chunk
         """
         self.node_id = node_id
         self.chunk_type = chunk_type
         self.content = content
-        self.file_path = file_path
+        self.file_path = str(file_path)
         self.start_line = start_line
         self.end_line = end_line
         self.language = language
-        self.name = name
-        self.qualified_name = qualified_name
+        self.name = name or node_id
+        self.qualified_name = qualified_name or name or node_id
         
-        # Additional properties
+        # Relationships
         self.parent = None
         self.children = []
-        self.context = {}
+        self.references = []
+        
+        # Additional data
         self.metadata = {}
+        self.context = {}
     
     def add_child(self, child: 'CodeChunk') -> None:
         """Add a child chunk.
@@ -59,39 +62,52 @@ class CodeChunk:
         self.children.append(child)
         child.parent = self
     
-    def get_descendants(self) -> List['CodeChunk']:
-        """Get all descendants of this chunk.
+    def add_reference(self, reference: 'CodeChunk') -> None:
+        """Add a reference to another chunk.
         
-        Returns:
-            List of descendant chunks
+        Args:
+            reference: Chunk being referenced
         """
-        descendants = []
-        for child in self.children:
-            descendants.append(child)
-            descendants.extend(child.get_descendants())
-        return descendants
+        self.references.append(reference)
     
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation.
+        """Convert the chunk to a dictionary.
         
         Returns:
             Dictionary representation of the chunk
         """
         result = {
-            "node_id": self.node_id,
-            "chunk_type": self.chunk_type,
-            "content": self.content,
-            "file_path": self.file_path,
-            "start_line": self.start_line,
-            "end_line": self.end_line,
-            "language": self.language,
-            "name": self.name,
-            "qualified_name": self.qualified_name,
-            "context": self.context,
-            "metadata": self.metadata
+            'node_id': self.node_id,
+            'chunk_type': self.chunk_type,
+            'content': self.content,
+            'file_path': self.file_path,
+            'start_line': self.start_line,
+            'end_line': self.end_line,
+            'language': self.language,
+            'name': self.name,
+            'qualified_name': self.qualified_name
         }
         
+        # Add metadata and context if present
+        if self.metadata:
+            result['metadata'] = self.metadata
+        if self.context:
+            result['context'] = self.context
+        
+        # Add parent_id if present
         if self.parent:
-            result["parent_id"] = self.parent.node_id
+            result['parent_id'] = self.parent.node_id
+        
+        # Add children_ids if present
+        if self.children:
+            result['children_ids'] = [child.node_id for child in self.children]
+        
+        # Add reference_ids if present
+        if self.references:
+            result['reference_ids'] = [ref.node_id for ref in self.references]
         
         return result
+    
+    def __repr__(self) -> str:
+        """Return a string representation of the chunk."""
+        return f"CodeChunk(node_id={self.node_id}, chunk_type={self.chunk_type}, name={self.name})"

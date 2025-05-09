@@ -2,6 +2,49 @@
 
 This service is responsible for analyzing codebases using Tree-sitter, generating semantic code chunks, creating embeddings for the vector database, and building dependency graphs.
 
+## Main Run Script
+
+The main script for analyzing Java projects is `analyze_java.py`. You can run it with the following command:
+
+```bash
+python scripts/analyze_java.py <path_to_java_project> [options]
+```
+
+Options:
+- `--clear-db`: Clear the database before adding new chunks
+- `--mock-embeddings`: Use mock embeddings instead of generating real ones
+- `--visualize`: Generate visualization of the dependency graph
+- `--project-id`: Project ID for the chunks
+- `--max-files`: Maximum number of files to process (default: 100)
+- `--skip-large-files`: Skip files larger than 1MB
+- `--minimal-schema`: Use minimal schema for the database
+
+Example:
+```bash
+python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
+```
+
+This will:
+1. Parse all Java files in the specified directory
+2. Extract classes, methods, and their relationships
+3. Generate embeddings for the code chunks
+4. Store the chunks in the LanceDB database
+5. Generate a visualization of the dependency graph
+
+## Quick Test
+
+```bash
+# Run the complete analysis pipeline with mock embeddings (fast)
+python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
+
+# Run the sample tests
+python samples/test/run_sample_tests.py
+
+# Run individual tests
+python -m unittest tests/parsing/test_java_parser_adapter.py
+python -m unittest tests/database/test_database_integration.py
+```
+
 ## Key Features
 
 - **AST Parsing**: Tree-sitter integration for multiple languages with specialized Java support
@@ -27,23 +70,25 @@ pip install -r requirements.txt
 
 ## Quick Start
 
-### Parsing and Chunking
+### Complete Analysis Pipeline
+
+```bash
+# Run the complete analysis pipeline
+./analyze.sh /path/to/repo
+
+# With options
+./analyze.sh /path/to/repo --clear-db --visualize --project-id my-project
+```
+
+### Individual Components
 
 ```bash
 # Parse a Java file and generate chunks
 python tests/test_parser.py samples/SimpleClass.java
-```
 
-### Generating Embeddings
-
-```bash
 # Generate embeddings for code chunks
 python tests/test_embeddings.py
-```
 
-### Building Dependency Graphs
-
-```bash
 # Build a dependency graph from code chunks
 python tests/test_dependency_graph.py
 ```
@@ -83,18 +128,33 @@ results = db_manager.search_code_chunks(query_embedding, limit=5)
 
 ## Java Parsing
 
-The analyser includes specialized support for Java files, extracting:
+The analyser includes specialized support for Java files with two parser implementations:
 
-- Package declarations
-- Import statements
-- Class declarations with inheritance information
-- Field declarations with types
-- Method declarations with return types and parameters
+### Standard Java Parser
+- Basic parsing of Java files
+- Extracts package declarations, imports, classes, fields, and methods
+- Treats each file as a single unit
+
+### Enhanced Java Parser (New)
+- Granular extraction of code elements as separate chunks
+- Hierarchical structure with parent-child relationships
+- Automatic dependency detection between chunks:
+  - Import dependencies
+  - Inheritance relationships (extends)
+  - Interface implementation (implements)
+  - Method calls
+  - Field usage
+- Better support for multi-file projects
+- Improved visualization with more detailed dependency graphs
 
 To test Java parsing:
 
 ```bash
+# Test standard Java parser
 python tests/test_java_parser.py /path/to/your/JavaFile.java
+
+# Test enhanced Java parser (automatically used by the analysis service)
+./analyze.sh /path/to/java/project --clear-db --mock-embeddings --visualize
 ```
 
 ## Testing
@@ -357,3 +417,31 @@ Tests the complete pipeline:
 - Stores in database with graph metadata
 - Tests search methods (vector, dependency-filtered, combined scoring)
 - Validates chunk retrieval with dependencies
+
+## Codebase Analysis Service
+
+```bash
+# Basic usage
+./analyze.sh /path/to/repo
+
+# With options
+./analyze.sh /path/to/repo --clear-db --visualize --minimal-schema
+```
+
+### Service Options
+
+```
+--repo-path PATH         Path to the repository to analyze (required)
+--db-path PATH           Path to the LanceDB database (default: codebase-analyser/.lancedb)
+--clear-db               Clear the database before processing
+--minimal-schema         Use minimal schema for reduced storage
+--embedding-model MODEL  Model to use for embeddings (default: microsoft/codebert-base)
+--embedding-batch-size N Batch size for embedding generation (default: 8)
+--mock-embeddings        Use mock embeddings instead of a real model (faster for testing)
+--visualize              Generate dependency graph visualization
+--output-dir DIR         Directory to save visualization outputs (default: samples)
+--graph-format FORMAT    Format for graph visualization (png or dot)
+--project-id ID          Project ID for multi-project support
+--max-files N            Maximum number of files to process (for testing)
+--skip-large-files       Skip files larger than 1MB
+```

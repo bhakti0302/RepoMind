@@ -2,6 +2,12 @@
 
 RepoMind is an AI-powered coding assistant that provides intelligent code understanding and generation capabilities. The project consists of a codebase analysis system for deep code understanding and a VS Code extension for the user interface.
 
+## Project Components
+
+1. **Codebase Analyser**: Advanced code analysis system for parsing, chunking, and understanding code
+2. **VS Code Extension**: User interface for interacting with the codebase analyser
+3. **Documentation**: Comprehensive documentation for the project
+
 ## Features
 
 ### Codebase Analysis System
@@ -16,6 +22,92 @@ RepoMind is an AI-powered coding assistant that provides intelligent code unders
 - Optional dependency graph visualization
 - Unified storage for vectors and graph metadata
 - Command-line interface for various operations
+
+### Enhanced Java Parser
+- Parses Java files and extracts classes, methods, fields, and their relationships
+- Creates CodeChunk objects with proper parent-child relationships
+- Stores chunks in the database
+- Supports complex Java projects with multiple files and packages
+
+## Quick Start
+
+### Prerequisites
+- Python 3.8 or later
+- Git
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/repomind.git
+cd repomind
+```
+
+2. Set up the codebase analyser:
+```bash
+cd codebase-analyser
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### Running the Java Analyzer
+
+The main script for analyzing Java projects is `analyze_java.py`. You can run it with the following command:
+
+```bash
+cd codebase-analyser
+python scripts/analyze_java.py <path_to_java_project> [options]
+```
+
+Options:
+- `--clear-db`: Clear the database before adding new chunks
+- `--mock-embeddings`: Use mock embeddings instead of generating real ones
+- `--visualize`: Generate visualization of the dependency graph
+- `--project-id`: Project ID for the chunks
+- `--max-files`: Maximum number of files to process (default: 100)
+- `--skip-large-files`: Skip files larger than 1MB
+- `--minimal-schema`: Use minimal schema for the database
+
+Example:
+```bash
+python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
+```
+
+This will:
+1. Parse all Java files in the specified directory
+2. Extract classes, methods, and their relationships
+3. Generate embeddings for the code chunks
+4. Store the chunks in the LanceDB database
+5. Generate a visualization of the dependency graph
+
+## Project Structure
+
+```
+RepoMind/
+├── codebase-analyser/           # Codebase analysis system
+│   ├── codebase_analyser/       # Main package
+│   │   ├── parsing/             # Code parsing and chunking
+│   │   ├── database/            # Database integration with LanceDB
+│   │   ├── embeddings/          # Code embedding generation
+│   │   └── visualization/       # Visualization utilities
+│   ├── scripts/                 # Utility scripts
+│   │   ├── analyze_java.py      # Main script for analyzing Java projects
+│   │   └── ...
+│   ├── tests/                   # Test directory
+│   │   ├── parsing/             # Tests for parsing components
+│   │   ├── database/            # Tests for database components
+│   │   └── ...
+│   └── samples/                 # Sample files and outputs
+│       ├── java_test_project/   # Simple Java project
+│       ├── complex_java/        # Complex Java project
+│       └── ...
+│
+├── extension-v1/                # VS Code extension
+│
+└── docs/                        # Documentation
+    └── PLAN.MD                  # Project plan and roadmap
+```
 
 ## Completed Components
 
@@ -51,110 +143,6 @@ RepoMind is an AI-powered coding assistant that provides intelligent code unders
 - Implemented visualization utilities for code relationships
 - Created command-line interface for dependency graph operations
 - Added database integration for storing and querying dependencies
-
-## Prerequisites
-
-- Python 3.8 or later
-- Git
-
-## Setup Instructions
-
-### Codebase Analyser Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/repomind.git
-cd repomind/codebase-analyser
-```
-
-2. Create a Python virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Run a test to verify the installation:
-```bash
-python test_parser.py samples/SimpleClass.java
-```
-
-### Database Location
-
-The codebase analyzer uses LanceDB to store code embeddings and dependencies. By default, the database is stored in:
-
-```
-codebase-analyser/.lancedb
-```
-
-You can specify a different location using the `--db-path` parameter in most commands.
-
-### Running the Codebase Analyser
-
-#### Parsing and Chunking
-
-```bash
-python test_parser.py <file_path>
-```
-You may use paths from sample. 
-#### Generating Embeddings
-
-```bash
-python test_embeddings.py
-```
-
-#### Building Dependency Graphs
-
-```bash
-python test_dependency_graph.py
-```
-
-#### Visualizing Dependency Graphs
-
-```bash
-# Generate a PNG visualization
-python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --output-file samples/graph.png
-
-# Generate a DOT file for Graphviz
-python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --format dot --output-file samples/dependency_graph.dot
-
-# Customize the visualization
-python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --layout circular --node-size 1500
-```
-
-The dependency graph visualization provides insights into code relationships:
-
-![Dependency Graph Example](samples/dependency_graph.png)
-
-## Project Structure
-
-```
-codebase-analyser/
-├── codebase_analyser/           # Main package
-│   ├── parsing/                 # Code parsing and chunking
-│   │   ├── analyser.py          # Main analyzer class
-│   │   ├── ast_utils.py         # AST utility functions
-│   │   ├── code_chunk.py        # Code chunk data model
-│   │   ├── chunker.py           # Code chunking logic
-│   │   ├── dependency_analyzer.py # Dependency analysis
-│   │   ├── dependency_types.py  # Dependency type definitions
-│   │   └── java_parser.py       # Java-specific parser
-│   ├── database/                # Database integration with LanceDB
-│   ├── embeddings/              # Code embedding generation
-│   └── graph/                   # Dependency graph functionality
-├── tests/                       # Test directory
-│   ├── test_parsing.py          # Tests for parsing and chunking
-│   ├── test_database.py         # Tests for database functionality
-│   ├── test_embeddings.py       # Tests for embedding generation
-│   ├── test_graph.py            # Tests for graph functionality
-│   └── fixtures/                # Test fixtures
-├── samples/                     # Sample files and outputs
-└── requirements.txt             # Python dependencies
-```
 
 ## Documentation
 
