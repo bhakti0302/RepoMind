@@ -1,61 +1,96 @@
-# Codebase Analyser
+# RepoMind - Intelligent Coding Assistant
 
-A tool for analyzing codebases and generating code based on requirements.
+RepoMind is an AI-powered coding assistant that provides intelligent code understanding and generation capabilities. The project consists of a codebase analysis system for deep code understanding and a VS Code extension for the user interface.
 
-## Overview
+## Features
 
-The Codebase Analyser is a powerful tool that provides deep code understanding and intelligent code generation capabilities. It combines AST parsing, semantic code chunking, vector embeddings, and graph-based analysis to create a comprehensive understanding of your codebase.
+### Codebase Analysis System
+- AST parsing with Tree-sitter for multiple languages
+- Hierarchical semantic code chunking
+- Dependency analysis and relationship mapping
+- Structural integrity and context preservation
+- Comprehensive metadata for code understanding
+- Memory-optimized processing for large codebases
+- Vector database integration with LanceDB
+- Code embedding generation using CodeBERT
+- Optional dependency graph visualization
+- Unified storage for vectors and graph metadata
+- Command-line interface for various operations
+- Multi-hop RAG for intelligent code retrieval
+- Custom relevance scoring combining semantic and structural relevance
 
-### Key Features
+## Completed Components
 
-- **AST Parsing**: Tree-sitter integration for multiple languages (Java, JavaScript, Python)
-- **Semantic Code Chunking**: Hierarchical chunking with structural integrity
-- **Vector Database**: LanceDB integration for storing and querying code embeddings
-- **Dependency Analysis**: Graph-based analysis of code relationships
-- **Custom Relevance Scoring**: Combined semantic similarity and graph proximity
-- **Multi-hop RAG**: Intelligent code retrieval with architectural and implementation context
-- **LangGraph Agent**: AI-powered code generation based on requirements
-- **Configurable Prompts**: Easily test different prompts for code generation
-- **LLM Integration**: Support for OpenAI and OpenRouter models
+### 1. Tree-sitter Integration
+- Integrated Tree-sitter for AST parsing
+- Added support for multiple programming languages
+- Implemented utility functions for AST traversal and analysis
+- Created specialized Java parser for detailed analysis
 
-## Installation
+### 2. Semantic Code Chunking
+- Designed and implemented semantic chunking algorithm based on AST structure
+- Created hierarchical chunking with fine-grained and container-level chunks
+- Ensured structural integrity and context preservation
+- Added comprehensive metadata for dependency relationships
+- Implemented visualization utilities for chunk hierarchy
 
+### 3. Vector Database Integration
+- Installed and configured LanceDB for storing code embeddings
+- Created comprehensive schema for code chunks and dependency relationships
+- Implemented version-compatible database manager with schema validation
+- Added robust error handling and logging
+- Designed flexible schema with minimal and full versions
+- Created database utility scripts for connection management
+
+### 4. Code Embedding Generation
+- Implemented embedding generation using CodeBERT
+- Added batch processing for efficient embedding generation
+- Implemented caching to avoid regenerating embeddings for the same code
+- Created utility scripts for embedding code chunks and storing them in the database
+
+### 5. Dependency Graph Construction
+- Built dependency graph construction system
+- Implemented visualization utilities for code relationships
+- Created command-line interface for dependency graph operations
+- Added database integration for storing and querying dependencies
+
+### 6. Retrieval-Augmented Generation (RAG)
+- Implemented multi-hop retrieval approach for code understanding
+- Created architectural pattern retrieval based on semantic similarity
+- Developed implementation details retrieval using both semantic and structural relevance
+- Built custom relevance scoring combining vector similarity and graph proximity
+- Designed context assembly mechanism for LLM prompts
+- Added comprehensive testing for RAG components
+
+## Prerequisites
+
+- Python 3.8 or later
+- Git
+
+## Setup Instructions
+
+### Codebase Analyser Setup
+
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/codebase-analyser.git
-cd codebase-analyser
-
-# Create a virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -e .
+git clone https://github.com/yourusername/repomind.git
+cd repomind/codebase-analyser
 ```
 
-Alternatively, you can use the provided installation script:
-
+2. Create a Python virtual environment:
 ```bash
-python install_all_dependencies.py
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-## Setup
-
-### Environment Variables
-
-Set up the following environment variables for LLM integration:
-
+3. Install dependencies:
 ```bash
-# OpenAI
-export OPENAI_API_KEY=your_openai_api_key
-export OPENAI_MODEL=gpt-3.5-turbo  # or another model
+pip install -r requirements.txt
+```
 
-# OpenRouter (alternative)
-export OPENROUTER_API_KEY=your_openrouter_api_key
-export OPENROUTER_MODEL=openai/gpt-3.5-turbo  # or another model
-
-# For testing without LLM calls
-export USE_MOCK_IMPLEMENTATIONS=1
+4. Run a test to verify the installation:
+```bash
+python test_parser.py samples/SimpleClass.java
 ```
 
 ### Database Location
@@ -63,37 +98,45 @@ export USE_MOCK_IMPLEMENTATIONS=1
 The codebase analyzer uses LanceDB to store code embeddings and dependencies. By default, the database is stored in:
 
 ```
-.lancedb
+codebase-analyser/.lancedb
 ```
 
 You can specify a different location using the `--db-path` parameter in most commands.
 
-## Usage
+### Running the Codebase Analyser
 
-### Analyzing Code
-
-```bash
-# Analyze a single file
-python -m codebase_analyser.cli.analyze_file path/to/file.java
-
-# Analyze a directory
-python -m codebase_analyser.cli.analyze_dir path/to/directory
-
-# Analyze with custom options
-python -m codebase_analyser.cli.analyze_dir path/to/directory --language java --chunk-size medium --store-embeddings
-```
-
-### Searching Code
+#### Parsing and Chunking
 
 ```bash
-# Search for code similar to a query
-python -m codebase_analyser.cli.search "implement a sorting algorithm" --language java --limit 5
+python test_parser.py <file_path>
+```
+You may use paths from sample. 
+#### Generating Embeddings
 
-# Search with custom relevance weights
-python -m codebase_analyser.cli.search "implement a sorting algorithm" --alpha 0.7 --beta 0.3
+```bash
+python test_embeddings.py
 ```
 
-### Testing RAG Components
+#### Building Dependency Graphs
+
+```bash
+python test_dependency_graph.py
+```
+
+#### Visualizing Dependency Graphs
+
+```bash
+# Generate a PNG visualization
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --output-file samples/graph.png
+
+# Generate a DOT file for Graphviz
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --format dot --output-file samples/dependency_graph.dot
+
+# Customize the visualization
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --layout circular --node-size 1500
+```
+
+#### Testing RAG Components
 
 ```bash
 # Test the RAG pipeline
@@ -101,51 +144,47 @@ python test_rag.py
 
 # Test with custom requirements
 python test_rag.py --requirements-file path/to/requirements.json
-
-# Test with specific language
-python test_rag.py --language java
 ```
 
-### Generating Code
+The dependency graph visualization provides insights into code relationships:
 
-```bash
-# Generate code from requirements
-python -m codebase_analyser.cli.generate --requirements-file requirements/feature.json --output-file generated_code.java
+![Dependency Graph Example](samples/dependency_graph.png)
 
-# Generate with custom prompt
-python -m codebase_analyser.cli.generate --requirements-file requirements/feature.json --prompt-file prompts/custom.txt
+## Project Structure
+
+```
+codebase-analyser/
+├── codebase_analyser/           # Main package
+│   ├── parsing/                 # Code parsing and chunking
+│   │   ├── analyser.py          # Main analyzer class
+│   │   ├── ast_utils.py         # AST utility functions
+│   │   ├── code_chunk.py        # Code chunk data model
+│   │   ├── chunker.py           # Code chunking logic
+│   │   ├── dependency_analyzer.py # Dependency analysis
+│   │   ├── dependency_types.py  # Dependency type definitions
+│   │   └── java_parser.py       # Java-specific parser
+│   ├── database/                # Database integration with LanceDB
+│   ├── embeddings/              # Code embedding generation
+│   ├── graph/                   # Dependency graph functionality
+│   ├── retrieval/               # Multi-hop RAG implementation
+│   └── agent/                   # LangGraph agent components
+├── tests/                       # Test directory
+│   ├── test_parsing.py          # Tests for parsing and chunking
+│   ├── test_database.py         # Tests for database functionality
+│   ├── test_embeddings.py       # Tests for embedding generation
+│   ├── test_graph.py            # Tests for graph functionality
+│   └── fixtures/                # Test fixtures
+├── samples/                     # Sample files and outputs
+└── requirements.txt             # Python dependencies
 ```
 
-### Testing Different Prompts
+## Documentation
 
-```bash
-# Test with a specific prompt template
-python -m codebase_analyser.cli.prompt_tester --prompt-file prompts/code_generation.txt --requirements-file requirements/feature.json
+For more detailed information, see the following documentation:
 
-# Compare multiple prompt templates
-python -m codebase_analyser.cli.prompt_tester --prompt-dir prompts/ --requirements-file requirements/feature.json --output-dir results/
-```
-
-## Key Components
-
-### 1. Code Parsing and Chunking
-The system uses Tree-sitter to parse code into AST (Abstract Syntax Tree) and then chunks it into semantically meaningful units.
-
-### 2. Vector Database Integration
-Code chunks are stored in LanceDB along with their embeddings for efficient similarity search.
-
-### 3. Dependency Graph
-The system builds a graph of code dependencies to understand relationships between components.
-
-### 4. Multi-hop RAG
-The Retrieval-Augmented Generation system uses a multi-hop approach:
-1. First hop: Retrieve architectural patterns based on semantic similarity
-2. Second hop: Retrieve implementation details using both semantic and structural relevance
-3. Context assembly: Combine retrieved information into a structured context for the LLM
-
-### 5. Custom Relevance Scoring
-Combines semantic similarity (vector space) with graph proximity (structural relationships) for more accurate code retrieval.
+- [Project Plan](docs/PLAN.MD) - Detailed project plan and roadmap
+- [Codebase Analyser README](codebase-analyser/README.md) - Detailed documentation for the codebase analyser
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.

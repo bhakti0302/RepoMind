@@ -1,0 +1,6 @@
+{
+  "description": "Implement a CSV exporter that can export data to a CSV file.",
+  "language": "java",
+  "file_path": "src/main/java/com/example/export/CsvExporter.java",
+  "additional_context": "The exporter should handle escaping of special characters and quoting of fields when necessary. It should implement the DataExporter interface which has a method 'void export(List<Map<String, Object>> data, OutputStream output) throws IOException'."
+}
