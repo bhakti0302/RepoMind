@@ -1,0 +1,6 @@
+{
+    "description": "Create a web scraper for e-commerce sites",
+    "language": "python",
+    "file_path": "web_scraper.py",
+    "additional_context": "The scraper should handle pagination and extract product names, prices, and descriptions."
+}

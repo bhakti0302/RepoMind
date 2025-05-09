@@ -1,0 +1,75 @@
+"""
+LangGraph implementation for the business requirements processing agent.
+"""
+import logging
+from typing import Dict, Any, Optional
+
+from langgraph.graph import StateGraph, END, START
+# Import the correct checkpointer for LangGraph 0.4.3
+from langgraph.checkpoint.memory import InMemorySaver
+
+from .state import AgentState
+from .nodes import (
+    process_requirements,
+    retrieve_architectural_context,
+    retrieve_implementation_context,
+    combine_context,
+    generate_code,
+    validate_code
+)
+
+logger = logging.getLogger(__name__)
+
+def create_agent_graph(checkpointer: Optional[Any] = None) -> StateGraph:
+    """
+    Create the LangGraph agent for business requirements processing.
+    
+    Args:
+        checkpointer: Optional checkpointer for the graph
+        
+    Returns:
+        Compiled StateGraph for the agent
+    """
+    # Create a new graph with our state
+    graph = StateGraph(AgentState)
+    
+    # Add nodes to the graph
+    graph.add_node("process_requirements", process_requirements)
+    graph.add_node("retrieve_architectural_context", retrieve_architectural_context)
+    graph.add_node("retrieve_implementation_context", retrieve_implementation_context)
+    graph.add_node("combine_context", combine_context)
+    graph.add_node("generate_code", generate_code)
+    graph.add_node("validate_code", validate_code)
+    
+    # Define the edges
+    graph.add_edge(START, "process_requirements")
+    graph.add_edge("process_requirements", "retrieve_architectural_context")
+    graph.add_edge("retrieve_architectural_context", "retrieve_implementation_context")
+    graph.add_edge("retrieve_implementation_context", "combine_context")
+    graph.add_edge("combine_context", "generate_code")
+    graph.add_edge("generate_code", "validate_code")
+    
+    # Define conditional edges for validation
+    def should_regenerate(state: AgentState) -> str:
+        """Determine if code should be regenerated based on validation results."""
+        if state.validation_result.get("valid", True):
+            return "end"
+        else:
+            # If we've had too many attempts, end anyway
+            if len(state.errors) >= 3:
+                logger.warning("Too many failed attempts, ending workflow")
+                return "end"
+            return "combine_context"
+    
+    graph.add_conditional_edges(
+        "validate_code",
+        should_regenerate,
+        {
+            "end": END,
+            "combine_context": "combine_context"
+        }
+    )
+    
+    # Compile the graph
+    memory_saver = checkpointer or InMemorySaver()
+    return graph.compile(checkpointer=memory_saver)

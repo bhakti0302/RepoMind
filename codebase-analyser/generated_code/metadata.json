@@ -1,0 +1,19 @@
+{
+  "requirements": {
+    "description": "Create a CSV exporter that implements the DataExporter interface",
+    "language": "java",
+    "file_path": "generated_code/CsvExporterImpl.java",
+    "additional_context": "The exporter should handle escaping commas and quotes in the data."
+  },
+  "context_used": {
+    "architectural": [
+      "arch1"
+    ],
+    "implementation": [
+      "impl1",
+      "impl2"
+    ]
+  },
+  "errors": [],
+  "attempts": 1
+}

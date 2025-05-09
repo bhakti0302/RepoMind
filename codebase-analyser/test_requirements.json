@@ -1,0 +1,6 @@
+{
+  "description": "Create a JSON exporter that implements the DataExporter interface",
+  "language": "java",
+  "file_path": "JsonExporterImpl.java",
+  "additional_context": "The exporter should handle nested objects and arrays in the data."
+}

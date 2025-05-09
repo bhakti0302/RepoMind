@@ -1,0 +1,133 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+venv/
+env/
+.env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+__pycache__/
+*.py[cod]
+*$py.class
+codebase-analyser/venv311/
+
+# Build outputs
+dist/
+out/
+build/
+*.vsix
+
+# Large files and binaries
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.bin
+*.model
+*.pt
+*.pth
+*.h5
+*.pkl
+*.joblib
+*.safetensors
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.test
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# OS specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Debug files
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+tmp/
+temp/
+
+# Python virtual environments (if using Python components)
+venv/
+env/
+.env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# LanceDB files
+lancedb/
+*.lance
+
+# Project specific
+.langchain.db/
+.langchain/
+
+# VS Code Extension specific
+*.vsix
+.vscode-test/
+.vscode-test-workspace/
+.vscode-test-workspace-storage/
+.vscode-test-workspace-state/
+.vscode-test-workspace-settings/
+.vscode-test-workspace-extensions/
+.vscode-test-workspace-memento/
+.vscode-test-workspace-globalStorage/
+.vscode-test-workspace-workspaceStorage/
+.vscode-test-workspace-workspaceState/
+.vscode-test-workspace-workspaceSettings/
+.vscode-test-workspace-workspaceExtensions/
+.vscode-test-workspace-workspaceMemento/
+.vscode-test-workspace-workspaceGlobalStorage/
+codebase-analyser/venv311/
