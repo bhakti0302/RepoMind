@@ -51,6 +51,8 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+Note: When running the code for the first time, model files will be downloaded and cached in the `.cache` directory. This directory is not included in the repository and will be created automatically when needed.
+
 ### Running the Java Analyzer
 
 The main script for analyzing Java projects is `analyze_java.py`. You can run it with the following command:

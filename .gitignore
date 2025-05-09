@@ -81,7 +81,13 @@ __pycache__/
 
 # LanceDB files
 lancedb/
+.lancedb/
 *.lance
+
+# Model cache directories
+.cache/
+.huggingface/
+.transformers_cache/
 
 # Project specific
 .langchain.db/
