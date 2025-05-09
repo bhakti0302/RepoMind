@@ -1,0 +1,94 @@
+{
+  "nodes": [
+    {
+      "id": "file:sample1.java",
+      "type": "file",
+      "name": "HelloWorld.java",
+      "qualified_name": "com.example.HelloWorld.java"
+    },
+    {
+      "id": "class:HelloWorld",
+      "type": "class_declaration",
+      "name": "HelloWorld",
+      "qualified_name": "com.example.HelloWorld"
+    },
+    {
+      "id": "method:HelloWorld.main",
+      "type": "method_declaration",
+      "name": "main",
+      "qualified_name": "com.example.HelloWorld.main"
+    },
+    {
+      "id": "file:sample2.py",
+      "type": "file",
+      "name": "sample2.py",
+      "qualified_name": "sample2.py"
+    },
+    {
+      "id": "function:hello_world",
+      "type": "function_declaration",
+      "name": "hello_world",
+      "qualified_name": "hello_world"
+    },
+    {
+      "id": "file:sample3.js",
+      "type": "file",
+      "name": "sample3.js",
+      "qualified_name": "sample3.js"
+    },
+    {
+      "id": "function:helloWorld",
+      "type": "function_declaration",
+      "name": "helloWorld",
+      "qualified_name": "helloWorld"
+    }
+  ],
+  "edges": [
+    {
+      "source_id": "file:sample1.java",
+      "target_id": "class:HelloWorld",
+      "type": "CONTAINS",
+      "strength": 1.0,
+      "locations": [],
+      "is_direct": true,
+      "is_required": true,
+      "description": "File contains class"
+    },
+    {
+      "source_id": "class:HelloWorld",
+      "target_id": "method:HelloWorld.main",
+      "type": "CONTAINS",
+      "strength": 1.0,
+      "locations": [],
+      "is_direct": true,
+      "is_required": true,
+      "description": "Class contains method"
+    },
+    {
+      "source_id": "file:sample2.py",
+      "target_id": "function:hello_world",
+      "type": "CONTAINS",
+      "strength": 1.0,
+      "locations": [],
+      "is_direct": true,
+      "is_required": true,
+      "description": "File contains function"
+    },
+    {
+      "source_id": "file:sample3.js",
+      "target_id": "function:helloWorld",
+      "type": "CONTAINS",
+      "strength": 1.0,
+      "locations": [],
+      "is_direct": true,
+      "is_required": true,
+      "description": "File contains function"
+    }
+  ],
+  "metrics": {
+    "coupling_score": 0.09523809523809523,
+    "cohesion_score": 0.3333333333333333,
+    "dependency_depth": 2,
+    "cyclic_dependencies": []
+  }
+}

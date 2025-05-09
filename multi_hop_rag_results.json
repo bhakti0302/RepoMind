@@ -1,0 +1,7 @@
+{
+  "query": "Implement a data exporter that can export to CSV format",
+  "language": "java",
+  "architectural_patterns": [],
+  "implementation_details": [],
+  "combined_context": "QUERY: Implement a data exporter that can export to CSV format\nLANGUAGE: java\n\nARCHITECTURAL PATTERNS:\nIMPLEMENTATION DETAILS:\n"
+}
