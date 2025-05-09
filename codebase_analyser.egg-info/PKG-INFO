@@ -1,0 +1,24 @@
+Metadata-Version: 2.4
+Name: codebase_analyser
+Version: 0.1.0
+Summary: Codebase analysis service for RepoMind
+Home-page: https://github.com/yourusername/repomind
+Author: RepoMind Team
+Author-email: team@repomind.example.com
+Keywords: code-analysis,tree-sitter,embeddings
+Requires-Python: >=3.8
+Requires-Dist: tree-sitter>=0.20.1
+Requires-Dist: tree-sitter-languages>=1.5.0
+Requires-Dist: lancedb>=0.3.3
+Requires-Dist: numpy>=1.24.3
+Requires-Dist: pydantic>=2.4.2
+Requires-Dist: transformers>=4.34.0
+Requires-Dist: torch>=2.0.1
+Requires-Dist: tqdm>=4.66.1
+Dynamic: author
+Dynamic: author-email
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
