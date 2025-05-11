@@ -22,16 +22,52 @@ from .nodes.feedback_nodes import process_human_feedback, apply_feedback
 from .nodes.output_nodes import prepare_output_for_downstream, save_output_to_file
 from .nodes.schema_validation import validate_with_schema, CodeGenerationOutput, ValidationResult
 
-# Try to import LangGraph
+# Try to import LangGraph components
 try:
     from langgraph.graph import StateGraph
-    from langgraph.checkpoint import InMemorySaver
-    from langgraph.prebuilt import ToolNode
     LANGGRAPH_AVAILABLE = True
+    
+    # Try different imports for checkpoint saver
+    try:
+        # Try the newer import path
+        from langgraph.checkpoint.memory import MemorySaver as InMemorySaver
+    except ImportError:
+        try:
+            # Try the older import path
+            from langgraph.checkpoint import InMemorySaver
+        except ImportError:
+            # If both fail, create a simple implementation
+            class InMemorySaver:
+                def __init__(self):
+                    self.checkpoints = {}
+                
+                def get(self, checkpoint_id):
+                    return self.checkpoints.get(checkpoint_id)
+                
+                def put(self, checkpoint_id, state):
+                    self.checkpoints[checkpoint_id] = state
+                    return checkpoint_id
+            
+            logger.warning("Using custom InMemorySaver implementation")
+    
+    # Import ToolNode
+    try:
+        from langgraph.prebuilt import ToolNode
+    except ImportError:
+        # Create a simple implementation if needed
+        class ToolNode:
+            def __init__(self, *args, **kwargs):
+                pass
+            
+            def __call__(self, *args, **kwargs):
+                return {}
+        
+        logger.warning("Using custom ToolNode implementation")
+    
     logger.info("LangGraph is available")
-except ImportError:
+except ImportError as e:
     LANGGRAPH_AVAILABLE = False
-    logger.warning("LangGraph is not available, using mock implementation")
+    logger.warning(f"LangGraph is not available, using mock implementation. Error: {e}")
 
 # Constants
 MAX_RETRIES = 3

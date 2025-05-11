@@ -12,7 +12,7 @@ from ..state import AgentState
 from ...retrieval.multi_hop import retrieve_architectural_patterns, retrieve_implementation_details
 from ...retrieval.relevance import score_relevance, rank_by_relevance
 from ...embeddings.embedding_generator import generate_embedding, cosine_similarity
-from ...database.unified_storage import open_unified_storage, close_unified_storage
+from ...database import open_unified_storage, close_unified_storage  # Import from database package, not unified_storage module
 from ...database.graph_storage import load_dependency_graph
 
 # Configure logging

@@ -2,12 +2,12 @@
 LLM-based nodes for the agent graph.
 """
 import os
-import logging
 import json
-from typing import Dict, Any, Optional
+import logging
+from typing import Dict, Any, List, Optional
 
-from langchain.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
+# Import AgentState
+from ..state import AgentState
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -15,8 +15,10 @@ logger = logging.getLogger(__name__)
 # Try to import LangChain LLM
 try:
     from langchain_openai import ChatOpenAI
+    from langchain.prompts import PromptTemplate
+    from langchain.schema.output_parser import StrOutputParser
     # Check if OpenRouter API key is available
-    openrouter_api_key = os.environ.get("OPENROUTER_API_KEY")
+    openrouter_api_key = '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'
     if not openrouter_api_key:
         logger.warning("OPENROUTER_API_KEY not found in environment variables")
         llm = None

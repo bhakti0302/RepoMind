@@ -78,27 +78,19 @@ class LanceDBManager:
             if self.create_if_not_exists:
                 os.makedirs(self.db_path, exist_ok=True)
 
-            # Connect to the database
-            # Note: Different versions of LanceDB have different APIs
-            try:
-                # Try newer version API
-                self.db = lancedb.connect(self.db_path, read_only=self.read_only)
-            except TypeError:
-                # Fall back to older version API
-                self.db = lancedb.connect(self.db_path)
-                logger.info("Connected using legacy LanceDB API")
-
+            # Connect to the database without read_only parameter
+            # LanceDB 0.22.0 doesn't support read_only in connect
+            self.db = lancedb.connect(self.db_path)
             logger.info(f"Connected to LanceDB at {self.db_path}")
 
             # Get existing tables
             try:
                 existing_tables = self.db.table_names()
+                logger.info(f"Found {len(existing_tables)} existing tables: {existing_tables}")
             except AttributeError:
                 # Older versions might not have table_names method
                 existing_tables = []
                 logger.info("Could not retrieve table names (older LanceDB version)")
-
-            logger.info(f"Found {len(existing_tables)} existing tables: {existing_tables}")
 
         except Exception as e:
             logger.error(f"Error connecting to LanceDB: {e}")

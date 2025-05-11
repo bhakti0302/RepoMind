@@ -20,9 +20,13 @@ from pathlib import Path
 import asyncio
 from typing import Dict, Any, List
 
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from codebase_analyser.agent.graph import run_agent
 from codebase_analyser.database import open_unified_storage, close_unified_storage
-from codebase_analyser.embeddings import EmbeddingGenerator
+from codebase_analyser.embeddings.embedding_generator import EmbeddingGenerator  # Import directly from the module
+from codebase_analyser.agent.state import AgentState
 
 # Configure logging
 logging.basicConfig(

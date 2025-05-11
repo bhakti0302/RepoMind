@@ -1,2 +1,4 @@
+cli
 codebase_analyser
+llm
 tests
