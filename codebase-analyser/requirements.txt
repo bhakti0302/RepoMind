@@ -25,3 +25,4 @@ pyarrow==14.0.1
 # Utilities
 tqdm==4.66.1
 requests==2.31.0
+pillow==11.1.0  # For image processing

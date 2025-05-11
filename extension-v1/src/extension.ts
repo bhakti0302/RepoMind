@@ -106,15 +106,15 @@ export function activate(context: vscode.ExtensionContext) {
         // Use a hardcoded path to the codebase-analyser directory
         const codebaseAnalyserPath = '/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser';
 
-        // Use analyze_java.py with the --visualize flag to generate a dependency graph
+        // Use analyze_java.py without the --visualize flag to avoid matplotlib dependency issues
         // Activate the virtual environment if it exists, and deactivate it after running the script
         const command = `cd "${codebaseAnalyserPath}" &&
             if [ -d "venv" ]; then
                 source venv/bin/activate &&
-                python3 scripts/analyze_java.py "${workspaceFolder}" --clear-db --mock-embeddings --project-id "${projectId}" --visualize &&
+                python3 scripts/analyze_java.py "${workspaceFolder}" --clear-db --mock-embeddings --project-id "${projectId}" &&
                 deactivate;
             else
-                python3 scripts/analyze_java.py "${workspaceFolder}" --clear-db --mock-embeddings --project-id "${projectId}" --visualize;
+                python3 scripts/analyze_java.py "${workspaceFolder}" --clear-db --mock-embeddings --project-id "${projectId}";
             fi`;
 
         vscode.window.showInformationMessage(`Analyzing project: ${projectId}`);

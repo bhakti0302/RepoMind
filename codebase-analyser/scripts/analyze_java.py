@@ -29,6 +29,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Analyze Java files")
     parser.add_argument("repo_path", help="Path to the repository or directory to analyze")
     parser.add_argument("--db-path", help="Path to the LanceDB database", default=".lancedb")
+    parser.add_argument("--data-dir", help="Path to the data directory", default="../data")
     parser.add_argument("--clear-db", action="store_true", help="Clear the database before adding new chunks")
     parser.add_argument("--mock-embeddings", action="store_true", help="Use mock embeddings instead of generating real ones")
     parser.add_argument("--visualize", action="store_true", help="Generate visualization of the dependency graph")
@@ -202,6 +203,7 @@ def analyze_java_files(args):
     logger.info("Step 3: Storing in database")
     storage_manager = UnifiedStorage(
         db_path=args.db_path,
+        data_dir=args.data_dir,
         use_minimal_schema=args.minimal_schema,
         create_if_not_exists=True,
         read_only=False
@@ -221,75 +223,113 @@ def analyze_java_files(args):
         if args.visualize:
             logger.info("Step 4: Generating dependency graph visualization")
 
-            # Build the graph
-            nx_graph = storage_manager._build_graph_from_dependencies()
+            try:
+                # Try to import matplotlib
+                import matplotlib.pyplot as plt
+                matplotlib_available = True
+            except ImportError:
+                logger.warning("Matplotlib is not available. Visualization will be skipped.")
+                matplotlib_available = False
 
-            # Convert NetworkX graph to the expected format
-            dependency_graph = {
-                'nodes': [],
-                'edges': []
-            }
+            if matplotlib_available:
+                # Build the graph
+                nx_graph = storage_manager._build_graph_from_dependencies()
 
-            # Add nodes
-            for node_id, node_attrs in nx_graph.nodes(data=True):
-                node = {
-                    'id': node_id,
-                    'type': node_attrs.get('type', 'unknown'),
-                    'name': node_attrs.get('name', node_id),
-                    'qualified_name': node_attrs.get('qualified_name', node_id)
+                # Convert NetworkX graph to the expected format
+                dependency_graph = {
+                    'nodes': [],
+                    'edges': []
                 }
-                dependency_graph['nodes'].append(node)
 
-            # Add edges
-            for source, target, edge_attrs in nx_graph.edges(data=True):
-                edge = {
-                    'source_id': source,
-                    'target_id': target,
-                    'type': edge_attrs.get('type', 'UNKNOWN'),
-                    'strength': edge_attrs.get('strength', 1.0),
-                    'is_direct': edge_attrs.get('is_direct', True),
-                    'is_required': edge_attrs.get('is_required', False),
-                    'description': edge_attrs.get('description', '')
-                }
-                dependency_graph['edges'].append(edge)
+                # Add nodes
+                for node_id, node_attrs in nx_graph.nodes(data=True):
+                    node = {
+                        'id': node_id,
+                        'type': node_attrs.get('type', 'unknown'),
+                        'name': node_attrs.get('name', node_id),
+                        'qualified_name': node_attrs.get('qualified_name', node_id)
+                    }
+                    dependency_graph['nodes'].append(node)
 
-            # Create output directory if it doesn't exist
-            os.makedirs(args.output_dir, exist_ok=True)
+                # Add edges
+                for source, target, edge_attrs in nx_graph.edges(data=True):
+                    edge = {
+                        'source_id': source,
+                        'target_id': target,
+                        'type': edge_attrs.get('type', 'UNKNOWN'),
+                        'strength': edge_attrs.get('strength', 1.0),
+                        'is_direct': edge_attrs.get('is_direct', True),
+                        'is_required': edge_attrs.get('is_required', False),
+                        'description': edge_attrs.get('description', '')
+                    }
+                    dependency_graph['edges'].append(edge)
 
-            # Generate visualization
-            output_file = os.path.join(args.output_dir, f"dependency_graph.{args.graph_format}")
-            visualizer = ChunkVisualizer(output_dir=args.output_dir)
+                # Create output directory if it doesn't exist
+                os.makedirs(args.output_dir, exist_ok=True)
 
-            # Convert graph nodes to CodeChunk objects
-            chunks = []
-            for node_id, node_attrs in nx_graph.nodes(data=True):
-                chunk = CodeChunk(
-                    node_id=node_id,
-                    chunk_type=node_attrs.get('type', 'unknown'),
-                    content="",
-                    file_path="",
-                    start_line=0,
-                    end_line=0,
-                    language="java",
-                    name=node_attrs.get('name', node_id)
-                )
-                chunks.append(chunk)
+                # Determine project ID
+                project_id = args.project_id or os.path.basename(os.path.abspath(args.repo_path))
 
-            # Add references based on graph edges
-            for source, target in nx_graph.edges():
-                source_chunk = next((c for c in chunks if c.node_id == source), None)
-                target_chunk = next((c for c in chunks if c.node_id == target), None)
-                if source_chunk and target_chunk:
-                    source_chunk.references.append(target_chunk)
+                # Generate visualization
+                output_file = os.path.join(args.output_dir, f"dependency_graph.{args.graph_format}")
+                project_vis_file = f"{project_id}_dependency_graph.{args.graph_format}"
+                visualizer = ChunkVisualizer(output_dir=args.output_dir)
 
-            # Use matplotlib-based visualization instead of plotly
-            visualizer.visualize_hierarchy_matplotlib(
-                chunks=chunks,
-                output_file=output_file,
-                show=False,
-                figsize=(16, 12)
-            )
-            logger.info(f"Saved visualization to {output_file}")
+                # Convert graph nodes to CodeChunk objects
+                chunks = []
+                for node_id, node_attrs in nx_graph.nodes(data=True):
+                    chunk = CodeChunk(
+                        node_id=node_id,
+                        chunk_type=node_attrs.get('type', 'unknown'),
+                        content="",
+                        file_path="",
+                        start_line=0,
+                        end_line=0,
+                        language="java",
+                        name=node_attrs.get('name', node_id)
+                    )
+                    chunks.append(chunk)
+
+                # Add references based on graph edges
+                for source, target in nx_graph.edges():
+                    source_chunk = next((c for c in chunks if c.node_id == source), None)
+                    target_chunk = next((c for c in chunks if c.node_id == target), None)
+                    if source_chunk and target_chunk:
+                        source_chunk.references.append(target_chunk)
+
+                # Use matplotlib-based visualization instead of plotly
+                try:
+                    # Generate visualization in the samples directory
+                    visualizer.visualize_hierarchy_matplotlib(
+                        chunks=chunks,
+                        output_file=output_file,
+                        show=False,
+                        figsize=(16, 12)
+                    )
+                    logger.info(f"Saved visualization to {output_file}")
+
+                    # Also save to project-specific directory
+                    import io
+                    from PIL import Image
+
+                    # Read the generated image
+                    img = Image.open(output_file)
+                    img_bytes = io.BytesIO()
+                    img.save(img_bytes, format=args.graph_format.upper())
+                    img_bytes.seek(0)
+
+                    # Save to project-specific directory
+                    project_vis_path = storage_manager.save_project_visualization(
+                        project_id=project_id,
+                        file_name=project_vis_file,
+                        content=img_bytes.read()
+                    )
+                    logger.info(f"Saved project-specific visualization to {project_vis_path}")
+
+                except Exception as e:
+                    logger.error(f"Error generating visualization: {e}")
+            else:
+                logger.info("Skipping visualization due to missing matplotlib dependency")
     finally:
         # Close storage connection
         storage_manager.close()

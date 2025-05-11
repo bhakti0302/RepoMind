@@ -23,6 +23,14 @@ RepoMind is an AI-powered coding assistant that provides intelligent code unders
 - Unified storage for vectors and graph metadata
 - Command-line interface for various operations
 
+### VS Code Extension
+- Interactive chat interface for querying the codebase
+- One-click codebase synchronization
+- Project-specific context for accurate responses
+- File attachment capability for additional context
+- Status bar integration for quick access
+- Multi-project support with automatic project ID management
+
 ### Enhanced Java Parser
 - Parses Java files and extracts classes, methods, fields, and their relationships
 - Creates CodeChunk objects with proper parent-child relationships
@@ -33,17 +41,12 @@ RepoMind is an AI-powered coding assistant that provides intelligent code unders
 
 ### Prerequisites
 - Python 3.8 or later
-- Git
+- Node.js and npm (for VS Code extension)
+- Visual Studio Code
 
 ### Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/repomind.git
-cd repomind
-```
-
-2. Set up the codebase analyser:
+1. Set up the codebase analyser:
 ```bash
 cd codebase-analyser
 python -m venv venv
@@ -51,37 +54,191 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Note: When running the code for the first time, model files will be downloaded and cached in the `.cache` directory. This directory is not included in the repository and will be created automatically when needed.
+2. Set up the VS Code extension:
+```bash
+cd ../extension-v1
+npm install
+npm run compile
+```
 
-### Running the Java Analyzer
+### Primary User Flow: Using the VS Code Extension
 
-The main script for analyzing Java projects is `analyze_java.py`. You can run it with the following command:
+The recommended way to use RepoMind is through the VS Code extension:
+
+1. **Open your project in VS Code with the extension**:
+```bash
+# Navigate to the extension directory
+cd extension-v1
+
+# Compile the extension
+npm run compile
+
+# Open VS Code with your project and the extension
+code --extensionDevelopmentPath=$(pwd) /path/to/your/project
+```
+
+2. **Use the extension**:
+   - Look for the RepoMind icon in the activity bar
+   - Click the "Sync" button to analyze your codebase
+   - Wait for the synchronization to complete
+   - Use the chat interface to query your codebase
+
+The extension automatically:
+- Detects your project folder
+- Assigns a project ID based on the folder name
+- Runs the codebase analysis
+- Populates the database with code chunks and relationships
+- Provides a chat interface for querying your codebase
+
+### Alternative: Command-Line Codebase Analysis
+
+For advanced users or testing purposes, you can also run the codebase analyzer directly from the command line. Detailed instructions are available in the [Codebase Analyser README](codebase-analyser/README.md).
+
+The codebase analyzer provides scripts for analyzing codebases:
 
 ```bash
 cd codebase-analyser
-python scripts/analyze_java.py <path_to_java_project> [options]
+python scripts/run_codebase_analysis.py --repo-path <path_to_repo> [options]
 ```
 
-Options:
-- `--clear-db`: Clear the database before adding new chunks
-- `--mock-embeddings`: Use mock embeddings instead of generating real ones
-- `--visualize`: Generate visualization of the dependency graph
-- `--project-id`: Project ID for the chunks
-- `--max-files`: Maximum number of files to process (default: 100)
-- `--skip-large-files`: Skip files larger than 1MB
-- `--minimal-schema`: Use minimal schema for the database
+For more details and options, see the [Codebase Analyser README](codebase-analyser/README.md).
 
-Example:
+### Accessing the Vector Database (for RAG Implementation)
+
+The system stores code chunks and their embeddings in a LanceDB database. Here's how to access it for RAG implementation:
+
+#### Direct Python Access (Recommended)
+
+```python
+# Import the UnifiedStorage class
+from codebase_analyser.database.unified_storage import UnifiedStorage
+
+# Initialize the database connection
+db = UnifiedStorage()
+
+# Search for code chunks by project ID
+results = db.search_code_chunks(
+    query="interface",  # Search query
+    limit=10,           # Maximum number of results
+    filters={"project_id": "demo"}  # Filter by project ID
+)
+
+# Access the dependency graph
+graph = db._build_graph_from_dependencies()
+
+# Calculate graph-based relevance
+# (For implementing custom relevance scoring combining vector similarity with graph proximity)
+import networkx as nx
+source_node = "class:MyClass"
+target_node = "class:Interface"
+if nx.has_path(graph, source_node, target_node):
+    path_length = nx.shortest_path_length(graph, source_node, target_node)
+    graph_score = 1.0 / (1.0 + path_length)  # Higher score for shorter paths
+```
+
+#### Command-Line Examples
+
 ```bash
-python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
+# Navigate to the codebase-analyser directory
+cd codebase-analyser
+
+# List all projects in the database
+python3 -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); print(table.to_arrow().to_pandas()['project_id'].unique())"
+
+# Count chunks for a specific project
+python3 -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); print(len(table.to_arrow().to_pandas()[table.to_arrow().to_pandas()['project_id'] == 'demo']))"
+
+# Search for chunks containing a specific term
+python3 -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); results = table.search('class').limit(5).to_pandas(); print(results[['node_id', 'name', 'project_id']])"
 ```
 
-This will:
-1. Parse all Java files in the specified directory
-2. Extract classes, methods, and their relationships
-3. Generate embeddings for the code chunks
-4. Store the chunks in the LanceDB database
-5. Generate a visualization of the dependency graph
+#### Vector Search Examples
+
+```python
+from codebase_analyser.database.unified_storage import UnifiedStorage
+
+# Initialize database
+db = UnifiedStorage()
+
+# Simple vector search with project filter
+results = db.search_code_chunks(
+    query="interface",  # Search query
+    limit=10,           # Maximum number of results
+    filters={"project_id": "demo2"}  # Filter by project ID
+)
+
+# Access the dependency graph
+graph = db._build_graph_from_dependencies()
+
+# Print node information
+for node_id in graph.nodes():
+    print(f"Node: {node_id}, Type: {graph.nodes[node_id].get('type')}")
+
+# Print edge information
+for source, target, data in graph.edges(data=True):
+    print(f"Edge: {source} -> {target}, Type: {data.get('type')}")
+```
+
+### Running the VS Code Extension
+
+To run the VS Code extension:
+
+```bash
+# Navigate to the extension directory
+cd extension-v1
+
+# Compile the extension
+npm run compile
+
+# Run the extension in development mode with your project
+code --extensionDevelopmentPath=$(pwd) /path/to/your/project
+```
+
+Once VS Code opens with your project:
+1. Look for the RepoMind icon in the activity bar
+2. Click the "Sync" button to analyze your codebase
+3. Wait for the synchronization to complete
+4. Use the chat interface to query your codebase
+
+The extension automatically:
+- Detects your project folder
+- Assigns a project ID based on the folder name
+- Runs the codebase analysis
+- Populates the database with code chunks and relationships
+
+This is the recommended workflow for most users, as it provides a simple and intuitive interface for analyzing and querying your codebase.
+
+## Testing the VS Code Extension
+
+### Quick Verification Flow
+
+To quickly test that the VS Code extension is working correctly:
+
+1. **Open a Java project with the extension**:
+   ```bash
+   cd extension-v1
+   npm run compile
+   code --extensionDevelopmentPath=$(pwd) /path/to/your/java/project
+   ```
+
+2. **Synchronize the codebase**:
+   - Look for the RepoMind icon in the VS Code activity bar
+   - Click the "Sync" button to analyze your codebase
+   - Wait for the synchronization to complete
+
+3. **Verify database population**:
+   - The database should be populated with chunks from your project
+   - You can verify this by checking the LanceDB database:
+   ```bash
+   cd codebase-analyser
+   python -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); import pandas as pd; df = table.to_arrow().to_pandas(); print('Project IDs:', df['project_id'].unique()); print('Number of chunks:', len(df))"
+   ```
+
+4. **Check the dependency graph**:
+   - A visualization of the dependency graph should be generated
+   - You can find it at: `data/projects/<project_id>/visualizations/<project_id>_dependency_graph.png`
+
+This simple flow allows you to verify that the extension is correctly analyzing your codebase, populating the database, and generating visualizations.
 
 ## Project Structure
 

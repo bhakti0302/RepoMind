@@ -212,7 +212,7 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 
 ##### Tasks:
 - [ ] 3.2.1: Design multi-hop RAG approach
-- [ ] 3.2.2: Implement architectural pattern retrieval
+- [ ] 3.2.2: Implement architectural pattern retrieval with semantic search
 - [ ] 3.2.3: Create implementation details retrieval
 - [ ] 3.2.4: Set up context combination mechanism
 - [ ] 3.2.5: Add relevance scoring for retrieved content
@@ -397,11 +397,20 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 **Dependencies**: Story 2.3, Story 3.2
 
 ##### Tasks:
-- [ ] 9.1.1: Update database schema to include project_id field
-- [ ] 9.1.2: Modify search functions to accept project filter
-- [ ] 9.1.3: Implement project path capture in VS Code extension
-- [ ] 9.1.4: Create project ID generation based on normalized path
+- [x] 9.1.1: Update database schema to include project_id field
+- [x] 9.1.2: Modify search functions to accept project filter
+- [x] 9.1.3: Implement project path capture in VS Code extension
+- [x] 9.1.4: Create project ID generation based on normalized path
 - [ ] 9.1.5: Add project context to all RAG queries
+
+###### Completed in 9.1:
+- Added project_id field to database schema for multi-project support
+- Modified search functions to filter by project_id
+- Implemented project path capture in VS Code extension
+- Created project ID generation based on folder name
+- Added project-specific data directory structure for visualizations and exports
+- Created API endpoints for accessing project-specific data
+- Updated README with instructions for querying by project ID
 
 
 

@@ -2,9 +2,55 @@
 
 This service is responsible for analyzing codebases using Tree-sitter, generating semantic code chunks, creating embeddings for the vector database, and building dependency graphs.
 
-## Main Run Script
+## Main Run Scripts
 
-The main script for analyzing Java projects is `analyze_java.py`. You can run it with the following command:
+You can choose between two main analysis scripts depending on your needs:
+
+### 1. Complete Codebase Analysis
+
+The main script for analyzing any codebase is `run_codebase_analysis.py`. This script supports multiple programming languages and provides a comprehensive analysis of your codebase.
+
+```bash
+python scripts/run_codebase_analysis.py --repo-path <path_to_repo> [options]
+```
+
+Or use the convenient shell wrapper:
+
+```bash
+./scripts/analyze.sh <path_to_repo> [options]
+```
+
+Options:
+- `--db-path`: Path to the LanceDB database (default: codebase-analyser/.lancedb)
+- `--clear-db`: Clear the database before processing
+- `--minimal-schema`: Use minimal schema for reduced storage
+- `--embedding-model`: Model to use for embeddings (default: microsoft/codebert-base)
+- `--embedding-batch-size`: Batch size for embedding generation (default: 8)
+- `--mock-embeddings`: Use mock embeddings instead of a real model
+- `--visualize`: Generate dependency graph visualization
+- `--output-dir`: Directory to save visualization outputs (default: samples)
+- `--graph-format`: Format for graph visualization (png or dot)
+- `--project-id`: Project ID for multi-project support
+- `--max-files`: Maximum number of files to process (for testing)
+- `--skip-large-files`: Skip files larger than 1MB
+
+Ready-to-run examples with sample projects:
+
+For the complex Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/run_codebase_analysis.py --repo-path samples/complex_java --clear-db --mock-embeddings --visualize
+```
+
+For the simple Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/run_codebase_analysis.py --repo-path samples/java_test_project --clear-db --mock-embeddings --visualize
+```
+
+### 2. Java-Specific Analysis
+
+For Java projects specifically, you can use the `analyze_java.py` script which is optimized for Java code with enhanced parsing capabilities:
 
 ```bash
 python scripts/analyze_java.py <path_to_java_project> [options]
@@ -19,23 +65,50 @@ Options:
 - `--skip-large-files`: Skip files larger than 1MB
 - `--minimal-schema`: Use minimal schema for the database
 
-Example:
+Ready-to-run examples with sample projects:
+
+For the complex Java project:
 ```bash
+# Run from the codebase-analyser directory
 python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
 ```
 
-This will:
-1. Parse all Java files in the specified directory
-2. Extract classes, methods, and their relationships
+For the simple Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/analyze_java.py samples/java_test_project --clear-db --mock-embeddings --visualize
+```
+
+To run tests on the sample projects:
+```bash
+# Run from the codebase-analyser directory
+python samples/test/run_sample_tests.py
+```
+
+Both scripts will:
+1. Parse all files in the specified directory
+2. Extract code structures and their relationships
 3. Generate embeddings for the code chunks
 4. Store the chunks in the LanceDB database
-5. Generate a visualization of the dependency graph
+5. Generate a visualization of the dependency graph (if requested)
+
+Choose the script that best fits your needs:
+- Use `run_codebase_analysis.py` for multi-language projects or general analysis
+- Use `analyze_java.py` for Java-specific projects with enhanced Java parsing
 
 ## Quick Test
+
+Here are some ready-to-run commands to quickly test the system:
 
 ```bash
 # Run the complete analysis pipeline with mock embeddings (fast)
 python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
+
+# Run the analysis on the simple Java project
+python scripts/analyze_java.py samples/java_test_project --clear-db --mock-embeddings --visualize
+
+# Run the general codebase analysis on a sample project
+python scripts/run_codebase_analysis.py --repo-path samples/complex_java --clear-db --mock-embeddings --visualize
 
 # Run the sample tests
 python samples/test/run_sample_tests.py
@@ -44,6 +117,8 @@ python samples/test/run_sample_tests.py
 python -m unittest tests/parsing/test_java_parser_adapter.py
 python -m unittest tests/database/test_database_integration.py
 ```
+
+All these commands can be run directly from the codebase-analyser directory without any modifications.
 
 ## Key Features
 

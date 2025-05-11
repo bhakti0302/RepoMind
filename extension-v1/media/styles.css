@@ -214,4 +214,44 @@ code {
 
 .attachment-label:hover {
     background-color: rgba(0, 120, 212, 0.2);
-} 
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    padding: var(--spacing);
+    background-color: var(--secondary-color);
+    border-bottom: 1px solid #444;
+}
+
+.action-button {
+    background-color: var(--assistant-message-bg);
+    color: var(--text-color);
+    border: 1px solid #444;
+    padding: 6px 12px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.action-button:hover {
+    background-color: #3d3d3d;
+    border-color: var(--primary-color);
+}
+
+#sync-button {
+    background-color: #2d5a88;
+}
+
+#sync-button:hover {
+    background-color: #3a6ea5;
+}
+
+#attach-button {
+    background-color: #4d4d4d;
+}
+
+#attach-button:hover {
+    background-color: #5a5a5a;
+}
