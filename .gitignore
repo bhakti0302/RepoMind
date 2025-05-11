@@ -86,6 +86,8 @@ lancedb/
 
 # Model cache directories
 .cache/
+codebase-analyser/.cache/
+**/.cache/
 .huggingface/
 .transformers_cache/
 
