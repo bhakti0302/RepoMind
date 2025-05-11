@@ -29,7 +29,7 @@ async def generate_llm_instructions(
         Updated state with path to the instructions file
     """
     try:
-        logger.info("Generating LLM instructions file")
+        logger.info("")
         
         # Set default output file if not provided
         if output_file is None:

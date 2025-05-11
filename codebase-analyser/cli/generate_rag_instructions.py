@@ -28,15 +28,56 @@ from codebase_analyser.agent.state import AgentState
 
 # Import LangChain components
 try:
+    print("Attempting to import langchain_core.documents...")
     from langchain_core.documents import Document
+    print("Successfully imported Document")
+    
+    print("Attempting to import langchain_core.output_parsers...")
     from langchain_core.output_parsers import StrOutputParser
+    print("Successfully imported StrOutputParser")
+    
+    print("Attempting to import langchain_core.prompts...")
     from langchain_core.prompts import ChatPromptTemplate
-    from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+    print("Successfully imported ChatPromptTemplate")
+    
+    print("Attempting to import langchain.text_splitter...")
     from langchain.text_splitter import RecursiveCharacterTextSplitter
-    from langchain.vectorstores import FAISS
+    print("Successfully imported RecursiveCharacterTextSplitter")
+    
+    # Try to import sentence-transformers
+    try:
+        from sentence_transformers import SentenceTransformer
+        SENTENCE_TRANSFORMERS_AVAILABLE = True
+        print("Successfully imported SentenceTransformer")
+    except ImportError:
+        SENTENCE_TRANSFORMERS_AVAILABLE = False
+        print("Failed to import SentenceTransformer")
+
+    # Try to import lancedb
+    try:
+        import lancedb
+        import pandas as pd
+        LANCEDB_AVAILABLE = True
+        print("Successfully imported LanceDB and pandas")
+    except ImportError:
+        LANCEDB_AVAILABLE = False
+        print("Failed to import LanceDB or pandas")
+    
+    # Check if both are available
+    if SENTENCE_TRANSFORMERS_AVAILABLE and LANCEDB_AVAILABLE:
+        EMBEDDING_AVAILABLE = True
+        print("Embedding functionality is available")
+    else:
+        EMBEDDING_AVAILABLE = False
+        print("Embedding functionality is not available")
+    
     LANGCHAIN_AVAILABLE = True
-except ImportError:
+    print("All LangChain imports successful, LANGCHAIN_AVAILABLE set to True")
+except ImportError as e:
     LANGCHAIN_AVAILABLE = False
+    EMBEDDING_AVAILABLE = False
+    print(f"LangChain import error: {e}")
+    print(f"Module that failed to import: {e.__class__.__module__}")
 
 # Configure logging
 logging.basicConfig(
@@ -46,10 +87,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 async def retrieve_relevant_code(
-    query: str, 
+    query: str,
     language: str,
     code_db_path: Optional[str] = None,
-    top_k: int = 3
+    top_k: int = 5
 ) -> List[Document]:
     """
     Retrieve relevant code examples from the vector database.
@@ -57,54 +98,107 @@ async def retrieve_relevant_code(
     Args:
         query: The query to search for
         language: The programming language
-        code_db_path: Path to the FAISS index
-        top_k: Number of examples to retrieve
+        code_db_path: Path to the code vector database
+        top_k: Number of results to return
         
     Returns:
-        List of relevant code documents
+        List of relevant documents
     """
-    if not LANGCHAIN_AVAILABLE:
-        logger.warning("LangChain is not available, skipping code retrieval")
+    if not EMBEDDING_AVAILABLE:
+        logger.warning("Embedding functionality is not available, skipping code retrieval")
         return []
     
     try:
-        # Default path for the vector database
+        logger.info(f"Retrieving code examples for query: {query}")
+        
+        # Set default code database path
         if code_db_path is None:
-            code_db_path = os.path.join(os.path.dirname(__file__), "..", "code_db")
+            code_db_path = os.path.join(os.path.dirname(__file__), "..", "lancedb")
+        
+        # Generate embedding for the query
+        model = SentenceTransformer('all-MiniLM-L6-v2')
+        query_embedding = model.encode(query).tolist()
         
         # Check if the vector database exists
         if not os.path.exists(code_db_path):
-            logger.warning(f"Vector database not found at {code_db_path}")
-            # Create a simple in-memory database with sample code
-            embeddings = OpenAIEmbeddings()
-            sample_docs = [
-                Document(
-                    page_content=f"// Sample {language} code for demonstration\n" +
-                                f"class Example {{\n    // This is a placeholder\n}}", 
-                    metadata={"language": language, "source": "sample"}
-                )
-            ]
-            vectorstore = FAISS.from_documents(sample_docs, embeddings)
+            logger.info(f"Vector database not found at {code_db_path}, creating sample database")
             
-            # Save the vector database for future use
-            os.makedirs(os.path.dirname(code_db_path), exist_ok=True)
-            vectorstore.save_local(code_db_path)
+            # Create a sample vector database
+            os.makedirs(code_db_path, exist_ok=True)
+            db = lancedb.connect(code_db_path)
+            
+            # Create sample data
+            sample_data = [{
+                "id": "sample1",
+                "content": f"public class Sample {{ public void hello() {{ System.out.println(\"Hello\"); }} }}",
+                "file_path": "sample/Sample.java",
+                "language": language,
+                "type": "class",
+                "vector": model.encode(f"public class Sample {{ public void hello() {{ System.out.println(\"Hello\"); }} }}").tolist()
+            }]
+            
+            # Create a dataframe
+            import pandas as pd
+            df = pd.DataFrame(sample_data)
+            
+            # Create the table
+            db.create_table("code_chunks", df)
+            logger.info("Created sample vector database")
+            
+            # Search for relevant code
+            table = db.open_table("code_chunks")
+            results = table.search(query_embedding).limit(top_k).to_pandas()
+            
+            # Convert to documents
+            docs = []
+            for _, row in results.iterrows():
+                docs.append(Document(
+                    page_content=row["content"],
+                    metadata={
+                        "source": row["file_path"],
+                        "language": row["language"]
+                    }
+                ))
+            
+            logger.info(f"Retrieved {len(docs)} relevant code examples")
+            return docs
         else:
-            # Load the existing vector database
-            embeddings = OpenAIEmbeddings()
-            vectorstore = FAISS.load_local(code_db_path, embeddings)
-        
-        # Create a retriever
-        retriever = vectorstore.as_retriever(search_kwargs={"k": top_k})
-        
-        # Add language filter to the query
-        enhanced_query = f"{query} language:{language}"
-        
-        # Retrieve relevant documents
-        docs = retriever.invoke(enhanced_query)
-        logger.info(f"Retrieved {len(docs)} relevant code examples")
-        
-        return docs
+            logger.info(f"Loading existing vector database from {code_db_path}")
+            
+            # Connect to the database
+            db = lancedb.connect(code_db_path)
+            
+            # Check if the table exists
+            if "code_chunks" in db.table_names():
+                # Open the table
+                table = db.open_table("code_chunks")
+                
+                # Create a where clause for language filtering
+                where_clause = f"language = '{language}'" if language else None
+                
+                # Search for relevant code
+                query_obj = table.search(query_embedding)
+                if where_clause:
+                    query_obj = query_obj.where(where_clause)
+                
+                results = query_obj.limit(top_k).to_pandas()
+                
+                # Convert to documents
+                docs = []
+                for _, row in results.iterrows():
+                    docs.append(Document(
+                        page_content=row["content"],
+                        metadata={
+                            "source": row["file_path"],
+                            "language": row["language"]
+                        }
+                    ))
+                
+                logger.info(f"Retrieved {len(docs)} relevant code examples")
+                return docs
+            else:
+                logger.warning(f"Table 'code_chunks' not found in database at {code_db_path}")
+                return []
     except Exception as e:
         logger.error(f"Error retrieving code examples: {e}")
         return []
@@ -128,6 +222,18 @@ async def generate_rag_instructions(
     try:
         logger.info("Generating RAG-enhanced instructions")
         
+        # Process requirements using NLP if not already processed
+        if not state.processed_requirements:
+            logger.info("Processing requirements using NLP")
+            from codebase_analyser.agent.nodes.nlp_nodes import process_requirements
+            nlp_result = await process_requirements(state)
+            state = AgentState(
+                requirements=state.requirements,
+                processed_requirements=nlp_result.get("processed_requirements"),
+                combined_context=state.combined_context,
+                errors=nlp_result.get("errors", [])
+            )
+        
         # Extract requirements and language
         requirements = state.requirements
         language = state.processed_requirements.get("language", "java") if state.processed_requirements else "java"
@@ -138,9 +244,28 @@ async def generate_rag_instructions(
         else:
             requirements_text = requirements
         
+        # Extract entities from processed requirements to enhance the query
+        enhanced_query = requirements_text
+        if state.processed_requirements and "entities" in state.processed_requirements:
+            entities = state.processed_requirements["entities"]
+            
+            # Add class names to the query
+            if "classes" in entities and entities["classes"]:
+                enhanced_query += " " + " ".join(entities["classes"])
+            
+            # Add function names to the query
+            if "functions" in entities and entities["functions"]:
+                enhanced_query += " " + " ".join(entities["functions"])
+            
+            # Add key phrases to the query
+            if "key_phrases" in state.processed_requirements and state.processed_requirements["key_phrases"]:
+                enhanced_query += " " + " ".join(state.processed_requirements["key_phrases"])
+        
+        logger.info(f"Enhanced query with NLP entities: {enhanced_query}")
+        
         # Retrieve relevant code examples
         relevant_docs = await retrieve_relevant_code(
-            query=requirements_text,
+            query=enhanced_query,
             language=language,
             code_db_path=code_db_path
         )
@@ -159,6 +284,21 @@ async def generate_rag_instructions(
         enhanced_context = state.combined_context or ""
         if combined_examples:
             enhanced_context += f"\n\n## RELEVANT CODE EXAMPLES\n{combined_examples}"
+        
+        # Add processed requirements to the context
+        if state.processed_requirements:
+            intent = state.processed_requirements.get("intent", "unknown")
+            entities = state.processed_requirements.get("entities", {})
+            
+            enhanced_context += f"\n\n## PROCESSED REQUIREMENTS\n"
+            enhanced_context += f"Intent: {intent}\n"
+            enhanced_context += f"Language: {language}\n"
+            
+            # Add entities
+            enhanced_context += "Entities:\n"
+            for entity_type, entity_list in entities.items():
+                if entity_list:
+                    enhanced_context += f"- {entity_type}: {', '.join(entity_list)}\n"
         
         # Create a new state with the enhanced context
         enhanced_state = AgentState(
@@ -194,8 +334,8 @@ async def index_codebase(
     Returns:
         True if indexing was successful
     """
-    if not LANGCHAIN_AVAILABLE:
-        logger.warning("LangChain is not available, skipping codebase indexing")
+    if not EMBEDDING_AVAILABLE:
+        logger.warning("Embedding functionality is not available, skipping codebase indexing")
         return False
     
     try:
@@ -271,13 +411,41 @@ async def index_codebase(
         chunks = text_splitter.split_documents(documents)
         logger.info(f"Split into {len(chunks)} chunks")
         
-        # Create embeddings and vector store
-        embeddings = OpenAIEmbeddings()
-        vectorstore = FAISS.from_documents(chunks, embeddings)
+        # Initialize the embedding model
+        model = SentenceTransformer('all-MiniLM-L6-v2')
         
-        # Save the vector store
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        vectorstore.save_local(output_path)
+        # Prepare data for LanceDB
+        data = []
+        for i, chunk in enumerate(chunks):
+            # Generate embedding
+            embedding = model.encode(chunk.page_content).tolist()
+            
+            # Create a dictionary with all fields
+            item = {
+                "id": f"chunk_{i}",
+                "content": chunk.page_content,
+                "file_path": chunk.metadata.get("source", ""),
+                "language": chunk.metadata.get("language", ""),
+                "type": "code_chunk",
+                "vector": embedding
+            }
+            
+            data.append(item)
+        
+        # Create the LanceDB database
+        os.makedirs(output_path, exist_ok=True)
+        db = lancedb.connect(output_path)
+        
+        # Create a dataframe
+        import pandas as pd
+        df = pd.DataFrame(data)
+        
+        # Create or replace the table
+        if "code_chunks" in db.table_names():
+            logger.info("Replacing existing code_chunks table")
+            db.drop_table("code_chunks")
+        
+        db.create_table("code_chunks", df)
         
         logger.info(f"Indexed codebase saved to {output_path}")
         return True
@@ -305,6 +473,8 @@ async def main_async():
                         help='Generate code and include it in the instructions')
     parser.add_argument('--verbose', action='store_true',
                         help='Enable verbose logging')
+    parser.add_argument('--skip-nlp', action='store_true',
+                        help='Skip NLP processing of requirements')
     
     args = parser.parse_args()
     
@@ -312,19 +482,22 @@ async def main_async():
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
     
+    logger.debug("LANGCHAIN_AVAILABLE: " + str(LANGCHAIN_AVAILABLE))
+    logger.debug("EMBEDDING_AVAILABLE: " + str(EMBEDDING_AVAILABLE))
+
     # Check if LangChain is available
     if not LANGCHAIN_AVAILABLE:
         logger.error("LangChain is not available. Please install it with: pip install langchain>=0.1.0 langchain-core>=0.1.0 langchain-openai>=0.1.0 faiss-cpu")
         sys.exit(1)
     
-    # Check for OpenAI API key
-    if not os.environ.get("OPENAI_API_KEY"):
-        logger.error("OPENAI_API_KEY environment variable is not set. Please set it before running this script.")
+    # Check if embedding functionality is available
+    if not EMBEDDING_AVAILABLE:
+        logger.error("Embedding functionality is not available. Please install sentence-transformers and lancedb with: pip install sentence-transformers lancedb pandas")
         sys.exit(1)
     
     # Index codebase if requested
     if args.index_codebase:
-        code_db_path = args.code_db or os.path.join(os.path.dirname(__file__), "..", "code_db")
+        code_db_path = args.code_db or os.path.join(os.path.dirname(__file__), "..", "lancedb")
         success = await index_codebase(
             codebase_path=args.index_codebase,
             output_path=code_db_path,
@@ -356,10 +529,29 @@ async def main_async():
             logger.error(f"Error loading context file: {str(e)}")
             sys.exit(1)
     
+    # Process requirements with NLP if not skipped
+    processed_requirements = None
+    if not args.skip_nlp:
+        try:
+            logger.info("Processing requirements with NLP")
+            from codebase_analyser.agent.nodes.nlp_nodes import simple_process_requirements
+            
+            # Use simple processing to avoid LLM dependency
+            if isinstance(requirements, str):
+                processed_requirements = simple_process_requirements(requirements, args.language)
+            else:
+                req_text = requirements.get("description", "")
+                processed_requirements = simple_process_requirements(req_text, args.language)
+            
+            logger.info(f"Processed requirements: {processed_requirements['intent']}")
+        except Exception as e:
+            logger.warning(f"Error processing requirements with NLP: {e}")
+            # Continue without NLP processing
+    
     # Create agent state
     state = AgentState(
         requirements=requirements,
-        processed_requirements={
+        processed_requirements=processed_requirements or {
             "intent": "code_generation",
             "language": args.language,
             "original_text": requirements if isinstance(requirements, str) else json.dumps(requirements)
