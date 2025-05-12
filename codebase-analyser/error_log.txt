@@ -1,40 +1,32 @@
 
 Error running codebase analysis:
-- Command: cd "/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser" &&
+- Command: cd "/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser" &&
             if [ -d "venv" ]; then
                 source venv/bin/activate &&
-                python3 scripts/analyze_java.py "/Users/shreyah/Documents/Projects/SAP/demo" --clear-db --mock-embeddings --project-id "demo" &&
+                python3 scripts/analyze_java.py "/Users/bhaktichindhe/Desktop/Project/BasicJavaTestProject/src" --clear-db --mock-embeddings --project-id "src" &&
                 deactivate;
             else
-                python3 scripts/analyze_java.py "/Users/shreyah/Documents/Projects/SAP/demo" --clear-db --mock-embeddings --project-id "demo";
+                python3 scripts/analyze_java.py "/Users/bhaktichindhe/Desktop/Project/BasicJavaTestProject/src" --clear-db --mock-embeddings --project-id "src";
             fi
-- Error message: Command failed: cd "/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser" &&
+- Error message: Command failed: cd "/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser" &&
             if [ -d "venv" ]; then
                 source venv/bin/activate &&
-                python3 scripts/analyze_java.py "/Users/shreyah/Documents/Projects/SAP/demo" --clear-db --mock-embeddings --project-id "demo" &&
+                python3 scripts/analyze_java.py "/Users/bhaktichindhe/Desktop/Project/BasicJavaTestProject/src" --clear-db --mock-embeddings --project-id "src" &&
                 deactivate;
             else
-                python3 scripts/analyze_java.py "/Users/shreyah/Documents/Projects/SAP/demo" --clear-db --mock-embeddings --project-id "demo";
+                python3 scripts/analyze_java.py "/Users/bhaktichindhe/Desktop/Project/BasicJavaTestProject/src" --clear-db --mock-embeddings --project-id "src";
             fi
 Traceback (most recent call last):
-  File "/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser/scripts/analyze_java.py", line 17, in <module>
-    from codebase_analyser.visualization.visualizer import ChunkVisualizer
-  File "/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser/codebase_analyser/visualization/__init__.py", line 5, in <module>
-    from .simple_visualizer import SimpleVisualizer
-  File "/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser/codebase_analyser/visualization/simple_visualizer.py", line 16, in <module>
-    import matplotlib.pyplot as plt
-ModuleNotFoundError: No module named 'matplotlib'
+  File "/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/scripts/analyze_java.py", line 13, in <module>
+    from codebase_analyser.parsing.java_parser_adapter import JavaParserAdapter
+ModuleNotFoundError: No module named 'codebase_analyser'
 
 - Error details: Traceback (most recent call last):
-  File "/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser/scripts/analyze_java.py", line 17, in <module>
-    from codebase_analyser.visualization.visualizer import ChunkVisualizer
-  File "/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser/codebase_analyser/visualization/__init__.py", line 5, in <module>
-    from .simple_visualizer import SimpleVisualizer
-  File "/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser/codebase_analyser/visualization/simple_visualizer.py", line 16, in <module>
-    import matplotlib.pyplot as plt
-ModuleNotFoundError: No module named 'matplotlib'
+  File "/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/scripts/analyze_java.py", line 13, in <module>
+    from codebase_analyser.parsing.java_parser_adapter import JavaParserAdapter
+ModuleNotFoundError: No module named 'codebase_analyser'
 
-- Working directory: /Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser
-- Project path: /Users/shreyah/Documents/Projects/SAP/demo
-- Project ID: demo
+- Working directory: /Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser
+- Project path: /Users/bhaktichindhe/Desktop/Project/BasicJavaTestProject/src
+- Project ID: src
                                 

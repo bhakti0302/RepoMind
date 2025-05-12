@@ -104,7 +104,7 @@ export function activate(context: vscode.ExtensionContext) {
         const projectId = path.basename(workspaceFolder);
 
         // Use a hardcoded path to the codebase-analyser directory
-        const codebaseAnalyserPath = '/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser';
+        const codebaseAnalyserPath = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser';
 
         // Use analyze_java.py without the --visualize flag to avoid matplotlib dependency issues
         // Activate the virtual environment if it exists, and deactivate it after running the script

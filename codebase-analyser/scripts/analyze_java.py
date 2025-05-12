@@ -10,6 +10,11 @@ import argparse
 import logging
 from pathlib import Path
 
+# Add the parent directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from codebase_analyser.parsing.java_parser_adapter import JavaParserAdapter
+
 from codebase_analyser.parsing.java_parser_adapter import JavaParserAdapter
 from codebase_analyser.chunking.code_chunk import CodeChunk
 from codebase_analyser.database.unified_storage import UnifiedStorage
