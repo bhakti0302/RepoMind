@@ -1,6 +1,7 @@
 # VS Code Agentic AI Coding Assistant - Project Plan
 
 ## Overview
+## Git test
 This project aims to develop a VS Code extension that serves as a chat-based AI coding assistant. The assistant will read business requirements from text files, analyze the existing codebase, generate new code using an LLM, and apply the generated code to the codebase using an AI agent.
 
 ## Tech Stack
