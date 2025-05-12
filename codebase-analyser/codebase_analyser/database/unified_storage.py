@@ -260,6 +260,31 @@ class UnifiedStorage:
 
         return export_file
 
+    def update_last_sync_time(self, project_id: str) -> str:
+        """Update the last sync time for a project.
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            Timestamp string in ISO format
+        """
+        if self.read_only:
+            raise ValueError("Cannot update last sync time in read-only mode")
+
+        return self.db_manager.update_last_sync_time(project_id)
+
+    def get_last_sync_time(self, project_id: str) -> Optional[str]:
+        """Get the last sync time for a project.
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            Timestamp string in ISO format, or None if not found
+        """
+        return self.db_manager.get_last_sync_time(project_id)
+
     def close(self) -> None:
         """Close the database connection."""
         # LanceDB doesn't have an explicit close method
@@ -281,6 +306,7 @@ class DatabaseManager:
 
         # Define table names
         self.code_chunks_table_name = "code_chunks"
+        self.metadata_table_name = "metadata"
 
     def clear_tables(self) -> None:
         """Clear all tables in the database."""
@@ -355,3 +381,89 @@ class DatabaseManager:
 
         # Convert to list of dictionaries
         return results.to_dict('records')
+
+    def update_last_sync_time(self, project_id: str) -> str:
+        """Update the last sync time for a project.
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            Timestamp string in ISO format
+        """
+        import datetime
+
+        # Get current timestamp in ISO format
+        timestamp = datetime.datetime.now().isoformat()
+
+        # Check if the metadata table exists
+        if self.metadata_table_name not in self.db.table_names():
+            # Create the metadata table
+            self.db.create_table(
+                self.metadata_table_name,
+                data=[{
+                    "project_id": project_id,
+                    "last_sync_time": timestamp,
+                    "embedding": [0.0] * 10  # Dummy embedding required by LanceDB
+                }]
+            )
+        else:
+            # Open the metadata table
+            table = self.db.open_table(self.metadata_table_name)
+
+            # Check if the project exists in the metadata table
+            try:
+                # Try to get the project's metadata
+                result = table.search().where(f"project_id = '{project_id}'").to_pandas()
+
+                if len(result) > 0:
+                    # Update the existing record
+                    table.update(
+                        where=f"project_id = '{project_id}'",
+                        values={"last_sync_time": timestamp}
+                    )
+                else:
+                    # Add a new record
+                    table.add([{
+                        "project_id": project_id,
+                        "last_sync_time": timestamp,
+                        "embedding": [0.0] * 10  # Dummy embedding required by LanceDB
+                    }])
+            except Exception as e:
+                # If there's an error, create a new record
+                table.add([{
+                    "project_id": project_id,
+                    "last_sync_time": timestamp,
+                    "embedding": [0.0] * 10  # Dummy embedding required by LanceDB
+                }])
+
+        return timestamp
+
+    def get_last_sync_time(self, project_id: str) -> Optional[str]:
+        """Get the last sync time for a project.
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            Timestamp string in ISO format, or None if not found
+        """
+        # Check if the metadata table exists
+        if self.metadata_table_name not in self.db.table_names():
+            return None
+
+        # Open the metadata table
+        table = self.db.open_table(self.metadata_table_name)
+
+        try:
+            # Try to get the project's metadata
+            result = table.search().where(f"project_id = '{project_id}'").to_pandas()
+
+            if len(result) > 0:
+                # Return the last sync time
+                return result.iloc[0]["last_sync_time"]
+        except Exception as e:
+            # If there's an error, return None
+            pass
+
+        return None

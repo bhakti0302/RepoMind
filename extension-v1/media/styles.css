@@ -201,6 +201,26 @@ code {
     display: none;
 }
 
+.image-container {
+    margin: 10px 0;
+    max-width: 100%;
+    overflow: hidden;
+    border-radius: var(--border-radius);
+    border: 1px solid #444;
+}
+
+.chat-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.chat-image:hover {
+    transform: scale(1.02);
+}
+
 .attachment-label {
     display: flex;
     align-items: center;
@@ -254,4 +274,12 @@ code {
 
 #attach-button:hover {
     background-color: #5a5a5a;
+}
+
+#visualize-button {
+    background-color: #2d882d;
+}
+
+#visualize-button:hover {
+    background-color: #3a9c3a;
 }

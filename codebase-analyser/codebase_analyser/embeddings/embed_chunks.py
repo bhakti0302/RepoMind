@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
 from tqdm import tqdm
 
-from ..database import LanceDBManager, open_db_connection, close_db_connection
+from ..database import UnifiedStorage, open_unified_storage as open_db_connection, close_unified_storage as close_db_connection
 from .embedding_generator import EmbeddingGenerator
 
 # Configure logging

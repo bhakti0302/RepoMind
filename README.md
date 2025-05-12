@@ -30,6 +30,9 @@ RepoMind is an AI-powered coding assistant that provides intelligent code unders
 - File attachment capability for additional context
 - Status bar integration for quick access
 - Multi-project support with automatic project ID management
+- Code relationship visualization directly in the chat UI
+- Incremental codebase updates for improved performance
+- Comprehensive error logging for debugging
 
 ### Enhanced Java Parser
 - Parses Java files and extracts classes, methods, fields, and their relationships
@@ -81,6 +84,7 @@ code --extensionDevelopmentPath=$(pwd) /path/to/your/project
    - Look for the RepoMind icon in the activity bar
    - Click the "Sync" button to analyze your codebase
    - Wait for the synchronization to complete
+   - Click the "Show Visualizations" button to see code relationships
    - Use the chat interface to query your codebase
 
 The extension automatically:
@@ -143,13 +147,13 @@ if nx.has_path(graph, source_node, target_node):
 cd codebase-analyser
 
 # List all projects in the database
-python3 -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); print(table.to_arrow().to_pandas()['project_id'].unique())"
+python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); print(table.to_arrow().to_pandas()['project_id'].unique())"
 
 # Count chunks for a specific project
-python3 -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); print(len(table.to_arrow().to_pandas()[table.to_arrow().to_pandas()['project_id'] == 'demo']))"
+python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); print(len(table.to_arrow().to_pandas()[table.to_arrow().to_pandas()['project_id'] == 'demo']))"
 
 # Search for chunks containing a specific term
-python3 -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); results = table.search('class').limit(5).to_pandas(); print(results[['node_id', 'name', 'project_id']])"
+python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); results = table.search('class').limit(5).to_pandas(); print(results[['node_id', 'name', 'project_id']])"
 ```
 
 #### Vector Search Examples
@@ -206,6 +210,22 @@ The extension automatically:
 - Runs the codebase analysis
 - Populates the database with code chunks and relationships
 
+#### Visualization Queries
+
+You can use natural language queries in the chat to display code visualizations. Here are some example queries you can try:
+
+- "Show me the code relationships"
+- "Visualize the codebase structure"
+- "Show me how files are connected"
+- "Display class relationships"
+- "I want to see the code architecture"
+- "Show me inheritance relationships"
+- "Can you visualize the code dependencies?"
+- "Let's visualize the code structure"
+- "Show me the file dependencies"
+
+Alternatively, you can click the "Show Visualizations" button to display the visualizations directly.
+
 This is the recommended workflow for most users, as it provides a simple and intuitive interface for analyzing and querying your codebase.
 
 ## Testing the VS Code Extension
@@ -252,6 +272,8 @@ RepoMind/
 │   │   └── visualization/       # Visualization utilities
 │   ├── scripts/                 # Utility scripts
 │   │   ├── analyze_java.py      # Main script for analyzing Java projects
+│   │   ├── visualize_code_relationships.py  # Visualization script
+│   │   ├── update_codebase.py   # Incremental update script
 │   │   └── ...
 │   ├── tests/                   # Test directory
 │   │   ├── parsing/             # Tests for parsing components
@@ -262,7 +284,18 @@ RepoMind/
 │       ├── complex_java/        # Complex Java project
 │       └── ...
 │
+├── data/                        # Data storage
+│   └── projects/                # Project-specific data
+│       └── <project_id>/        # Data for each project
+│           ├── chunks/          # Chunked code
+│           ├── embeddings/      # Code embeddings
+│           └── visualizations/  # Code visualizations
+│
 ├── extension-v1/                # VS Code extension
+│   ├── src/                     # TypeScript source code
+│   │   ├── ui/                  # UI components
+│   │   └── utils/               # Utility functions
+│   └── media/                   # CSS and other assets
 │
 └── docs/                        # Documentation
     └── PLAN.MD                  # Project plan and roadmap

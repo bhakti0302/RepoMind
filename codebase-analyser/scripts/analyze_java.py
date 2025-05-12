@@ -28,7 +28,7 @@ def parse_args():
     """Parse command-line arguments."""
     parser = argparse.ArgumentParser(description="Analyze Java files")
     parser.add_argument("repo_path", help="Path to the repository or directory to analyze")
-    parser.add_argument("--db-path", help="Path to the LanceDB database", default=".lancedb")
+    parser.add_argument("--db-path", help="Path to the LanceDB database", default="./.lancedb")
     parser.add_argument("--data-dir", help="Path to the data directory", default="../data")
     parser.add_argument("--clear-db", action="store_true", help="Clear the database before adding new chunks")
     parser.add_argument("--mock-embeddings", action="store_true", help="Use mock embeddings instead of generating real ones")
@@ -218,6 +218,11 @@ def analyze_java_files(args):
         # Add chunks with graph metadata
         logger.info("Adding chunks with graph metadata")
         storage_manager.add_code_chunks_with_graph_metadata(chunks=all_chunks)
+
+        # Update the last sync time
+        project_id = args.project_id or os.path.basename(os.path.abspath(args.repo_path))
+        timestamp = storage_manager.update_last_sync_time(project_id)
+        logger.info(f"Updated last sync time for project {project_id}: {timestamp}")
 
         # Step 4: Generate visualization if requested
         if args.visualize:

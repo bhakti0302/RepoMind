@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as cp from 'child_process';
 import { StatusBarItem } from './ui/statusBar';
 import { ChatViewProvider } from './ui/chatView';
+import { ErrorLogger } from './utils/errorLogger';
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
@@ -27,7 +28,10 @@ export function activate(context: vscode.ExtensionContext) {
     // Register commands
     let startAssistantCommand = vscode.commands.registerCommand('extension-v1.startAssistant', () => {
         vscode.window.showInformationMessage('RepoMind started!');
-        vscode.commands.executeCommand('extension-v1.chatView.focus');
+        // Focus our chat view without affecting other extensions
+        setTimeout(() => {
+            vscode.commands.executeCommand('workbench.view.extension.repomind-chat-view');
+        }, 100);
         statusBar.setReady('RepoMind is ready');
     });
 
@@ -85,11 +89,19 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let openChatViewCommand = vscode.commands.registerCommand('extension-v1.openChatView', () => {
-        vscode.commands.executeCommand('extension-v1.chatView.focus');
+        // Focus our chat view without affecting other extensions
+        setTimeout(() => {
+            vscode.commands.executeCommand('workbench.view.extension.repomind-chat-view');
+        }, 100);
     });
 
     // Sync codebase command
     let syncCodebaseCommand = vscode.commands.registerCommand('extension-v1.syncCodebase', async () => {
+        // Make sure we stay in our extension view
+        setTimeout(() => {
+            vscode.commands.executeCommand('workbench.view.extension.repomind-chat-view');
+        }, 100);
+
         statusBar.setWorking('Syncing codebase...');
 
         // Get the current workspace folder
@@ -103,21 +115,79 @@ export function activate(context: vscode.ExtensionContext) {
         const workspaceFolder = workspaceFolders[0].uri.fsPath;
         const projectId = path.basename(workspaceFolder);
 
-        // Use a hardcoded path to the codebase-analyser directory
-        const codebaseAnalyserPath = '/Users/shreyah/Documents/Projects/SAP/RepoMind/codebase-analyser';
+        // Get the path to the codebase-analyser directory relative to the extension
+        const extensionPath = context.extensionPath;
+        const workspaceRoot = path.dirname(extensionPath);
+        const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
 
-        // Use analyze_java.py without the --visualize flag to avoid matplotlib dependency issues
-        // Activate the virtual environment if it exists, and deactivate it after running the script
-        const command = `cd "${codebaseAnalyserPath}" &&
-            if [ -d "venv" ]; then
-                source venv/bin/activate &&
-                python3 scripts/analyze_java.py "${workspaceFolder}" --clear-db --mock-embeddings --project-id "${projectId}" &&
-                deactivate;
-            else
-                python3 scripts/analyze_java.py "${workspaceFolder}" --clear-db --mock-embeddings --project-id "${projectId}";
-            fi`;
+        // Path to the LanceDB database
+        const dbPath = path.join(codebaseAnalyserPath, '.lancedb');
 
-        vscode.window.showInformationMessage(`Analyzing project: ${projectId}`);
+        // Check if the database exists and if it has data for this project
+        let isFullSync = false;
+
+        try {
+            // Check if the database directory exists
+            if (!fs.existsSync(dbPath)) {
+                console.log(`Database directory does not exist at: ${dbPath}`);
+                isFullSync = true;
+            } else {
+                // Check if the code_chunks table exists with data for this project
+                // We'll use a simple command to check if the project exists in the database
+                const checkCommand = `cd "${codebaseAnalyserPath}" && python3 -c "import lancedb; import sys; db = lancedb.connect('.lancedb'); tables = db.table_names(); sys.exit(0 if 'code_chunks' in tables else 1)"`;
+
+                try {
+                    cp.execSync(checkCommand);
+
+                    // Now check if the project exists in the database
+                    const checkProjectCommand = `cd "${codebaseAnalyserPath}" && python3 -c "import lancedb; import sys; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); df = table.to_arrow().to_pandas(); sys.exit(0 if '${projectId}' in df['project_id'].unique() else 1)"`;
+
+                    try {
+                        cp.execSync(checkProjectCommand);
+                        console.log(`Project ${projectId} found in database, using incremental update`);
+                        isFullSync = false;
+                    } catch (error) {
+                        console.log(`Project ${projectId} not found in database, using full sync`);
+                        isFullSync = true;
+                    }
+                } catch (error) {
+                    console.log(`Table 'code_chunks' not found in database, using full sync`);
+                    isFullSync = true;
+                }
+            }
+        } catch (error) {
+            console.error(`Error checking database: ${error}`);
+            isFullSync = true;
+        }
+
+        // Use the appropriate script based on whether we need a full sync or incremental update
+        let command;
+        if (isFullSync) {
+            // Use analyze_java.py for full sync
+            command = `cd "${codebaseAnalyserPath}" &&
+                if [ -d "venv" ]; then
+                    source venv/bin/activate &&
+                    python3 scripts/analyze_java.py "${workspaceFolder}" --clear-db --mock-embeddings --project-id "${projectId}" &&
+                    deactivate;
+                else
+                    python3 scripts/analyze_java.py "${workspaceFolder}" --clear-db --mock-embeddings --project-id "${projectId}";
+                fi`;
+
+            vscode.window.showInformationMessage(`Performing full sync for project: ${projectId}`);
+        } else {
+            // Use update_codebase.py for incremental update
+            command = `cd "${codebaseAnalyserPath}" &&
+                if [ -d "venv" ]; then
+                    source venv/bin/activate &&
+                    python3 scripts/update_codebase.py "${workspaceFolder}" --mock-embeddings --project-id "${projectId}" &&
+                    deactivate;
+                else
+                    python3 scripts/update_codebase.py "${workspaceFolder}" --mock-embeddings --project-id "${projectId}";
+                fi`;
+
+            vscode.window.showInformationMessage(`Performing incremental update for project: ${projectId}`);
+        }
+
         console.log(`Workspace folder: ${workspaceFolder}`);
         console.log(`Project ID: ${projectId}`);
         console.log(`Codebase Analyser path: ${codebaseAnalyserPath}`);
@@ -204,17 +274,29 @@ Error running codebase analysis:
                                 // Show a more detailed error message
                                 vscode.window.showErrorMessage(`Error details: ${stderr.substring(0, 100)}...`);
 
-                                // Create an error log file
-                                const errorLogPath = path.join(codebaseAnalyserPath, 'error_log.txt');
-                                try {
-                                    fs.writeFileSync(errorLogPath, errorLog);
-                                    vscode.window.showInformationMessage(`Error log saved to: ${errorLogPath}`);
-                                } catch (logError) {
-                                    console.error(`Failed to write error log: ${logError instanceof Error ? logError.message : String(logError)}`);
-                                }
+                                // Log the error using the ErrorLogger
+                                const logFile = ErrorLogger.logError(error, {
+                                    command,
+                                    stderr,
+                                    stdout,
+                                    workspaceFolder,
+                                    projectId,
+                                    codebaseAnalyserPath,
+                                    isFullSync
+                                });
+
+                                // Show a message with an option to view the error log
+                                vscode.window.showErrorMessage(
+                                    'Error syncing codebase. See error log for details.',
+                                    'View Error Log'
+                                ).then(selection => {
+                                    if (selection === 'View Error Log') {
+                                        ErrorLogger.showErrorLog(logFile);
+                                    }
+                                });
 
                                 // Send error to chat view
-                                vscode.commands.executeCommand('extension-v1.sendErrorToChat', errorLog, errorLogPath);
+                                vscode.commands.executeCommand('extension-v1.sendErrorToChat', errorLog, logFile);
                             }
 
                             reject(error);
@@ -226,8 +308,52 @@ Error running codebase analysis:
                         }
 
                         console.log(`Stdout: ${stdout}`);
-                        vscode.window.showInformationMessage('Codebase synced successfully!');
-                        statusBar.setReady('Codebase synced');
+
+                        // Get the last sync time from the database
+                        const getLastSyncTimeCommand = `cd "${codebaseAnalyserPath}" &&
+                            if [ -d "venv" ]; then
+                                source venv/bin/activate &&
+                                python3 -c "from codebase_analyser.database.unified_storage import UnifiedStorage; import sys; storage = UnifiedStorage(db_path='.lancedb'); timestamp = storage.get_last_sync_time('${projectId}'); print(timestamp if timestamp else 'Unknown')" &&
+                                deactivate;
+                            else
+                                python3 -c "from codebase_analyser.database.unified_storage import UnifiedStorage; import sys; storage = UnifiedStorage(db_path='.lancedb'); timestamp = storage.get_last_sync_time('${projectId}'); print(timestamp if timestamp else 'Unknown')";
+                            fi`;
+
+                        try {
+                            const lastSyncTime = cp.execSync(getLastSyncTimeCommand).toString().trim();
+                            console.log(`Last sync time: ${lastSyncTime}`);
+
+                            // Format the timestamp for display
+                            let formattedTime = lastSyncTime;
+                            try {
+                                if (lastSyncTime !== 'Unknown') {
+                                    // Parse ISO timestamp and format it
+                                    const date = new Date(lastSyncTime);
+                                    // Use a more explicit format to avoid confusion
+                                    formattedTime = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                                }
+                            } catch (error) {
+                                console.error(`Error formatting timestamp: ${error}`);
+                            }
+
+                            // Show success message with timestamp
+                            vscode.window.showInformationMessage(`Codebase synced successfully at ${formattedTime}!`);
+                            statusBar.setReady(`Synced at ${formattedTime}`);
+
+                            // Send timestamp to chat view if available
+                            if (chatViewProvider) {
+                                chatViewProvider.sendMessageToWebviews({
+                                    command: 'addMessage',
+                                    text: `Codebase synced successfully at ${formattedTime}`,
+                                    isUser: false
+                                });
+                            }
+                        } catch (error) {
+                            console.error(`Error getting last sync time: ${error}`);
+                            vscode.window.showInformationMessage('Codebase synced successfully!');
+                            statusBar.setReady('Codebase synced');
+                        }
+
                         resolve();
                     });
 
@@ -265,8 +391,10 @@ Error running codebase analysis:
                 const fileContent = fs.readFileSync(filePath, 'utf8');
                 vscode.window.showInformationMessage(`File attached: ${fileName}`);
 
-                // Focus the chat view
-                vscode.commands.executeCommand('extension-v1.chatView.focus');
+                // Focus our chat view without affecting other extensions
+                setTimeout(() => {
+                    vscode.commands.executeCommand('workbench.view.extension.repomind-chat-view');
+                }, 100);
 
                 // TODO: Add the file content to the chat
                 console.log(`Attached file: ${fileName}`);
@@ -278,23 +406,439 @@ Error running codebase analysis:
     });
 
     // Command to send error to chat view
-    let sendErrorToChatCommand = vscode.commands.registerCommand('extension-v1.sendErrorToChat', (_errorLog: string, errorLogPath: string) => {
-        // Focus the chat view
-        vscode.commands.executeCommand('extension-v1.chatView.focus');
+    let sendErrorToChatCommand = vscode.commands.registerCommand('extension-v1.sendErrorToChat', (errorLog: string, errorLogPath: string) => {
+        // Focus our chat view without affecting other extensions
+        setTimeout(() => {
+            vscode.commands.executeCommand('workbench.view.extension.repomind-chat-view');
+        }, 100);
 
         // Post a message to the chat view
         setTimeout(() => {
             // Create a simple notification with the error
-            vscode.window.showErrorMessage('Error syncing codebase. Details have been saved to error_log.txt.');
+            vscode.window.showErrorMessage('Error occurred. Details have been saved to error log.');
 
             // Add error to the chat view
-            // We'll use a simpler approach by showing a notification
-            // and focusing the chat view
-            vscode.window.showInformationMessage(`Error details saved to: ${errorLogPath}`);
+            if (chatViewProvider) {
+                chatViewProvider.sendMessageToWebviews({
+                    command: 'addMessage',
+                    text: 'An error occurred during the operation. Error details have been saved to the log.',
+                    isUser: false
+                });
 
-            // Focus the chat view
-            vscode.commands.executeCommand('extension-v1.chatView.focus');
+                // Add a shortened version of the error log to the chat
+                const shortenedLog = errorLog.split('\n').slice(0, 10).join('\n');
+                chatViewProvider.sendMessageToWebviews({
+                    command: 'addMessage',
+                    text: `Error summary:\n\`\`\`\n${shortenedLog}\n...\n\`\`\`\nFull details saved to: ${errorLogPath}`,
+                    isUser: false
+                });
+
+                // Add a button to view the full error log
+                chatViewProvider.sendMessageToWebviews({
+                    command: 'addMessage',
+                    text: 'You can view the full error log by clicking "View Error Log" in the notification.',
+                    isUser: false
+                });
+            } else {
+                // Fallback if chat view is not available
+                vscode.window.showInformationMessage(`Error details saved to: ${errorLogPath}`);
+            }
+
+            // Focus our chat view without affecting other extensions
+            setTimeout(() => {
+                vscode.commands.executeCommand('workbench.view.extension.repomind-chat-view');
+            }, 100);
         }, 1000);
+    });
+
+    // Visualize code relationships command
+    let visualizeRelationshipsCommand = vscode.commands.registerCommand('extension-v1.visualizeRelationships', async () => {
+        statusBar.setWorking('Visualizing code relationships...');
+
+        // Get the current workspace folder
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showErrorMessage('No workspace folder is open. Please open a folder first.');
+            statusBar.setError('No workspace folder');
+            return;
+        }
+
+        const workspaceFolder = workspaceFolders[0].uri.fsPath;
+        const projectId = path.basename(workspaceFolder);
+
+        // Get the path to the codebase-analyser directory relative to the extension
+        const extensionPath = context.extensionPath;
+        const workspaceRoot = path.dirname(extensionPath);
+        const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
+
+        // Create visualizations directory if it doesn't exist
+        const visualizationsDir = path.join(workspaceFolder, 'visualizations');
+        if (!fs.existsSync(visualizationsDir)) {
+            fs.mkdirSync(visualizationsDir, { recursive: true });
+        }
+
+        // Command to run the visualization script
+        const command = `cd "${codebaseAnalyserPath}" &&
+            if [ -d "venv" ]; then
+                source venv/bin/activate &&
+                python3 scripts/visualize_code_relationships.py --repo-path "${workspaceFolder}" --output-dir "${visualizationsDir}" --project-id "${projectId}" &&
+                deactivate;
+            else
+                python3 scripts/visualize_code_relationships.py --repo-path "${workspaceFolder}" --output-dir "${visualizationsDir}" --project-id "${projectId}";
+            fi`;
+
+        vscode.window.showInformationMessage(`Visualizing code relationships for project: ${projectId}`);
+        console.log(`Workspace folder: ${workspaceFolder}`);
+        console.log(`Project ID: ${projectId}`);
+        console.log(`Visualizations directory: ${visualizationsDir}`);
+        console.log(`Running command: ${command}`);
+
+        // Show progress notification
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Visualizing code relationships',
+            cancellable: true
+        }, async (progress, token) => {
+            progress.report({ message: 'Generating visualizations...' });
+
+            return new Promise<void>((resolve, reject) => {
+                // Run the visualization command
+                const visualizeProcess = cp.exec(command, (error, stdout, stderr) => {
+                    if (error) {
+                        const errorMessage = `Error visualizing code relationships: ${error.message}`;
+                        vscode.window.showErrorMessage(errorMessage);
+                        statusBar.setError('Visualization failed');
+                        console.error(`Error: ${error.message}`);
+                        console.error(`Command that failed: ${command}`);
+
+                        if (stderr) {
+                            console.error(`Stderr: ${stderr}`);
+                        }
+
+                        // Log the error to a file
+                        const logFile = ErrorLogger.logError(error, {
+                            command,
+                            stderr,
+                            stdout,
+                            workspaceFolder,
+                            projectId,
+                            visualizationsDir
+                        });
+
+                        // Show a message with an option to view the error log
+                        vscode.window.showErrorMessage(
+                            'Error visualizing code relationships. See error log for details.',
+                            'View Error Log'
+                        ).then(selection => {
+                            if (selection === 'View Error Log') {
+                                ErrorLogger.showErrorLog(logFile);
+                            }
+                        });
+
+                        // Try to use the manual visualization script as a fallback
+                        try {
+                            const manualVisualizePath = path.join(codebaseAnalyserPath, 'scripts', 'manual_visualize.py');
+                            if (fs.existsSync(manualVisualizePath)) {
+                                console.log('Trying manual visualization script as fallback...');
+                                const fallbackCommand = `python "${manualVisualizePath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
+
+                                cp.exec(fallbackCommand, (fallbackError, fallbackStdout, fallbackStderr) => {
+                                    if (fallbackError) {
+                                        console.error(`Fallback visualization failed: ${fallbackError.message}`);
+                                        if (fallbackStderr) {
+                                            console.error(`Fallback stderr: ${fallbackStderr}`);
+                                        }
+                                    } else {
+                                        console.log('Fallback visualization succeeded');
+                                        console.log(`Fallback stdout: ${fallbackStdout}`);
+
+                                        // Check if the visualization files exist
+                                        const multiFilePath = path.join(visualizationsDir, `${projectId}_multi_file_relationships.png`);
+                                        const relationshipTypesPath = path.join(visualizationsDir, `${projectId}_relationship_types.png`);
+
+                                        if (fs.existsSync(multiFilePath) && fs.existsSync(relationshipTypesPath)) {
+                                            vscode.window.showInformationMessage(
+                                                'Visualizations created using fallback method.',
+                                                'Show in Chat'
+                                            ).then(selection => {
+                                                if (selection === 'Show in Chat') {
+                                                    vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
+                                                }
+                                            });
+
+                                            // Resolve with the fallback visualization paths
+                                            resolve();
+                                            return;
+                                        }
+                                    }
+
+                                    // If we get here, both the main and fallback methods failed
+                                    reject(error);
+                                });
+                                return;
+                            }
+                        } catch (fallbackError) {
+                            console.error('Error running fallback visualization:', fallbackError);
+                        }
+
+                        reject(error);
+                        return;
+                    }
+
+                    if (stderr) {
+                        console.error(`Stderr: ${stderr}`);
+                    }
+
+                    console.log(`Stdout: ${stdout}`);
+
+                    try {
+                        // Parse the JSON output to get the visualization paths
+                        const result = JSON.parse(stdout);
+
+                        // Show success message with links to open the visualizations
+                        vscode.window.showInformationMessage('Code relationships visualized successfully!',
+                            'Open Multi-File Relationships', 'Open Relationship Types')
+                            .then(selection => {
+                                if (selection === 'Open Multi-File Relationships') {
+                                    // Open the multi-file relationships visualization
+                                    const multiFileVisualizationPath = result.multi_file_relationships;
+                                    vscode.env.openExternal(vscode.Uri.file(multiFileVisualizationPath));
+                                } else if (selection === 'Open Relationship Types') {
+                                    // Open the relationship types visualization
+                                    const relationshipTypesVisualizationPath = result.relationship_types;
+                                    vscode.env.openExternal(vscode.Uri.file(relationshipTypesVisualizationPath));
+                                }
+                            });
+
+                        statusBar.setReady('Visualizations created');
+                        resolve();
+                    } catch (parseError) {
+                        console.error(`Error parsing visualization result: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+                        vscode.window.showErrorMessage('Visualizations created, but could not parse the result.');
+                        statusBar.setReady('Visualizations created');
+                        resolve();
+                    }
+                });
+
+                token.onCancellationRequested(() => {
+                    visualizeProcess.kill();
+                    vscode.window.showInformationMessage('Visualization cancelled.');
+                    statusBar.setDefault();
+                    resolve();
+                });
+            });
+        }).then(() => {
+            console.log('Visualization process completed successfully');
+        }, (error: unknown) => {
+            console.error(`Visualization process failed: ${error instanceof Error ? error.message : String(error)}`);
+        });
+    });
+
+    // Command to show visualizations in chat
+    let showVisualizationsInChatCommand = vscode.commands.registerCommand('extension-v1.showVisualizationsInChat', async () => {
+        // Get the current workspace folder
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showErrorMessage('No workspace folder is open. Please open a folder first.');
+            return;
+        }
+
+        const workspaceFolder = workspaceFolders[0].uri.fsPath;
+        const projectId = path.basename(workspaceFolder);
+
+        // Get the path to the codebase-analyser directory relative to the extension
+        const extensionPath = context.extensionPath;
+        const workspaceRoot = path.dirname(extensionPath);
+        const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
+
+        // Path to the visualizations directory
+        const visualizationsDir = path.join(workspaceFolder, 'visualizations');
+
+        // Check if the visualizations directory exists
+        if (!fs.existsSync(visualizationsDir)) {
+            // Try to create the directory and generate visualizations
+            try {
+                fs.mkdirSync(visualizationsDir, { recursive: true });
+
+                // Run the manual visualization script
+                const manualVisualizePath = path.join(codebaseAnalyserPath, 'scripts', 'manual_visualize.py');
+                if (fs.existsSync(manualVisualizePath)) {
+                    vscode.window.showInformationMessage('Generating visualizations...');
+
+                    const fallbackCommand = `python "${manualVisualizePath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
+
+                    cp.exec(fallbackCommand, (fallbackError, fallbackStdout, fallbackStderr) => {
+                        if (fallbackError) {
+                            console.error(`Visualization generation failed: ${fallbackError.message}`);
+                            if (fallbackStderr) {
+                                console.error(`Stderr: ${fallbackStderr}`);
+                            }
+                            vscode.window.showErrorMessage('Failed to generate visualizations.');
+                        } else {
+                            console.log('Visualization generation succeeded');
+                            console.log(`Stdout: ${fallbackStdout}`);
+
+                            // Now show the visualizations
+                            showVisualizations();
+                        }
+                    });
+                    return;
+                } else {
+                    vscode.window.showErrorMessage('Visualization script not found.');
+                    return;
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to create visualizations directory: ${error instanceof Error ? error.message : String(error)}`);
+                return;
+            }
+        }
+
+        // Function to show visualizations
+        function showVisualizations() {
+            // Check for visualization files
+            const multiFileVisualizationPath = path.join(visualizationsDir, `${projectId}_multi_file_relationships.png`);
+            const relationshipTypesVisualizationPath = path.join(visualizationsDir, `${projectId}_relationship_types.png`);
+
+            let visualizationsFound = false;
+
+            // Send visualizations to chat
+            if (fs.existsSync(multiFileVisualizationPath)) {
+                chatViewProvider.sendImageToChat(multiFileVisualizationPath, 'Multi-File Relationships Visualization:');
+                visualizationsFound = true;
+            }
+
+            if (fs.existsSync(relationshipTypesVisualizationPath)) {
+                chatViewProvider.sendImageToChat(relationshipTypesVisualizationPath, 'Relationship Types Visualization:');
+                visualizationsFound = true;
+            }
+
+            if (!visualizationsFound) {
+                vscode.window.showErrorMessage('No visualization files found. Please run "Visualize Code Relationships" first.');
+            } else {
+                // Focus the chat view
+                vscode.commands.executeCommand('extension-v1.chatView.focus');
+            }
+        }
+
+        // Show visualizations if they exist
+        showVisualizations();
+    });
+
+    // Command to generate visualizations using manual script
+    let generateVisualizationsCommand = vscode.commands.registerCommand('extension-v1.generateVisualizations', async () => {
+        // Get the current workspace folder
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showErrorMessage('No workspace folder is open. Please open a folder first.');
+            return;
+        }
+
+        const workspaceFolder = workspaceFolders[0].uri.fsPath;
+        const projectId = path.basename(workspaceFolder);
+
+        // Get the path to the codebase-analyser directory relative to the extension
+        const extensionPath = context.extensionPath;
+        const workspaceRoot = path.dirname(extensionPath);
+        const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
+
+        // Path to the visualizations directory
+        const visualizationsDir = path.join(workspaceFolder, 'visualizations');
+
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(visualizationsDir)) {
+            fs.mkdirSync(visualizationsDir, { recursive: true });
+        }
+
+        // Run the manual visualization script
+        const manualVisualizePath = path.join(codebaseAnalyserPath, 'scripts', 'manual_visualize.py');
+        if (!fs.existsSync(manualVisualizePath)) {
+            vscode.window.showErrorMessage('Manual visualization script not found.');
+            return;
+        }
+
+        // Show progress notification
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Generating visualizations',
+            cancellable: true
+        }, async (progress, token) => {
+            progress.report({ message: 'Running manual visualization script...' });
+
+            return new Promise<void>((resolve, reject) => {
+                const command = `python "${manualVisualizePath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
+
+                const process = cp.exec(command, (error, stdout, stderr) => {
+                    if (error) {
+                        console.error(`Visualization generation failed: ${error.message}`);
+                        if (stderr) {
+                            console.error(`Stderr: ${stderr}`);
+                        }
+
+                        // Log the error
+                        const logFile = ErrorLogger.logError(error, {
+                            command,
+                            stderr,
+                            stdout,
+                            workspaceFolder,
+                            projectId,
+                            visualizationsDir
+                        });
+
+                        vscode.window.showErrorMessage(
+                            'Failed to generate visualizations. See error log for details.',
+                            'View Error Log'
+                        ).then(selection => {
+                            if (selection === 'View Error Log') {
+                                ErrorLogger.showErrorLog(logFile);
+                            }
+                        });
+
+                        reject(error);
+                    } else {
+                        console.log('Visualization generation succeeded');
+                        console.log(`Stdout: ${stdout}`);
+
+                        try {
+                            // Parse the JSON output to get the visualization paths
+                            const result = JSON.parse(stdout);
+
+                            // Show success message with links to open the visualizations
+                            vscode.window.showInformationMessage(
+                                'Visualizations generated successfully!',
+                                'Show in Chat', 'Open Multi-File', 'Open Relationship Types'
+                            ).then(selection => {
+                                if (selection === 'Show in Chat') {
+                                    vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
+                                } else if (selection === 'Open Multi-File') {
+                                    vscode.env.openExternal(vscode.Uri.file(result.multi_file_relationships));
+                                } else if (selection === 'Open Relationship Types') {
+                                    vscode.env.openExternal(vscode.Uri.file(result.relationship_types));
+                                }
+                            });
+
+                            resolve();
+                        } catch (parseError) {
+                            console.error(`Error parsing visualization result: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+                            vscode.window.showInformationMessage(
+                                'Visualizations created, but could not parse the result.',
+                                'Show in Chat'
+                            ).then(selection => {
+                                if (selection === 'Show in Chat') {
+                                    vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
+                                }
+                            });
+                            resolve();
+                        }
+                    }
+                });
+
+                token.onCancellationRequested(() => {
+                    process.kill();
+                    vscode.window.showInformationMessage('Visualization generation cancelled.');
+                    resolve();
+                });
+            });
+        });
     });
 
     // Add commands to subscriptions
@@ -305,9 +849,59 @@ Error running codebase analysis:
     context.subscriptions.push(syncCodebaseCommand);
     context.subscriptions.push(attachFileCommand);
     context.subscriptions.push(sendErrorToChatCommand);
+    context.subscriptions.push(visualizeRelationshipsCommand);
+    context.subscriptions.push(showVisualizationsInChatCommand);
+    context.subscriptions.push(generateVisualizationsCommand);
 
-    // Set status
+    // Set status and check for last sync time
     statusBar.setReady('RepoMind is ready');
+
+    // Check if there's a workspace open
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+        const workspaceFolder = workspaceFolders[0].uri.fsPath;
+        const projectId = path.basename(workspaceFolder);
+
+        // Get the path to the codebase-analyser directory
+        const workspaceRoot = path.dirname(context.extensionPath);
+        const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
+
+        // Check if the database exists
+        const dbPath = path.join(codebaseAnalyserPath, '.lancedb');
+        if (fs.existsSync(dbPath)) {
+            // Get the last sync time
+            const getLastSyncTimeCommand = `cd "${codebaseAnalyserPath}" &&
+                if [ -d "venv" ]; then
+                    source venv/bin/activate &&
+                    python3 -c "from codebase_analyser.database.unified_storage import UnifiedStorage; import sys; storage = UnifiedStorage(db_path='.lancedb'); timestamp = storage.get_last_sync_time('${projectId}'); print(timestamp if timestamp else 'Unknown')" &&
+                    deactivate;
+                else
+                    python3 -c "from codebase_analyser.database.unified_storage import UnifiedStorage; import sys; storage = UnifiedStorage(db_path='.lancedb'); timestamp = storage.get_last_sync_time('${projectId}'); print(timestamp if timestamp else 'Unknown')";
+                fi`;
+
+            try {
+                const lastSyncTime = cp.execSync(getLastSyncTimeCommand).toString().trim();
+
+                // Format the timestamp for display
+                let formattedTime = lastSyncTime;
+                try {
+                    if (lastSyncTime !== 'Unknown') {
+                        // Parse ISO timestamp and format it
+                        const date = new Date(lastSyncTime);
+                        // Use a more explicit format to avoid confusion
+                        formattedTime = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+
+                        // Update status bar
+                        statusBar.setReady(`Last synced: ${formattedTime}`);
+                    }
+                } catch (error) {
+                    console.error(`Error formatting timestamp: ${error}`);
+                }
+            } catch (error) {
+                console.error(`Error getting last sync time: ${error}`);
+            }
+        }
+    }
 }
 
 // This method is called when your extension is deactivated

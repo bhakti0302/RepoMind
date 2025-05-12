@@ -24,6 +24,26 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 - Task 1.1.5 completed: Create basic activation function
 - Task 1.1.6 completed: Set up chat interface UI components
 
+### Project Structure
+```
+RepoMind/
+├── codebase-analyser/              # Main project directory
+│   ├── codebase_analyser/          # Python package (with underscores)
+│   │   ├── nlp/                    # NLP module for requirements processing
+│   │   ├── rag/                    # RAG module for context retrieval
+│   │   ├── synthesis/              # Code synthesis module
+│   │   ├── parsing/                # Code parsing module
+│   │   ├── database/               # Database integration
+│   │   └── ...                     # Other modules
+│   ├── scripts/                    # Command-line scripts
+│   ├── tests/                      # Test files
+│   └── requirements.txt            # Dependencies
+├── extension-v1/                   # VS Code extension
+└── data/                           # Data directory
+    ├── nlp_models/                 # spaCy models
+    └── projects/                   # Project-specific data
+```
+
 ### Considerations
 - Focus on simplicity and correctness over scalability
 - Modular design for easy extension
@@ -199,11 +219,39 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 **Dependencies**: Story 1.1
 
 ##### Tasks:
-- [ ] 3.1.1: Install and configure spaCy
+- [x] 3.1.1: Install and configure spaCy
 - [ ] 3.1.2: Set up Named Entity Recognition for requirements
 - [ ] 3.1.3: Implement key component extraction
-- [ ] 3.1.4: Create utility functions for text processing
+- [x] 3.1.4: Create utility functions for text processing
 - [ ] 3.1.5: Add error handling for NLP operations
+
+###### Completed in 3.1.1:
+- Added spaCy and related dependencies to requirements.txt
+- Created NLP module structure with proper organization
+- Implemented model loading and management functionality
+- Created setup script for downloading and configuring spaCy models
+- Added test script to verify spaCy installation and functionality
+
+###### Completed in 3.1.4:
+- Implemented text preprocessing functions
+- Created sentence extraction utilities
+- Added keyword extraction based on part-of-speech tags
+- Implemented code reference cleaning functionality
+
+###### NLP Module Structure:
+- `requirements_parser.py`: Main parser for requirements documents
+- `entity_recognition.py`: Named Entity Recognition for identifying key entities
+- `component_extractor.py`: Extract components like actions, objects, and constraints
+- `text_utils.py`: Utility functions for text preprocessing and analysis
+- `error_handler.py`: Centralized error handling for NLP operations
+- `models/`: Directory for managing spaCy models
+
+###### Implementation Details:
+- Use spaCy's pre-trained English models (en_core_web_sm/md/lg)
+- Implement custom NER for software engineering concepts
+- Create utility functions for text preprocessing and sentence extraction
+- Add keyword extraction based on part-of-speech tagging
+- Implement error handling with graceful fallbacks
 
 #### Story 3.2: RAG Implementation
 **Description**: Implement Retrieval-Augmented Generation for code synthesis
@@ -211,11 +259,34 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 **Dependencies**: Story 2.3, Story 3.1
 
 ##### Tasks:
-- [ ] 3.2.1: Design multi-hop RAG approach
-- [ ] 3.2.2: Implement architectural pattern retrieval with semantic search
-- [ ] 3.2.3: Create implementation details retrieval
+- [ ] 3.2.1: Implement Phase 1 - Basic Vector-Based RAG
+- [ ] 3.2.2: Implement Phase 2 - Graph-Enhanced Single-Hop RAG
+- [ ] 3.2.3: Implement Phase 3 - Full Multi-Hop Graph RAG
 - [ ] 3.2.4: Set up context combination mechanism
-- [ ] 3.2.5: Add relevance scoring for retrieved content
+- [ ] 3.2.5: Add combined relevance scoring (semantic + graph proximity)
+
+###### Phase 1 - Basic Vector-Based RAG:
+- Implement simple vector search using existing LanceDB infrastructure
+- Create basic query builder to convert requirements to search queries
+- Implement context window creation from top K results
+- Add basic prompt engineering for code generation
+- This phase provides a minimal viable product with semantic search only
+
+###### Phase 2 - Graph-Enhanced Single-Hop RAG:
+- Extend Phase 1 with graph relationship awareness
+- Implement import relationship edges in the dependency graph
+- Add inheritance relationship edges (extends/implements)
+- Create graph expansion to include direct neighbors of search results
+- Implement weighted scoring combining semantic similarity and graph proximity
+- This phase enhances results by including structurally related code
+
+###### Phase 3 - Full Multi-Hop Graph RAG:
+- Implement architectural pattern retrieval as first hop
+- Create implementation details retrieval as second hop
+- Add graph traversal to find related components
+- Implement context hierarchy preservation
+- Create advanced context combination for multi-hop results
+- This phase provides comprehensive code understanding
 
 #### Story 3.3: Code Synthesis System
 **Description**: Implement system to generate code based on requirements
@@ -223,11 +294,19 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 **Dependencies**: Story 3.2
 
 ##### Tasks:
-- [ ] 3.3.1: Design code synthesis workflow
-- [ ] 3.3.2: Implement vector database query mechanism
-- [ ] 3.3.3: Create dependency graph integration
-- [ ] 3.3.4: Set up LLM prompt engineering for code generation
-- [ ] 3.3.5: Implement output formatting for llm-instructions.txt
+- [ ] 3.3.1: Design code synthesis workflow aligned with RAG phases
+- [ ] 3.3.2: Implement prompt engineering for code generation
+- [ ] 3.3.3: Create code validation and refinement mechanism
+- [ ] 3.3.4: Implement output formatting for llm-instructions.txt
+- [ ] 3.3.5: Add feedback loop for iterative improvement
+
+###### Code Synthesis Workflow:
+- Requirements parsing using NLP to extract key components
+- Context retrieval using the appropriate RAG phase
+- Code generation using retrieved context and requirements
+- Validation of generated code against project standards
+- Refinement based on validation feedback
+- Output formatting for integration with the codebase
 
 ### Epic 4: MCP Implementation
 **Goal**: Implement Model Context Protocol for file system operations
@@ -361,49 +440,66 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 - [ ] 7.3.4: Add response handling for approvals/rejections
 - [ ] 7.3.5: Implement timeout handling for approval requests
 
-### Epic 8: Vector Database Maintenance
-**Goal**: Implement system to keep vector database up-to-date
+### Epic 8: Multi-Project Support and Incremental Indexing
+**Goal**: Enhance the system to support multiple projects and efficient incremental indexing
 
-#### Story 8.1: Change Detection
-**Description**: Implement detection of codebase changes
-**Complexity**: Medium
+#### Story 8.1: Change Detection and Incremental Updates
+**Description**: Implement detection of codebase changes and incremental updates
+**Complexity**: High
 **Dependencies**: Story 2.3
 
 ##### Tasks:
-- [ ] 8.1.1: Create file system watcher for code changes
-- [ ] 8.1.2: Implement change detection algorithm
-- [ ] 8.1.3: Add filtering for relevant changes
-- [ ] 8.1.4: Create change metadata storage
-- [ ] 8.1.5: Implement debouncing for frequent changes
+- [x] 8.1.1: Design file change tracking system
+- [x] 8.1.2: Implement content-based change detection
+- [x] 8.1.3: Add filtering for relevant changes
+- [x] 8.1.4: Create change metadata storage
+- [x] 8.1.5: Implement debouncing for frequent changes
+
+###### Completed in 8.1:
+- Created FileChangeTracker class that tracks file changes using content hashes
+- Implemented content-based change detection using SHA-256 hashing
+- Added filtering for relevant file types and patterns
+- Created metadata storage for tracking file changes
+- Implemented debouncing to avoid processing frequent changes
 
 #### Story 8.2: Automatic Vector Database Updates
 **Description**: Implement automatic updates to vector database
-**Complexity**: Medium
+**Complexity**: High
 **Dependencies**: Story 8.1
 
 ##### Tasks:
-- [ ] 8.2.1: Design update workflow
-- [ ] 8.2.2: Implement incremental update mechanism
-- [ ] 8.2.3: Create background update process
-- [ ] 8.2.4: Add progress indication for updates
-- [ ] 8.2.5: Implement error recovery for failed updates
+- [x] 8.2.1: Design update workflow
+- [x] 8.2.2: Implement incremental update mechanism
+- [x] 8.2.3: Create background update process
+- [x] 8.2.4: Add progress indication for updates
+- [x] 8.2.5: Implement error recovery for failed updates
 
-### Epic 9: Multi-Project Support and Incremental Indexing
-**Goal**: Enhance the system to support multiple projects and efficient incremental indexing
+###### Completed in 8.2:
+- Designed efficient update workflow for incremental changes
+- Implemented IncrementalUpdateManager for efficient database updates
+- Created background update process with threading support
+- Added progress indication for updates in the VS Code extension
+- Implemented error recovery and logging for failed updates
+- Added performance optimizations for large projects:
+  - Parallel file processing using ThreadPoolExecutor
+  - Batch insertion of chunks to reduce database overhead
+  - Configurable worker count based on CPU cores
+  - File filtering based on extensions and skip patterns
+  - Optimized deletion of chunks for removed files
 
-#### Story 9.1: Project-Specific Context
+#### Story 8.3: Project-Specific Context
 **Description**: Implement project-specific context for queries and results
 **Complexity**: Medium
 **Dependencies**: Story 2.3, Story 3.2
 
 ##### Tasks:
-- [x] 9.1.1: Update database schema to include project_id field
-- [x] 9.1.2: Modify search functions to accept project filter
-- [x] 9.1.3: Implement project path capture in VS Code extension
-- [x] 9.1.4: Create project ID generation based on normalized path
-- [ ] 9.1.5: Add project context to all RAG queries
+- [x] 8.3.1: Update database schema to include project_id field
+- [x] 8.3.2: Modify search functions to accept project filter
+- [x] 8.3.3: Implement project path capture in VS Code extension
+- [x] 8.3.4: Create project ID generation based on normalized path
+- [ ] 8.3.5: Add project context to all RAG queries
 
-###### Completed in 9.1:
+###### Completed in 8.3:
 - Added project_id field to database schema for multi-project support
 - Modified search functions to filter by project_id
 - Implemented project path capture in VS Code extension
@@ -412,33 +508,59 @@ This project aims to develop a VS Code extension that serves as a chat-based AI 
 - Created API endpoints for accessing project-specific data
 - Updated README with instructions for querying by project ID
 
-
-
-#### Story 9.2: Efficient Incremental Indexing
-**Description**: Implement efficient incremental indexing for large projects
-**Complexity**: High
-**Dependencies**: Story 8.1, Story 9.1
-
-##### Tasks:
-- [ ] 9.2.1: Design file change tracking system
-- [ ] 9.2.2: Implement content-based change detection
-- [ ] 9.2.3: Create dependency-aware update mechanism
-- [ ] 9.2.4: Implement partial graph updates
-- [ ] 9.2.5: Add performance optimizations for large projects
-
-
-
-#### Story 9.3: Multi-Project Management
+#### Story 8.4: Multi-Project Management
 **Description**: Implement tools for managing multiple projects
 **Complexity**: Medium
+**Dependencies**: Story 8.3
+
+##### Tasks:
+- [ ] 8.4.1: Create project selection UI in VS Code extension
+- [ ] 8.4.2: Implement project metadata storage
+- [ ] 8.4.3: Add project-specific configuration options
+- [ ] 8.4.4: Create project initialization workflow
+- [ ] 8.4.5: Implement project status indicators
+- [ ] 8.4.6: Check for non java files 
+- [ ] 8.4.7: Expand to other visualisations such as UML
+- [ ] 8.4.8: Implement a checkpoint system 
+
+### Epic 9: SAP CAP Java Framework Support
+**Goal**: Add support for parsing and analyzing SAP Cloud Application Programming (CAP) Java projects
+
+#### Story 9.1: CAP Java Parser Implementation
+**Description**: Implement specialized parser for CAP Java projects
+**Complexity**: High
+**Dependencies**: Story 2.1, Story 2.2
+
+##### Tasks:
+- [ ] 9.1.1: Research CAP Java framework structure and conventions
+- [ ] 9.1.2: Implement CAP entity model parser
+- [ ] 9.1.3: Create parser for CAP service definitions
+- [ ] 9.1.4: Add support for CAP annotations and decorators
+- [ ] 9.1.5: Implement CDS (Core Data Services) schema parser
+
+#### Story 9.2: CAP Relationship Detection
+**Description**: Implement detection of CAP-specific relationships
+**Complexity**: High
 **Dependencies**: Story 9.1
 
 ##### Tasks:
-- [ ] 9.3.1: Create project selection UI in VS Code extension
-- [ ] 9.3.2: Implement project metadata storage
-- [ ] 9.3.3: Add project-specific configuration options
-- [ ] 9.3.4: Create project initialization workflow
-- [ ] 9.3.5: Implement project status indicators
+- [ ] 9.2.1: Implement entity-to-service relationship detection
+- [ ] 9.2.2: Create parser for CAP event handlers
+- [ ] 9.2.3: Add support for CAP-specific dependency injection
+- [ ] 9.2.4: Implement detection of OData service relationships
+- [ ] 9.2.5: Create visualization for CAP service architecture
+
+#### Story 9.3: CAP-Specific Chunking and Embeddings
+**Description**: Implement specialized chunking and embeddings for CAP projects
+**Complexity**: Medium
+**Dependencies**: Story 9.1, Story 9.2
+
+##### Tasks:
+- [ ] 9.3.1: Design CAP-specific chunking strategy
+- [ ] 9.3.2: Implement specialized metadata for CAP chunks
+- [ ] 9.3.3: Create CAP-aware embedding generation
+- [ ] 9.3.4: Add CAP framework context to embeddings
+- [ ] 9.3.5: Implement CAP-specific search optimizations
 
 
 
