@@ -348,6 +348,10 @@ Error running codebase analysis:
                                     isUser: false
                                 });
                             }
+
+                            // Automatically regenerate visualizations after syncing
+                            console.log('Automatically regenerating visualizations after sync...');
+                            vscode.commands.executeCommand('extension-v1.visualizeRelationships');
                         } catch (error) {
                             console.error(`Error getting last sync time: ${error}`);
                             vscode.window.showInformationMessage('Codebase synced successfully!');
@@ -471,20 +475,40 @@ Error running codebase analysis:
         const workspaceRoot = path.dirname(extensionPath);
         const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
 
-        // Create visualizations directory if it doesn't exist
+        // Create central visualizations directory if it doesn't exist
+        const dataDir = path.join(workspaceRoot, 'data');
+        const centralVisualizationsDir = path.join(dataDir, 'visualizations', projectId);
+        if (!fs.existsSync(centralVisualizationsDir)) {
+            fs.mkdirSync(centralVisualizationsDir, { recursive: true });
+        }
+
+        // Also create project-specific visualizations directory for backward compatibility
         const visualizationsDir = path.join(workspaceFolder, 'visualizations');
         if (!fs.existsSync(visualizationsDir)) {
             fs.mkdirSync(visualizationsDir, { recursive: true });
         }
 
+        // Generate timestamp for the visualization files
+        const now = new Date();
+        const timestamp = now.getFullYear().toString() +
+                         (now.getMonth() + 1).toString().padStart(2, '0') +
+                         now.getDate().toString().padStart(2, '0') +
+                         now.getHours().toString().padStart(2, '0') +
+                         now.getMinutes().toString().padStart(2, '0') +
+                         now.getSeconds().toString().padStart(2, '0');
+
         // Command to run the visualization script
         const command = `cd "${codebaseAnalyserPath}" &&
             if [ -d "venv" ]; then
                 source venv/bin/activate &&
-                python3 scripts/visualize_code_relationships.py --repo-path "${workspaceFolder}" --output-dir "${visualizationsDir}" --project-id "${projectId}" &&
+                python3 scripts/visualize_from_db.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                # Also generate in the old location for backward compatibility
+                python3 scripts/visualize_from_db.py --project-id "${projectId}" --output-dir "${visualizationsDir}" &&
                 deactivate;
             else
-                python3 scripts/visualize_code_relationships.py --repo-path "${workspaceFolder}" --output-dir "${visualizationsDir}" --project-id "${projectId}";
+                python3 scripts/visualize_from_db.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                # Also generate in the old location for backward compatibility
+                python3 scripts/visualize_from_db.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
             fi`;
 
         vscode.window.showInformationMessage(`Visualizing code relationships for project: ${projectId}`);
@@ -537,10 +561,10 @@ Error running codebase analysis:
 
                         // Try to use the manual visualization script as a fallback
                         try {
-                            const manualVisualizePath = path.join(codebaseAnalyserPath, 'scripts', 'manual_visualize.py');
-                            if (fs.existsSync(manualVisualizePath)) {
-                                console.log('Trying manual visualization script as fallback...');
-                                const fallbackCommand = `python "${manualVisualizePath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
+                            const visualizeFromDbPath = path.join(codebaseAnalyserPath, 'scripts', 'visualize_from_db.py');
+                            if (fs.existsSync(visualizeFromDbPath)) {
+                                console.log('Trying visualize_from_db.py script as fallback...');
+                                const fallbackCommand = `python "${visualizeFromDbPath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
 
                                 cp.exec(fallbackCommand, (fallbackError, fallbackStdout, fallbackStderr) => {
                                     if (fallbackError) {
@@ -651,7 +675,11 @@ Error running codebase analysis:
         const workspaceRoot = path.dirname(extensionPath);
         const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
 
-        // Path to the visualizations directory
+        // Path to the central visualizations directory
+        const dataDir = path.join(workspaceRoot, 'data');
+        const centralVisualizationsDir = path.join(dataDir, 'visualizations', projectId);
+
+        // Also check the old visualizations directory for backward compatibility
         const visualizationsDir = path.join(workspaceFolder, 'visualizations');
 
         // Check if the visualizations directory exists
@@ -661,11 +689,11 @@ Error running codebase analysis:
                 fs.mkdirSync(visualizationsDir, { recursive: true });
 
                 // Run the manual visualization script
-                const manualVisualizePath = path.join(codebaseAnalyserPath, 'scripts', 'manual_visualize.py');
-                if (fs.existsSync(manualVisualizePath)) {
+                const visualizeFromDbPath = path.join(codebaseAnalyserPath, 'scripts', 'visualize_from_db.py');
+                if (fs.existsSync(visualizeFromDbPath)) {
                     vscode.window.showInformationMessage('Generating visualizations...');
 
-                    const fallbackCommand = `python "${manualVisualizePath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
+                    const fallbackCommand = `python "${visualizeFromDbPath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
 
                     cp.exec(fallbackCommand, (fallbackError, fallbackStdout, fallbackStderr) => {
                         if (fallbackError) {
@@ -695,21 +723,79 @@ Error running codebase analysis:
 
         // Function to show visualizations
         function showVisualizations() {
-            // Check for visualization files
-            const multiFileVisualizationPath = path.join(visualizationsDir, `${projectId}_multi_file_relationships.png`);
-            const relationshipTypesVisualizationPath = path.join(visualizationsDir, `${projectId}_relationship_types.png`);
-
             let visualizationsFound = false;
 
-            // Send visualizations to chat
-            if (fs.existsSync(multiFileVisualizationPath)) {
-                chatViewProvider.sendImageToChat(multiFileVisualizationPath, 'Multi-File Relationships Visualization:');
-                visualizationsFound = true;
+            // Function to find the latest visualization file
+            function findLatestVisualization(directory: string, filePattern: string): string | null {
+                if (!fs.existsSync(directory)) {
+                    return null;
+                }
+
+                try {
+                    // Get all files in the directory
+                    const files = fs.readdirSync(directory);
+
+                    // Filter files matching the pattern
+                    const matchingFiles = files.filter(file => file.includes(filePattern));
+
+                    if (matchingFiles.length === 0) {
+                        return null;
+                    }
+
+                    // Sort files by timestamp (newest first)
+                    matchingFiles.sort((a, b) => {
+                        // Extract timestamps if they exist
+                        const timestampA = a.match(/(\d{14})/);
+                        const timestampB = b.match(/(\d{14})/);
+
+                        if (timestampA && timestampB) {
+                            return timestampB[1].localeCompare(timestampA[1]);
+                        } else {
+                            // If no timestamps, sort by modification time
+                            const statA = fs.statSync(path.join(directory, a));
+                            const statB = fs.statSync(path.join(directory, b));
+                            return statB.mtime.getTime() - statA.mtime.getTime();
+                        }
+                    });
+
+                    // Return the path to the newest file
+                    return path.join(directory, matchingFiles[0]);
+                } catch (error) {
+                    console.error(`Error finding latest visualization: ${error}`);
+                    return null;
+                }
             }
 
-            if (fs.existsSync(relationshipTypesVisualizationPath)) {
+            // Try to find the latest visualizations in the central directory first
+            let multiFileVisualizationPath = findLatestVisualization(centralVisualizationsDir, 'multi_file_relationships');
+            let relationshipTypesVisualizationPath = findLatestVisualization(centralVisualizationsDir, 'relationship_types');
+
+            // If not found in central directory, check the old location
+            if (!multiFileVisualizationPath) {
+                multiFileVisualizationPath = path.join(visualizationsDir, `${projectId}_multi_file_relationships.png`);
+                if (!fs.existsSync(multiFileVisualizationPath)) {
+                    multiFileVisualizationPath = null;
+                }
+            }
+
+            if (!relationshipTypesVisualizationPath) {
+                relationshipTypesVisualizationPath = path.join(visualizationsDir, `${projectId}_relationship_types.png`);
+                if (!fs.existsSync(relationshipTypesVisualizationPath)) {
+                    relationshipTypesVisualizationPath = null;
+                }
+            }
+
+            // Send visualizations to chat
+            if (multiFileVisualizationPath) {
+                chatViewProvider.sendImageToChat(multiFileVisualizationPath, 'Multi-File Relationships Visualization:');
+                visualizationsFound = true;
+                console.log(`Using multi-file visualization: ${multiFileVisualizationPath}`);
+            }
+
+            if (relationshipTypesVisualizationPath) {
                 chatViewProvider.sendImageToChat(relationshipTypesVisualizationPath, 'Relationship Types Visualization:');
                 visualizationsFound = true;
+                console.log(`Using relationship types visualization: ${relationshipTypesVisualizationPath}`);
             }
 
             if (!visualizationsFound) {

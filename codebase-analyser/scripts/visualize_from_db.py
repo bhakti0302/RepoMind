@@ -146,9 +146,11 @@ def main():
     import argparse
     parser = argparse.ArgumentParser(description="Visualize code relationships from the database")
     parser.add_argument("--project-id", default="testshreya", help="Project ID")
-    parser.add_argument("--output-dir", default="/Users/shreyah/Documents/Projects/SAP/testshreya/visualizations", help="Output directory")
+    default_output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'testshreya', 'visualizations')
+    parser.add_argument("--output-dir", default=default_output_dir, help="Output directory")
     parser.add_argument("--db-path", default="./.lancedb", help="Path to the LanceDB database")
     parser.add_argument("--data-dir", default="../data", help="Path to the data directory")
+    parser.add_argument("--timestamp", default=None, help="Timestamp to include in the filename")
     args = parser.parse_args()
 
     # Create output directory
@@ -165,20 +167,40 @@ def main():
         # Build the graph from the database
         graph = storage._build_graph_from_dependencies()
 
-        # Filter nodes by project ID
-        project_nodes = []
-        for node, attrs in graph.nodes(data=True):
-            # Check if the node belongs to the project
-            if 'project_id' in attrs and attrs['project_id'] == args.project_id:
-                project_nodes.append(node)
+        # Get all chunks from the database
+        table = storage.db_manager.get_code_chunks_table()
+        chunks_df = table.to_pandas()
+        project_chunks = chunks_df[chunks_df['project_id'] == args.project_id]
+
+        # Get node IDs from the project chunks
+        project_nodes = project_chunks['node_id'].tolist()
+
+        # Add nodes that might be missing from the graph
+        for _, chunk in project_chunks.iterrows():
+            if chunk['node_id'] not in graph:
+                graph.add_node(
+                    chunk['node_id'],
+                    type=chunk['chunk_type'],
+                    name=chunk['name'],
+                    qualified_name=chunk['qualified_name'],
+                    project_id=chunk['project_id']
+                )
 
         # Create a subgraph with only the project nodes
         project_graph = graph.subgraph(project_nodes)
 
+        # Create filenames with timestamp if provided
+        if args.timestamp:
+            multi_file_filename = f"{args.project_id}_multi_file_relationships_{args.timestamp}.png"
+            relationship_types_filename = f"{args.project_id}_relationship_types_{args.timestamp}.png"
+        else:
+            multi_file_filename = f"{args.project_id}_multi_file_relationships.png"
+            relationship_types_filename = f"{args.project_id}_relationship_types.png"
+
         # Visualize the graph
         multi_file_path = visualize_graph(
             project_graph,
-            os.path.join(args.output_dir, f"{args.project_id}_multi_file_relationships.png"),
+            os.path.join(args.output_dir, multi_file_filename),
             f"Multi-File Relationships - {args.project_id}"
         )
 
@@ -201,7 +223,7 @@ def main():
         # Visualize the relationship types graph
         relationship_types_path = visualize_graph(
             relationship_types_graph,
-            os.path.join(args.output_dir, f"{args.project_id}_relationship_types.png"),
+            os.path.join(args.output_dir, relationship_types_filename),
             f"Different Types of Relationships - {args.project_id}"
         )
 

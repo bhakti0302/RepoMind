@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 
 # Source directory (where manual_visualize.py saved the visualizations)
-src_dir = Path("/Users/shreyah/Documents/Projects/SAP/testshreya/visualizations")
+src_dir = Path(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'testshreya', 'visualizations'))
 
 # Ensure the source directory exists
 os.makedirs(src_dir, exist_ok=True)
@@ -22,7 +22,8 @@ relationship_types_path = src_dir / f"{project_id}_relationship_types.png"
 
 if not multi_file_path.exists() or not relationship_types_path.exists():
     print("Visualizations not found. Running manual_visualize.py...")
-    os.system(f"python /Users/shreyah/Documents/Projects/SAP/RepoMind/manual_visualize.py --output-dir {src_dir}")
+    script_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'scripts', 'manual_visualize.py')
+    os.system(f"python {script_path} --output-dir {src_dir}")
 
 # Check again if the visualizations exist
 if multi_file_path.exists() and relationship_types_path.exists():

@@ -110,15 +110,20 @@ def create_sample_data(project_id):
         content="public interface Entity { String getId(); boolean isValid(); }",
         node_id="interface:Entity",
         qualified_name="com.example.Entity",
-        context={
-            "file_path": f"/Users/shreyah/Documents/Projects/SAP/{project_id}/Entity.java",
-            "package": "com.example",
-            "methods": [
-                {"name": "getId", "return_type": "String"},
-                {"name": "isValid", "return_type": "boolean"}
-            ]
-        }
+        file_path=f"{project_id}/Entity.java",
+        start_line=1,
+        end_line=3,
+        language="java"
     )
+    # Add context manually
+    entity_chunk.context = {
+        "file_path": f"{project_id}/Entity.java",
+        "package": "com.example",
+        "methods": [
+            {"name": "getId", "return_type": "String"},
+            {"name": "isValid", "return_type": "boolean"}
+        ]
+    }
     chunks.append(entity_chunk)
 
     # AbstractEntity class
@@ -128,20 +133,25 @@ def create_sample_data(project_id):
         content="public abstract class AbstractEntity implements Entity { ... }",
         node_id="class:AbstractEntity",
         qualified_name="com.example.AbstractEntity",
-        context={
-            "file_path": f"/Users/shreyah/Documents/Projects/SAP/{project_id}/AbstractEntity.java",
-            "package": "com.example",
-            "implements": ["Entity"],
-            "methods": [
-                {"name": "getId", "return_type": "String"},
-                {"name": "isValid", "return_type": "boolean"}
-            ],
-            "fields": [
-                {"name": "id", "type": "String"},
-                {"name": "valid", "type": "boolean"}
-            ]
-        }
+        file_path=f"{project_id}/AbstractEntity.java",
+        start_line=1,
+        end_line=10,
+        language="java"
     )
+    # Add context manually
+    abstract_entity_chunk.context = {
+        "file_path": f"{project_id}/AbstractEntity.java",
+        "package": "com.example",
+        "implements": ["Entity"],
+        "methods": [
+            {"name": "getId", "return_type": "String"},
+            {"name": "isValid", "return_type": "boolean"}
+        ],
+        "fields": [
+            {"name": "id", "type": "String"},
+            {"name": "valid", "type": "boolean"}
+        ]
+    }
     chunks.append(abstract_entity_chunk)
 
     # User class
@@ -151,23 +161,28 @@ def create_sample_data(project_id):
         content="public class User extends AbstractEntity { ... }",
         node_id="class:User",
         qualified_name="com.example.User",
-        context={
-            "file_path": f"/Users/shreyah/Documents/Projects/SAP/{project_id}/User.java",
-            "package": "com.example",
-            "extends": "AbstractEntity",
-            "methods": [
-                {"name": "getUsername", "return_type": "String"},
-                {"name": "getEmail", "return_type": "String"},
-                {"name": "addOrder", "return_type": "void"}
-            ],
-            "fields": [
-                {"name": "username", "type": "String"},
-                {"name": "email", "type": "String"},
-                {"name": "orders", "type": "List<Order>"},
-                {"name": "address", "type": "Address"}
-            ]
-        }
+        file_path=f"{project_id}/User.java",
+        start_line=1,
+        end_line=15,
+        language="java"
     )
+    # Add context manually
+    user_chunk.context = {
+        "file_path": f"{project_id}/User.java",
+        "package": "com.example",
+        "extends": "AbstractEntity",
+        "methods": [
+            {"name": "getUsername", "return_type": "String"},
+            {"name": "getEmail", "return_type": "String"},
+            {"name": "addOrder", "return_type": "void"}
+        ],
+        "fields": [
+            {"name": "username", "type": "String"},
+            {"name": "email", "type": "String"},
+            {"name": "orders", "type": "List<Order>"},
+            {"name": "address", "type": "Address"}
+        ]
+    }
     chunks.append(user_chunk)
 
     # Order class
@@ -177,24 +192,29 @@ def create_sample_data(project_id):
         content="public class Order extends AbstractEntity { ... }",
         node_id="class:Order",
         qualified_name="com.example.Order",
-        context={
-            "file_path": f"/Users/shreyah/Documents/Projects/SAP/{project_id}/Order.java",
-            "package": "com.example",
-            "extends": "AbstractEntity",
-            "methods": [
-                {"name": "getOrderNumber", "return_type": "String"},
-                {"name": "getOrderDate", "return_type": "Date"},
-                {"name": "getTotalAmount", "return_type": "double"},
-                {"name": "getUser", "return_type": "User"}
-            ],
-            "fields": [
-                {"name": "orderNumber", "type": "String"},
-                {"name": "orderDate", "type": "Date"},
-                {"name": "totalAmount", "type": "double"},
-                {"name": "user", "type": "User"}
-            ]
-        }
+        file_path=f"{project_id}/Order.java",
+        start_line=1,
+        end_line=15,
+        language="java"
     )
+    # Add context manually
+    order_chunk.context = {
+        "file_path": f"{project_id}/Order.java",
+        "package": "com.example",
+        "extends": "AbstractEntity",
+        "methods": [
+            {"name": "getOrderNumber", "return_type": "String"},
+            {"name": "getOrderDate", "return_type": "Date"},
+            {"name": "getTotalAmount", "return_type": "double"},
+            {"name": "getUser", "return_type": "User"}
+        ],
+        "fields": [
+            {"name": "orderNumber", "type": "String"},
+            {"name": "orderDate", "type": "Date"},
+            {"name": "totalAmount", "type": "double"},
+            {"name": "user", "type": "User"}
+        ]
+    }
     chunks.append(order_chunk)
 
     # Address class
@@ -204,25 +224,30 @@ def create_sample_data(project_id):
         content="public class Address { ... }",
         node_id="class:Address",
         qualified_name="com.example.Address",
-        context={
-            "file_path": f"/Users/shreyah/Documents/Projects/SAP/{project_id}/Address.java",
-            "package": "com.example",
-            "methods": [
-                {"name": "getStreet", "return_type": "String"},
-                {"name": "getCity", "return_type": "String"},
-                {"name": "getState", "return_type": "String"},
-                {"name": "getZipCode", "return_type": "String"},
-                {"name": "getCountry", "return_type": "String"}
-            ],
-            "fields": [
-                {"name": "street", "type": "String"},
-                {"name": "city", "type": "String"},
-                {"name": "state", "type": "String"},
-                {"name": "zipCode", "type": "String"},
-                {"name": "country", "type": "String"}
-            ]
-        }
+        file_path=f"{project_id}/Address.java",
+        start_line=1,
+        end_line=15,
+        language="java"
     )
+    # Add context manually
+    address_chunk.context = {
+        "file_path": f"{project_id}/Address.java",
+        "package": "com.example",
+        "methods": [
+            {"name": "getStreet", "return_type": "String"},
+            {"name": "getCity", "return_type": "String"},
+            {"name": "getState", "return_type": "String"},
+            {"name": "getZipCode", "return_type": "String"},
+            {"name": "getCountry", "return_type": "String"}
+        ],
+        "fields": [
+            {"name": "street", "type": "String"},
+            {"name": "city", "type": "String"},
+            {"name": "state", "type": "String"},
+            {"name": "zipCode", "type": "String"},
+            {"name": "country", "type": "String"}
+        ]
+    }
     chunks.append(address_chunk)
 
     # Add nodes to the dependency graph
@@ -525,6 +550,7 @@ def main():
     parser.add_argument("--repo-path", required=True, help="Path to the Java repository")
     parser.add_argument("--output-dir", default="visualizations", help="Directory to save visualizations")
     parser.add_argument("--project-id", default=None, help="Project ID (defaults to folder name)")
+    parser.add_argument("--timestamp", default=None, help="Timestamp to include in the filename")
 
     args = parser.parse_args()
 
@@ -536,6 +562,9 @@ def main():
 
     # Set project ID if not provided
     project_id = args.project_id or repo_path.name
+
+    # Get timestamp if provided
+    timestamp = args.timestamp
 
     # Create output directory if it doesn't exist
     output_dir = Path(args.output_dir)
@@ -549,11 +578,19 @@ def main():
         logger.warning("No chunks found in the repository. Using sample data for visualization.")
         chunks, dependency_graph = create_sample_data(project_id)
 
+    # Create filenames with timestamp if provided
+    if timestamp:
+        multi_file_filename = f"{project_id}_multi_file_relationships_{timestamp}.png"
+        relationship_types_filename = f"{project_id}_relationship_types_{timestamp}.png"
+    else:
+        multi_file_filename = f"{project_id}_multi_file_relationships.png"
+        relationship_types_filename = f"{project_id}_relationship_types.png"
+
     # Create and visualize multi-file graph
     G_multi_file = create_multi_file_graph(chunks, dependency_graph)
     visualize_graph(
         G_multi_file,
-        output_dir / f"{project_id}_multi_file_relationships.png",
+        output_dir / multi_file_filename,
         f"Multi-File Relationships - {project_id}"
     )
 
@@ -561,7 +598,7 @@ def main():
     G_relationship_types = create_relationship_types_graph(chunks, dependency_graph)
     visualize_graph(
         G_relationship_types,
-        output_dir / f"{project_id}_relationship_types.png",
+        output_dir / relationship_types_filename,
         f"Different Types of Relationships - {project_id}"
     )
 
@@ -569,8 +606,8 @@ def main():
 
     # Return the paths to the visualizations for the VS Code extension
     result = {
-        "multi_file_relationships": str(output_dir / f"{project_id}_multi_file_relationships.png"),
-        "relationship_types": str(output_dir / f"{project_id}_relationship_types.png")
+        "multi_file_relationships": str(output_dir / multi_file_filename),
+        "relationship_types": str(output_dir / relationship_types_filename)
     }
 
     print(json.dumps(result))
