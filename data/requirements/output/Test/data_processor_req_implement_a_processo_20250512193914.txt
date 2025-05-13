@@ -1,0 +1,112 @@
+
+# Implementation Instructions
+
+## Step 1: Create a New File
+Create a new file at the following path:
+`src/main/java/com/example/ProcessorData.java`
+
+## Step 2: Add the Generated Code
+Copy the code below into your new file:
+
+
+
+## Generated Code (java class)
+Code Block 1 (java):
+```java
+/**
+ * Processor for string data, providing functionality to process, calculate total length, and filter by length.
+ */
+public class ProcessorData {
+
+    /**
+     * Processes a list of strings and returns processed data objects with the string value and its length.
+     * 
+     * @param data The list of strings to process
+     * @return A list of processed data objects
+     */
+    public List<ProcessedStringData> processStrings(List<String> data) {
+        List<ProcessedStringData> results = new ArrayList<>();
+        for (String item : data) {
+            ProcessedStringData processedItem = new ProcessedStringData(item, item.length());
+            results.add(processedItem);
+        }
+        return results;
+    }
+
+    /**
+     * Calculates the total length of all strings in a list.
+     * 
+     * @param data The list of strings to calculate length for
+     * @return The total length of all strings
+     */
+    public int calculateTotalStringLength(List<String> data) {
+        return data.stream().mapToInt(String::length).sum();
+    }
+
+    /**
+     * Filters strings by a minimum length threshold.
+     * 
+     * @param data       The list of strings to filter
+     * @param minLength The minimum length threshold
+     * @return A filtered list of strings
+     */
+    public List<String> filterByLength(List<String> data, int minLength) {
+        return data.stream().filter(item -> item.length() >= minLength).collect(Collectors.toList());
+    }
+
+    /**
+     * Data class representing processed string data with the string value and its length.
+     */
+    public static class ProcessedStringData {
+        private final String value;
+        private final int length;
+
+        public ProcessedStringData(String value, int length) {
+            this.value = value;
+            this.length = length;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public int getLength() {
+            return length;
+        }
+
+        @Override
+        public String toString() {
+            return "ProcessedStringData{" +
+                    "value='" + value + '\'' +
+                    ", length=" + length +
+                    '}';
+        }
+    }
+}
+```
+
+Code Block 2 (java):
+```java
+public class Main {
+    public static void main(String[] args) {
+        ProcessorData processor = new ProcessorData();
+        List<String> data = List.of("Hello", "World", "Java", "Programming");
+        
+        // Process Strings
+        List<ProcessorData.ProcessedStringData> processed = processor.processStrings(data);
+        System.out.println("Processed Data:");
+        processed.forEach(System.out::println);
+        
+        // Calculate Total Length
+        int totalLength = processor.calculateTotalStringLength(data);
+        System.out.println("\nTotal Length: " + totalLength);
+        
+        // Filter by Length
+        List<String> filtered = processor.filterByLength(data, 5);
+        System.out.println("\nFiltered Data (Length >= 5):");
+        filtered.forEach(System.out::println);
+    }
+}
+```
+
+

@@ -1,0 +1,115 @@
+
+# Implementation Instructions
+
+## Step 1: Create a New File
+Create a new file at the following path:
+`src/main/java/com/example/responsible.java`
+
+## Step 2: Add the Generated Code
+Copy the code below into your new file:
+
+
+
+## Generated Code (java class)
+Code Block 1 (java):
+```java
+/**
+ * ProcessorData class responsible for processing string data.
+ * It provides functionality to process strings, calculate total length, and filter by minimum length.
+ */
+public class ProcessorData {
+
+    /**
+     * Data object to hold processed string data (value and length).
+     */
+    public static class ProcessedData {
+        private final String value;
+        private final int length;
+
+        /**
+         * Constructor for ProcessedData.
+         * @param value the string value
+         * @param length the length of the string
+         */
+        public ProcessedData(String value, int length) {
+            this.value = value;
+            this.length = length;
+        }
+
+        /**
+         * Getter for the string value.
+         * @return the string value
+         */
+        public String getValue() {
+            return value;
+        }
+
+        /**
+         * Getter for the string length.
+         * @return the length of the string
+         */
+        public int getLength() {
+            return length;
+        }
+    }
+
+    /**
+     * Process a list of strings and return a list of ProcessedData objects.
+     * @param strings list of strings to process
+     * @return list of ProcessedData objects containing each string and its length
+     */
+    public List<ProcessedData> processStrings(List<String> strings) {
+        return strings.stream()
+                .map(s -> new ProcessedData(s, s.length()))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Calculate the total length of all strings in a list.
+     * @param strings list of strings
+     * @return total length of all strings
+     */
+    public int calculateTotalLength(List<String> strings) {
+        return strings.stream()
+                .mapToInt(String::length)
+                .sum();
+    }
+
+    /**
+     * Filter strings by a minimum length threshold.
+     * @param strings list of strings to filter
+     * @param minLength minimum length threshold
+     * @return list of strings that meet or exceed the minimum length
+     */
+    public List<String> filterByMinLength(List<String> strings, int minLength) {
+        return strings.stream()
+                .filter(s -> s.length() >= minLength)
+                .collect(Collectors.toList());
+    }
+}
+```
+
+Code Block 2 (java):
+```java
+public class Main {
+    public static void main(String[] args) {
+        ProcessorData processor = new ProcessorData();
+        List<String> exampleStrings = Arrays.asList("apple", "banana", "cherry");
+
+        // Process Strings
+        List<ProcessorData.ProcessedData> processed = processor.processStrings(exampleStrings);
+        processed.forEach(pd -> System.out.println("Value: " + pd.getValue() + ", Length: " + pd.getLength()));
+
+        // Calculate Total Length
+        int totalLength = processor.calculateTotalLength(exampleStrings);
+        System.out.println("Total Length: " + totalLength);
+
+        // Filter by Min Length
+        int minLengthThreshold = 6;
+        List<String> filteredStrings = processor.filterByMinLength(exampleStrings, minLengthThreshold);
+        System.out.println("Filtered Strings (>= " + minLengthThreshold + "): " + filteredStrings);
+    }
+}
+```
+
+

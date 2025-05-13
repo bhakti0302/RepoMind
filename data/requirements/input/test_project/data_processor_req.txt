@@ -1,0 +1,5 @@
+Implement a ProcessorData class that can process string data.
+The class should have the following functionality:
+1. Process a list of strings and return processed data objects with the string value and its length
+2. Calculate the total length of all strings in a list
+3. Filter strings by a minimum length threshold

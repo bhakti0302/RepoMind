@@ -1,0 +1,23 @@
+
+# Implementation Instructions
+
+## Step 1: Locate the File
+Find the file that needs to be modified at its current location.
+
+## Step 2: Replace or Update the Code
+Replace the existing code with the generated code below, or update the specific sections as indicated.
+
+
+
+## Implementation Instructions
+
+### File to Modify
+The code should be inserted into the file: Unknown
+
+### Code to Insert
+Code Block 1 (java):
+```java
+// Error: Error code: 402 - {'error': {'message': 'Insufficient credits. Add more using https://openrouter.ai/settings/credits', 'code': 402}}
+```
+
+
