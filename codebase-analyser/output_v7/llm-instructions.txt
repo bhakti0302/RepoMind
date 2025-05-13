@@ -1,0 +1,141 @@
+It seems like there was a misunderstanding in the prompt interpretation. Given the strict format you provided initially and the detailed instructions that followed (which don't align with the initial format request but seem to be a more comprehensive ask), I'll provide a response that bridges both, focusing first on the exact format you initially requested, followed by a brief alignment with the more detailed instructions for clarity.
+
+### **Initial Format Request Compliance**
+
+#### Overview :
+Implementation to display employees by department involves adding a filtering method to the service layer and utilizing it in the main application class.
+
+#### Key Components :
+- `EmployeeService` class
+- `Main` class
+- New Method: `getEmployeesByDepartment(String department)`
+
+#### Code Changes :
+
+  **Add to** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java**
+  ```java
+  /**
+   * Filters employees by the specified department.
+   * @param department Name of the department to filter by.
+   * @return List of employees in the specified department.
+   */
+  public List<Employee> getEmployeesByDepartment(String department) {
+      return employees.stream()
+              .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
+              .toList();
+  }
+  ```
+
+  **Modify** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+  ```java
+  public static void main(String[] args) {
+      EmployeeService service = new EmployeeService();
+      service.addEmployee(new Employee(1, "Alice", "HR"));
+      service.addEmployee(new Employee(2, "Bob", "IT"));
+      service.addEmployee(new Employee(3, "Charlie", "HR")); // Added for demo
+
+      System.out.println("All Employees:");
+      for (Employee e : service.getAllEmployees()) {
+          System.out.println(e);
+      }
+      
+      String targetDepartment = "HR";
+      System.out.println("\nEmployees in " + targetDepartment + " Department:");
+      for (Employee e : service.getEmployeesByDepartment(targetDepartment)) {
+          System.out.println(e);
+      }
+  }
+  ```
+
+  **Ensure in** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java` (No Change, Verification)
+  ```java
+  // Verify getters are present for id, name, department
+  public int getId() { return id; }
+  public String getName() { return name; }
+  public String getDepartment() { return department; }
+  ```
+
+---
+
+### **Alignment with Detailed Instructions Request (Condensed for Brevity)**
+
+#### 1. Overview of the Implementation Approach
+- **Service Layer Enhancement**: Add department-based filtering in `EmployeeService`.
+- **Main Class Update**: Demonstrate the new filtering capability.
+
+#### 2. Key Components and Their Responsibilities
+- **`EmployeeService`**: Manages employee data, including the new filtering method.
+- **`Main` Class**: Utilizes `EmployeeService` to add employees and display them, both all and by department.
+
+#### 3. Detailed Implementation Steps
+1. **Enhance `EmployeeService`**:
+   - Add `getEmployeesByDepartment(String department)` method.
+2. **Update `Main` Class**:
+   - Add example employees across different departments.
+   - Call `getEmployeesByDepartment` for a specified department and print results.
+
+#### 4. Code Examples (Already Provided Above)
+- **Critical Part in `EmployeeService`**: The `getEmployeesByDepartment` method.
+- **Usage in `Main` Class**: Demonstrated in the modified `main` method.
+
+#### 5. Testing Approach (Not Requested in Initial Format but Mentioned in Instructions)
+- **Unit Testing**:
+  - Test `getEmployeesByDepartment` with existing and non-existing departments.
+  - Verify case insensitivity.
+- **Integration Testing** (in `Main` or a dedicated test class):
+  - Add employees to different departments.
+  - Assert the correct employees are returned for each department test case. 
+
+**Note**: For a comprehensive solution, including testing, the above step 5 would be elaborated with specific test cases and potentially code snippets for unit tests (e.g., using JUnit). However, adhering to your initial request, the focus remains on the code changes and a brief overview. 
+
+### Detailed Testing Approach (Added for Completeness, Though Not Initially Requested)
+
+#### Unit Tests for `EmployeeService`
+
+```java
+// Example using JUnit
+public class EmployeeServiceTest {
+
+    @Test
+    public void testGetEmployeesByDepartmentExisting() {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Test", "IT"));
+        
+        List<Employee> employees = service.getEmployeesByDepartment("IT");
+        assertNotNull(employees);
+        assertEquals(1, employees.size());
+    }
+
+    @Test
+    public void testGetEmployeesByDepartmentNonExisting() {
+        EmployeeService service = new EmployeeService();
+        
+        List<Employee> employees = service.getEmployeesByDepartment("Finance");
+        assertNotNull(employees);
+        assertTrue(employees.isEmpty());
+    }
+
+    @Test
+    public void testGetEmployeesByDepartmentCaseInsensitive() {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Test", "it"));
+        
+        List<Employee> employees = service.getEmployeesByDepartment("IT");
+        assertNotNull(employees);
+        assertEquals(1, employees.size());
+    }
+}
+```
+
+#### Integration Test in `Main` Class (Simplified, Actual Implementation Might Vary)
+
+```java
+// Within main, after adding employees
+System.out.println("Integration Test: Employees in HR");
+List<Employee> hrEmployees = service.getEmployeesByDepartment("HR");
+if (hrEmployees.size() != 2) {
+    System.err.println("Integration Test Failed: Expected 2 HR employees");
+} else {
+    System.out.println("Integration Test Passed");
+}
+```

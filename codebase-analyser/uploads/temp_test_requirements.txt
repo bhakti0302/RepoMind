@@ -1,0 +1,16 @@
+Business Requirement: Display Book Availability by Author
+
+Objective:
+Allow users to view all books by a specific author and see their availability status.
+
+Functional Requirements:
+1. Search by Author
+   - The system should list all books written by a given author.
+
+2. Show Availability
+   - For each book, display whether it is currently "Issued" or "Available".
+
+Suggested Code Additions:
+- Add a method `Library.searchBooksByAuthor(String author)` that filters books by author.
+- Display the title and availability status for each matching book.
+

@@ -1,0 +1,50 @@
+--- Document 1: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+import java.util.ArrayList;
+
+--- Document 2: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+import java.util.List;
+
+--- Document 3: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+
+
+        for (Employee e : service.getAllEmployees()) {
+            System.out.println(e);
+        }
+
+--- Document 4: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+public List<Employee> getAllEmployees() {
+        return employees;
+    }
+
+--- Document 5: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+import com.company.service.EmployeeService;
+
+--- Document 6: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+public void addEmployee(Employee employee) {
+        employees.add(employee);
+    }
+
+--- Document 7: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+public class EmployeeService {
+    private List<Employee> employees = new ArrayList<>();
+
+    public void addEmployee(Employee employee) {
+        employees.add(employee);
+    }
+
+    public List<Employee> getAllEmployees() {
+        return employees;
+    }
+}
+
+--- Document 8: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+import com.company.model.Employee;
+

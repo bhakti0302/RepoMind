@@ -219,10 +219,10 @@ RepoMind/
 **Dependencies**: Story 1.1
 
 ##### Tasks:
-- [x] 3.1.1: Install and configure spaCy
+- [ ] 3.1.1: Install and configure spaCy
 - [ ] 3.1.2: Set up Named Entity Recognition for requirements
 - [ ] 3.1.3: Implement key component extraction
-- [x] 3.1.4: Create utility functions for text processing
+- [ ] 3.1.4: Create utility functions for text processing
 - [ ] 3.1.5: Add error handling for NLP operations
 
 ###### Completed in 3.1.1:

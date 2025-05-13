@@ -1,0 +1,111 @@
+# NLP Analysis Pipeline: System Flow and Steps
+
+## Overview
+
+The NLP Analysis Pipeline is a comprehensive system that processes business requirements, retrieves relevant code context using RAG (Retrieval-Augmented Generation), and generates code implementations using LLM technology. The system is designed with a modular architecture and integrates with VS Code for a seamless user experience.
+
+## System Flow
+
+### 1. Input Processing
+1. **User submits business requirements** through the VS Code extension
+2. **File attachment handler** validates and processes the input file
+3. **Requirements parser** analyzes the text using spaCy NLP
+4. **Entity extractor** identifies key software engineering concepts
+5. **Component analyzer** extracts actions, constraints, and requirements
+6. **Search queries** are generated based on the extracted information
+
+### 2. Context Retrieval (RAG)
+1. **Vector search** finds relevant code chunks in the LanceDB database
+2. **Graph enhancer** adds related code through graph relationships:
+   - First hop: Retrieves architectural patterns
+   - Second hop: Retrieves implementation details
+   - Additional hops: Retrieves related components
+3. **Relevance scorer** ranks results based on:
+   - Semantic similarity
+   - Code type relevance
+   - Graph proximity
+   - Recency
+4. **Context builder** creates context windows from top results
+5. **Context combiner** merges contexts and removes duplicates
+
+### 3. Code Generation
+1. **Prompt builder** creates prompts for the LLM based on:
+   - Business requirements
+   - Retrieved code context
+   - Few-shot examples (if available)
+2. **LLM client** sends the prompt to NVIDIA's Llama 3.3 Nemotron Super 49B model
+3. **Response handler** processes the LLM's response
+4. **Output formatter** saves the generated code to llm-output.txt
+
+### 4. Validation and Refinement
+1. **Code validator** checks the syntax and style of the generated code
+2. **Feedback loop** iteratively improves the code based on validation results
+3. **Output display** shows the results in VS Code
+
+### 5. User Feedback
+1. **User reviews** the generated code
+2. **Feedback collection** gathers user input for future improvements
+3. **System learning** improves prompt strategies based on feedback
+
+## Detailed Steps
+
+### Step 1: File Attachment and Initial Processing
+1. User attaches a business requirements document in VS Code
+2. `FileAttachmentHandler` validates the file format and size
+3. File is stored in the upload directory
+4. `VSCodeIntegration` initiates the processing pipeline
+5. Processing status is displayed to the user
+
+### Step 2: NLP Analysis of Requirements
+1. `RequirementsParser` parses the text using spaCy
+2. `EntityExtractor` identifies entities like classes, methods, variables
+3. `ComponentAnalyzer` extracts functional requirements, constraints
+4. `TextProcessor` cleans and normalizes the text
+5. Search queries are generated for the RAG system
+
+### Step 3: RAG-Based Context Retrieval
+1. `VectorSearch` finds relevant code chunks using semantic search
+2. `GraphEnhancer` adds related code through graph relationships
+3. `MultiHopRAG` performs multi-hop traversal:
+   - First hop: Retrieves architectural patterns (classes, interfaces)
+   - Second hop: Retrieves implementation details (methods, fields)
+   - Additional hops: Retrieves related components
+4. `RelevanceScorer` ranks results using a weighted scoring system
+5. `ContextBuilder` creates context windows from top results
+6. `ContextCombiner` merges contexts and removes duplicates
+
+### Step 4: Code Generation
+1. `PromptBuilder` creates a prompt for the LLM
+2. Environment variables are loaded from the .env file
+3. `NVIDIALlamaClient` authenticates with the API
+4. Prompt is sent to the LLM with configured parameters
+5. LLM generates code based on the requirements and context
+6. Generated code is stored in llm-output.txt
+7. `OutputFormatter` formats the output for display
+
+### Step 5: Result Display and Feedback
+1. `OutputDisplay` shows the results in VS Code
+2. User can view the generated code and processing details
+3. `FeedbackLoop` collects user feedback
+4. System can iteratively improve the code based on feedback
+
+## Configuration
+The system is configured through:
+1. `.env` file for environment variables
+2. Command-line arguments for overrides
+3. VS Code extension settings
+
+Key configuration parameters include:
+- LLM API key and model name
+- Temperature and max tokens for generation
+- Database path and output directory
+- RAG parameters (number of results, context length)
+
+## Output
+The system produces:
+1. `llm-instructions.txt` containing the prompt sent to the LLM
+2. `llm-output.txt` containing the generated code
+3. HTML view of the processing results
+4. Formatted output for display in VS Code
+
+This comprehensive pipeline transforms business requirements into code implementations by leveraging NLP, RAG, and LLM technologies in a seamless, integrated workflow.

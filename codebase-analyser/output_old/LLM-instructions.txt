@@ -1,0 +1,85 @@
+# Requirements
+
+Business Requirement: Display Employees by Department
+
+Objective:
+Allow the system to list all employees belonging to a specific department.
+
+Functional Requirements:
+1. Filter by Department
+   - Users should be able to enter a department name (e.g., "Engineering", "HR").
+   - The system should display all employees working in that department.
+
+2. Display Details
+   - For each matching employee, display their name, ID, and role.
+
+Suggested Code Enhancements:
+- Add a method `getEmployeesByDepartment(String department)` in the `EmployeeManager` class.
+- Use this method in the main class to demonstrate filtering functionality.
+
+# Context
+
+--- Document 1: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+import java.util.ArrayList;
+
+--- Document 2: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+import java.util.List;
+
+--- Document 3: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+
+
+        for (Employee e : service.getAllEmployees()) {
+            System.out.println(e);
+        }
+
+--- Document 4: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+public List<Employee> getAllEmployees() {
+        return employees;
+    }
+
+--- Document 5: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+import com.company.service.EmployeeService;
+
+--- Document 6: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+public void addEmployee(Employee employee) {
+        employees.add(employee);
+    }
+
+--- Document 7: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+public class EmployeeService {
+    private List<Employee> employees = new ArrayList<>();
+
+    public void addEmployee(Employee employee) {
+        employees.add(employee);
+    }
+
+    public List<Employee> getAllEmployees() {
+        return employees;
+    }
+}
+
+--- Document 8: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+import com.company.model.Employee;
+
+
+
+# Instructions
+
+Based on the provided requirements and context, implement the necessary code changes.
+
+Please provide your implementation in the following format:
+
+## File: [file_path]
+
+```[language]
+// Your code here
+```
+

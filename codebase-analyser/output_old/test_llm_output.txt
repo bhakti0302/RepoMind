@@ -1,0 +1,1 @@
+Error generating text: 401 Client Error: Unauthorized for url: https://api.together.xyz/v1/completions

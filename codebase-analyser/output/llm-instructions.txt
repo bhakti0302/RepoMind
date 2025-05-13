@@ -1,0 +1,82 @@
+Given the strict format requirements and the instruction to only fill the parts that need code changes (without testing approach, implementation plan, etc.), I'll adapt the response to fit as closely as possible while providing necessary context for clarity. Since the format provided in the prompt doesn't fully align with the "Instructions" section, I'll address both, but primarily focus on the initial format for the code changes as requested.
+
+### **Overview** 
+Implementing the "Display Employees by Department" feature involves enhancing the `EmployeeService` class to filter employees by department and updating the `Main` class to demonstrate this functionality.
+
+### **Key Components** 
+- **Employee.java**: Holds employee data.
+- **EmployeeService.java**: Manages employee data, to be enhanced for department filtering.
+- **Main.java**: Demonstrates the application's functionality, to be updated for department filtering demo.
+
+### **Code Changes** 
+
+#### **Create** to `com/company/service/EmployeeService.java` (New Method)
+```java
+/**
+ * Filters employees by the specified department.
+ * @param department Name of the department to filter by.
+ * @return List of employees in the specified department.
+ */
+public List<Employee> getEmployeesByDepartment(String department) {
+    return employees.stream()
+            .filter(employee -> employee.department.equalsIgnoreCase(department))
+            .collect(Collectors.toList());
+}
+```
+
+#### **Modify** `com/company/model/Employee.java` (ToString for Better Display)
+```java
+@Override
+public String toString() {
+    return "Employee{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", department='" + department + '\'' +
+            ", role='" + role + '\'' + // Assuming 'role' exists, if not, add it
+            '}';
+}
+```
+**Note**: If the `role` field does not exist in `Employee.java`, **Add** it:
+```java
+private String role;
+
+public Employee(int id, String name, String department, String role) {
+    this.id = id;
+    this.name = name;
+    this.department = department;
+    this.role = role;
+}
+```
+
+#### **Update** `com/company/app/Main.java` (Demonstrate Department Filtering)
+```java
+public static void main(String[] args) {
+    EmployeeService service = new EmployeeService();
+    service.addEmployee(new Employee(1, "Alice", "HR", "Manager")); // Assuming 'role' is added
+    service.addEmployee(new Employee(2, "Bob", "IT", "Developer"));
+    service.addEmployee(new Employee(3, "Charlie", "HR", "Assistant"));
+
+    System.out.println("Employees in HR Department:");
+    for (Employee e : service.getEmployeesByDepartment("HR")) {
+        System.out.println(e);
+    }
+}
+```
+
+#### **Insert** (If Not Already Present) to `com/company/service/EmployeeService.java` (Imports for Stream API)
+```java
+import java.util.stream.Collectors;
+```
+
+### **Detailed Implementation Steps & Code Examples for Critical Parts**
+- **Step 1**: Enhance `EmployeeService` with `getEmployeesByDepartment`.
+  - **Code**: Provided in **Create** section above.
+- **Step 2**: Ensure `Employee` class has a `toString` method for clear output.
+  - **Code**: Provided in **Modify** section above.
+- **Step 3**: Update `Main` class to demo filter functionality.
+  - **Code**: Provided in **Update** section above.
+
+### **Note on Unused Sections for Compliance**
+- **Testing Approach**: Not Provided as per Instructions.
+- **Implementation Plan**: Incorporated into **Overview**, **Key Components**, and **Detailed Implementation Steps**.
+- **Other Unfilled Sections**: Omitted for brevity and compliance with the "only fill what's necessary" guideline.

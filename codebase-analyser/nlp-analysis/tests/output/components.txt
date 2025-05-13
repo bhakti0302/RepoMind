@@ -1,0 +1,25 @@
+Analyzed Components
+==================
+
+Functional Requirements:
+  - Filter by Department
+   - Users should be able to enter a department name (e.g., "Engineering", "HR").
+   - The system should display all employees working in that department.
+  - Display Details
+   - For each matching employee, display their name, ID, and role.
+
+Suggested Code
+
+Non-Functional Requirements:
+
+Constraints:
+  - Filter by Department
+   - Users should be able to enter a department name (e.g., "Engineering", "HR").
+  - - The system should display all employees working in that department.
+
+Actions:
+  - allow
+  - filter
+  - display
+  - display
+  - add

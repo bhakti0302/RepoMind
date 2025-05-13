@@ -1,0 +1,55 @@
+Business Requirement: Display Employees by Department
+
+Objective:
+Allow the system to list all employees belonging to a specific department.
+
+Functional Requirements:
+1. Filter by Department
+   - Users should be able to enter a department name (e.g., "Engineering", "HR").
+   - The system should display all employees working in that department.
+
+2. Display Details
+   - For each matching employee, display their name, ID, and role.
+
+Suggested Code Enhancements:
+- Add a method `getEmployeesByDepartment(String department)` in the `EmployeeManager` class.
+- Use this method in the main class to demonstrate filtering functionality.
+
+Prompt:
+The output should be in this format :
+
+Overview :
+
+
+Key Components :
+
+
+Code Changes :
+  Create to path_of the file 
+  ```
+    // Your code here
+  ```
+
+ Add to path_of the file 
+  ```
+    // Your code here
+  ```
+
+  Modify to path_of the file 
+  ```
+    // Your code here
+  ```
+  Update to path_of the file 
+  ```
+    // Your code here
+  ```
+  Insert to path_of the file 
+  ```
+    // Your code here
+  ```
+Do not give testing approach.
+DO NOT give implementation plan or testing plan.
+Just fill the parts in the above format that have code changes according to you.
+You do not need to fill all the above parts , just the one that needs to be changed. 
+If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords.
+Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.

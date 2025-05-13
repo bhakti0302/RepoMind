@@ -1,0 +1,82 @@
+Below is a simple Java class that represents an `Employee` with `id`, `name`, and `department` properties. This example includes:
+
+- Private fields for encapsulation
+- Public constructors for initialization
+- Getter and Setter methods for accessing and modifying the properties
+- `toString()` method for a meaningful string representation of the `Employee` object
+- `equals()` and `hashCode()` methods for comparing objects (best practice when dealing with collections or maps)
+
+```java
+public class Employee {
+
+    private Long id;
+    private String name;
+    private String department;
+
+    // No-argument constructor (required for certain frameworks and for flexibility)
+    public Employee() {}
+
+    // All-argument constructor
+    public Employee(Long id, String name, String department) {
+        this.id = id;
+        this.name = name;
+        this.department = department;
+    }
+
+    // Getters
+    public Long getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    // Setters
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    @Override
+    public String toString() {
+        return "Employee{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", department='" + department + '\'' +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Employee employee = (Employee) o;
+
+        if (id != null ? !id.equals(employee.id) : employee.id != null) return false;
+        if (name != null ? !name.equals(employee.name) : employee.name != null) return false;
+        return department != null ? department.equals(employee.department) : employee.department == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (department != null ? department.hashCode() : 0);
+        return result;
+    }
+}
+```
+

@@ -53,6 +53,8 @@ RepoMind is an AI-powered coding assistant that provides intelligent code unders
 ```bash
 cd codebase-analyser
 python -m venv venv
+python3 -m venv venv
+
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```

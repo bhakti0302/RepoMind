@@ -46,6 +46,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 this._handleAttachFile(webviewView.webview);
             } else if (message.command === commands.OPEN_IMAGE) {
                 this._handleOpenImage(message.path);
+            } else if (message.command === 'openFile') {
+                // Handle openFile command
+                vscode.commands.executeCommand('extension-v1.openFile', message.path);
             } else if (message.command === commands.VISUALIZE_RELATIONSHIPS) {
                 this._handleVisualizeRelationships(webviewView.webview);
             }
@@ -61,7 +64,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private _handleUserMessage(webview: vscode.Webview, text: string) {
+    private async _handleUserMessage(webview: vscode.Webview, text: string) {
         // Check for misspellings and suggest corrections
         const correction = suggestCorrection(text);
         if (correction && correction !== text) {
@@ -78,11 +81,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             }, 500);
         } else {
             // Process the original text
-            this._processUserMessage(webview, text);
+            await this._processUserMessage(webview, text);
         }
     }
 
-    private _processUserMessage(webview: vscode.Webview, text: string) {
+    private async _processUserMessage(webview: vscode.Webview, text: string) {
         // Generate a response using the chat assistant
         const response = generateResponse(text);
 
@@ -90,6 +93,39 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         if (response.command === commands.VISUALIZE_RELATIONSHIPS) {
             // Handle visualization request
             this._handleVisualizeRelationships(webview);
+        } else if (response.command === commands.PROCESS_CODE_QUESTION) {
+            // Send the initial processing message
+            const processingMessageId = `processing-${Date.now()}`;
+            webview.postMessage({
+                command: commands.ADD_MESSAGE,
+                text: response.text,
+                isUser: false,
+                id: processingMessageId
+            });
+
+            try {
+                // Import the processCodeQuestion function
+                const { processCodeQuestion } = require('../utils/chatAssistant');
+
+                // Process the code question
+                const llmResponse = await processCodeQuestion(text);
+
+                // Send the LLM response
+                webview.postMessage({
+                    command: commands.ADD_MESSAGE,
+                    text: llmResponse,
+                    isUser: false
+                });
+            } catch (error) {
+                console.error(`Error processing code question: ${error}`);
+
+                // Send an error message
+                webview.postMessage({
+                    command: commands.ADD_MESSAGE,
+                    text: `Error processing your question: ${error instanceof Error ? error.message : String(error)}`,
+                    isUser: false
+                });
+            }
         } else {
             // Send the text response
             setTimeout(() => {
@@ -355,48 +391,25 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private _handleAttachFile(webview: vscode.Webview) {
-        // Execute the command to attach a file
-        vscode.window.showOpenDialog({
-            canSelectMany: false,
-            openLabel: 'Attach',
-            filters: {
-                'Text Files': ['txt', 'md', 'json', 'js', 'ts', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'go', 'rs', 'rb']
-            }
-        }).then(files => {
-            if (files && files.length > 0) {
-                const filePath = files[0].fsPath;
-                const fileName = path.basename(filePath);
-
-                try {
-                    const fileContent = fs.readFileSync(filePath, 'utf8');
-
-                    // Add a message showing the attached file
-                    webview.postMessage({
-                        command: commands.ADD_MESSAGE,
-                        text: `Attached file: ${fileName}`,
-                        isUser: true
-                    });
-
-                    // Add the file content as a message
-                    webview.postMessage({
-                        command: commands.ADD_MESSAGE,
-                        text: `File content:\n\`\`\`\n${fileContent}\n\`\`\``,
-                        isUser: false
-                    });
-                } catch (error: unknown) {
-                    webview.postMessage({
-                        command: commands.ADD_MESSAGE,
-                        text: `Error reading file: ${error instanceof Error ? error.message : String(error)}`,
-                        isUser: false
-                    });
-                }
-            }
+        // Show a message that we're waiting for file selection
+        webview.postMessage({
+            command: commands.ADD_MESSAGE,
+            text: 'Please select a requirements file to attach...',
+            isUser: false
         });
+
+        // Execute the command to attach a file
+        vscode.commands.executeCommand('extension-v1.attachFile');
     }
 
     // Method to send a message to the webview
     public sendMessageToWebviews(message: any) {
         if (this._view) {
+            // If this is an updateMessage command, add the command name from our constants
+            if (message.command === 'updateMessage') {
+                message.command = commands.UPDATE_MESSAGE;
+            }
+
             this._view.webview.postMessage(message);
         }
     }
@@ -433,6 +446,30 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 @keyframes slideIn {
                     from { transform: translateY(10px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }
+                }
+
+                @keyframes blink {
+                    0% { opacity: 0.2; }
+                    20% { opacity: 1; }
+                    100% { opacity: 0.2; }
+                }
+
+                .loading-dots span {
+                    animation: blink 1.4s infinite both;
+                    display: inline-block;
+                    width: 4px;
+                    height: 4px;
+                    border-radius: 50%;
+                    margin-right: 3px;
+                    background-color: #0078d4;
+                }
+
+                .loading-dots span:nth-child(2) {
+                    animation-delay: 0.2s;
+                }
+
+                .loading-dots span:nth-child(3) {
+                    animation-delay: 0.4s;
                 }
 
                 .image-container {
@@ -484,6 +521,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 const messageInput = document.getElementById('message-input');
                 const sendButton = document.getElementById('send-button');
 
+                // Add a global function to open files
+                window.vscode = {
+                    open: function(filePath) {
+                        vscode.postMessage({
+                            command: 'openFile',
+                            path: filePath
+                        });
+                    }
+                };
+
                 // Get references to the new buttons
                 const syncButton = document.getElementById('sync-button');
                 const attachButton = document.getElementById('attach-button');
@@ -520,9 +567,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 });
 
                 // Handle messages from the extension
-                window.addEventListener('message', event => {
+                window.addEventListener('message', function(event) {
                     const message = event.data;
-                    if (message.command === 'addMessage' || message.command === '${commands.ADD_MESSAGE}') {
+                    if (message.command === 'addMessage' || message.command === 'ADD_MESSAGE') {
+                        // Generate a unique ID for the message if not provided
+                        const messageId = message.id || 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
                         addMessage(
                             message.text,
                             message.isUser === true,
@@ -531,11 +581,20 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                             message.imageUri,
                             message.imageCaption,
                             message.isLoading === true,
-                            message.loadingType
+                            message.loadingType,
+                            messageId
                         );
+                    } else if (message.command === 'updateMessage' || message.command === 'UPDATE_MESSAGE') {
+                        // Find and update an existing message
+                        updateMessage(message.id, message.text);
                     } else if (message.command === 'openImage') {
                         vscode.postMessage({
                             command: 'openImage',
+                            path: message.path
+                        });
+                    } else if (message.command === 'openFile') {
+                        vscode.postMessage({
+                            command: 'openFile',
                             path: message.path
                         });
                     }
@@ -558,9 +617,14 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                     }
                 }
 
-                function addMessage(text, isUser, imagePath, isImage, imageUri, imageCaption, isLoading, loadingType) {
+                function addMessage(text, isUser, imagePath, isImage, imageUri, imageCaption, isLoading, loadingType, messageId) {
                     const messageElement = document.createElement('div');
                     messageElement.className = isUser ? 'user-message' : 'assistant-message';
+
+                    // Set the message ID as a data attribute for later reference
+                    if (messageId) {
+                        messageElement.setAttribute('data-message-id', messageId);
+                    }
 
                     // Add a loading indicator if requested
                     if (isLoading && !isUser) {
@@ -730,8 +794,67 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
                         messageElement.appendChild(openLink);
                     } else {
-                        // Regular text message
-                        messageElement.textContent = text;
+                        // Check if the text contains HTML
+                        const containsHTML = text.includes('<') && text.includes('>') &&
+                                           (text.includes('<button') || text.includes('<div') || text.includes('<a'));
+
+                        if (containsHTML) {
+                            // If the text contains HTML, use innerHTML
+                            messageElement.innerHTML = text;
+
+                            // Find all buttons and add click event listeners
+                            const buttons = messageElement.querySelectorAll('button');
+                            buttons.forEach(button => {
+                                // Check for data-path attribute (new approach)
+                                const filePath = button.getAttribute('data-path');
+                                if (filePath) {
+                                    button.addEventListener('click', () => {
+                                        vscode.postMessage({
+                                            command: 'openFile',
+                                            path: filePath
+                                        });
+                                    });
+                                }
+                                // Also check for onclick attribute (fallback for backward compatibility)
+                                else {
+                                    const onclickAttr = button.getAttribute('onclick');
+                                    if (onclickAttr && onclickAttr.includes('vscode.open')) {
+                                        // Extract the file path from the onclick attribute
+                                        const match = onclickAttr.match(/vscode\.open\(['"](.+?)['"]\)/);
+                                        if (match && match[1]) {
+                                            const extractedPath = match[1];
+
+                                            // Remove the onclick attribute and add a proper event listener
+                                            button.removeAttribute('onclick');
+                                            button.addEventListener('click', () => {
+                                                vscode.postMessage({
+                                                    command: 'openFile',
+                                                    path: extractedPath
+                                                });
+                                            });
+                                        }
+                                    }
+                                }
+                            });
+
+                            // Also find all links with data-path attributes and add click event listeners
+                            const links = messageElement.querySelectorAll('a[data-path]');
+                            links.forEach(link => {
+                                const filePath = link.getAttribute('data-path');
+                                if (filePath) {
+                                    link.addEventListener('click', (e) => {
+                                        e.preventDefault(); // Prevent default link behavior
+                                        vscode.postMessage({
+                                            command: 'openFile',
+                                            path: filePath
+                                        });
+                                    });
+                                }
+                            });
+                        } else {
+                            // Regular text message
+                            messageElement.textContent = text;
+                        }
 
                         // If there's an original image path but no image tag, add a link to open the image
                         if (!isUser && imagePath) {
@@ -761,6 +884,54 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
                     // Add a subtle animation to show the message has been added
                     messageElement.style.animation = 'slideIn 0.3s';
+                }
+
+                // Function to update an existing message
+                function updateMessage(messageId, newText) {
+                    if (!messageId) return;
+
+                    // Find the message element by its ID
+                    const messageElement = document.querySelector("[data-message-id='" + messageId + "']");
+                    if (!messageElement) {
+                        console.error("Message with ID " + messageId + " not found");
+                        return;
+                    }
+
+                    // Update the text content
+                    // If the message has child elements, we need to be careful not to remove them
+                    const hasChildren = messageElement.children.length > 0;
+
+                    // Check if the new text contains HTML
+                    const containsHTML = newText.includes('<') && newText.includes('>');
+
+                    if (containsHTML) {
+                        // If the text contains HTML, use innerHTML
+                        messageElement.innerHTML = newText;
+                    } else if (hasChildren) {
+                        // If it has children (like images), find the text node or first div and update it
+                        const textNode = messageElement.childNodes[0];
+                        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                            textNode.textContent = newText;
+                        } else {
+                            // Try to find the first div that might contain text
+                            const firstDiv = messageElement.querySelector('div:first-child');
+                            if (firstDiv) {
+                                firstDiv.textContent = newText;
+                            } else {
+                                // If we can't find a suitable element, just prepend the text
+                                messageElement.textContent = newText + messageElement.textContent;
+                            }
+                        }
+                    } else {
+                        // If it's just a text message, simply update the content
+                        messageElement.textContent = newText;
+                    }
+
+                    // Add a subtle animation to show the message has been updated
+                    messageElement.style.animation = 'none';
+                    setTimeout(function() {
+                        messageElement.style.animation = 'fadeIn 0.3s';
+                    }, 10);
                 }
             </script>
         </body>

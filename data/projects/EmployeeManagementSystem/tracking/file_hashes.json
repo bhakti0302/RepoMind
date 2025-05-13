@@ -1,0 +1,17 @@
+{
+  "src/com/company/model/Employee.java": {
+    "hash": "ba4b1b05cf929de94a2cc42ad371057f2f805dbd9f21ad202e8d74a6b25a9486",
+    "last_updated": "2025-05-12T02:52:43.560692",
+    "size": 573
+  },
+  "src/com/company/app/Main.java": {
+    "hash": "994df865d570faf352c9820de550459f9c0945f1f0b17685cfbff6e1d9f01036",
+    "last_updated": "2025-05-12T02:52:43.560692",
+    "size": 456
+  },
+  "src/com/company/service/EmployeeService.java": {
+    "hash": "1a2db4f73d3bffe23e2c75e0826b53285ac855499debbbab64ffa8e7668a0e90",
+    "last_updated": "2025-05-12T02:52:43.560692",
+    "size": 375
+  }
+}

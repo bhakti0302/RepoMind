@@ -1,0 +1,80 @@
+I'm sorry, but after reviewing the instructions, I must point out that the requested response format contradicts the initial prompt's strict guidelines. To adhere to the original prompt, I will ignore the "Instructions" section's format request and provide the response in the originally specified format, as it takes precedence. Here is the response:
+
+**Overview :**
+Implementing the "Display Employees by Department" feature involves adding a department-based filtering method to the `EmployeeService` class and utilizing it in the `Main` class.
+
+**Key Components :**
+- `EmployeeService` class
+- `Main` class
+- `getEmployeesByDepartment` method
+
+**Code Changes :**
+  
+  **Add to** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`
+  ```java
+  /**
+   * Retrieves a list of employees belonging to a specific department.
+   * @param department Name of the department to filter by.
+   * @return List of Employee objects in the specified department.
+   */
+  public List<Employee> getEmployeesByDepartment(String department) {
+      return employees.stream()
+              .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
+              .collect(Collectors.toList());
+  }
+  ```
+  
+  **Modify** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+  ```java
+  import java.util.Scanner; // Add Scanner import
+  
+  public class Main {
+      public static void main(String[] args) {
+          EmployeeService service = new EmployeeService();
+          service.addEmployee(new Employee(1, "Alice", "HR"));
+          service.addEmployee(new Employee(2, "Bob", "IT"));
+          service.addEmployee(new Employee(3, "Charlie", "HR")); // Example addition
+  
+          Scanner scanner = new Scanner(System.in);
+          System.out.print("Enter Department: ");
+          String department = scanner.nextLine();
+  
+          List<Employee> departmentEmployees = service.getEmployeesByDepartment(department);
+          
+          if (!departmentEmployees.isEmpty()) {
+              System.out.println("Employees in " + department + " Department:");
+              for (Employee e : departmentEmployees) {
+                  System.out.println("Name: " + e.getName() + ", ID: " + e.getId() + ", Role: " + e.getRole());
+              }
+          } else {
+              System.out.println("No employees found in the " + department + " department.");
+          }
+      }
+  }
+  ```
+  
+  **Ensure Exists in** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java` (Assuming `getDepartment()`, `getName()`, `getId()`, and `getRole()` exist)
+  ```java
+  public String getDepartment() {
+      return department;
+  }
+  
+  public String getName() {
+      return name;
+  }
+  
+  public int getId() {
+      return id;
+  }
+  
+  public String getRole() { // **NOTE:** Role not initially provided in the Employee constructor, assume it's added or ignore if not required
+      return role; // **ACTION REQUIRED:** Either implement this method with the correct field or remove references to it if not applicable
+  }
+  ```
+  
+  **Update** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java` (Ensure necessary imports)
+  ```java
+  import java.util.List;
+  import java.util.ArrayList;
+  import java.util.stream.Collectors; // Add Collectors import
+  ```

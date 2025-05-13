@@ -1,0 +1,28 @@
+{
+  "classes": [
+    "Main",
+    "EmployeeService"
+  ],
+  "methods": [
+    "Employee",
+    "main",
+    "addEmployee",
+    "getAllEmployees",
+    "EmployeeService"
+  ],
+  "variables": [
+    "employees",
+    "service"
+  ],
+  "imports": [
+    "java.util.List",
+    "com.company.service.EmployeeService",
+    "java.util.ArrayList",
+    "com.company.model.Employee"
+  ],
+  "interfaces": [],
+  "annotations": [],
+  "packages": [
+    "com.company.app"
+  ]
+}

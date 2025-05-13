@@ -1,8 +1,16 @@
 /**
- * Simple chat assistant to provide helpful responses
+ * Chat assistant to provide helpful responses
+ * Uses LLM for code-related questions
  */
 
 import { detectCommand, commands } from './commands';
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as cp from 'child_process';
+import { promisify } from 'util';
+
+const exec = promisify(cp.exec);
 
 // Predefined responses for common queries
 const responses = {
@@ -23,8 +31,8 @@ const responses = {
     ],
     help: [
         "I can help you understand your codebase better. Try asking me to visualize code relationships, explain specific parts of your code, or help with debugging.",
-        "Here are some things you can ask me:\n- Visualize code relationships\n- Show file dependencies\n- Explain how different parts of your code connect\n- Help with understanding specific code patterns",
-        "I'm your codebase assistant. I can help you visualize code relationships, understand dependencies, and navigate your project more effectively."
+        "Here are some things you can ask me:\n- Visualize code relationships\n- Show file dependencies\n- Explain how different parts of your code connect\n- Help with understanding specific code patterns\n- Ask questions about your code",
+        "I'm your codebase assistant. I can help you visualize code relationships, understand dependencies, and navigate your project more effectively. You can also ask me questions about your code."
     ],
     fallback: [
         "I'm not sure I understand. Could you rephrase that?",
@@ -35,6 +43,11 @@ const responses = {
         "I'll show you the code relationships visualization.",
         "Here's a visualization of your code structure.",
         "Let me visualize the code relationships for you."
+    ],
+    processing: [
+        "I'm processing your question. This may take a moment...",
+        "Let me think about that. I'll have an answer for you shortly...",
+        "I'm analyzing your question. Please wait a moment..."
     ]
 };
 
@@ -96,35 +109,36 @@ function isHelp(message: string): boolean {
 export function generateResponse(message: string): { text: string, command: string | null } {
     // Check for commands first
     const command = detectCommand(message);
-    
+
     if (command === commands.VISUALIZE_RELATIONSHIPS) {
-        return { 
+        return {
             text: getRandomResponse('visualization'),
-            command 
+            command
         };
     }
-    
+
     // Check for common patterns
     if (isGreeting(message)) {
         return { text: getRandomResponse('greeting'), command: null };
     }
-    
+
     if (isFarewell(message)) {
         return { text: getRandomResponse('farewell'), command: null };
     }
-    
+
     if (isThanks(message)) {
         return { text: getRandomResponse('thanks'), command: null };
     }
-    
+
     if (isHelp(message)) {
         return { text: getRandomResponse('help'), command: null };
     }
-    
-    // Default response
-    return { 
-        text: `I received your message: "${message}". How can I help you understand your codebase better?`, 
-        command: null 
+
+    // For code-related questions, return a processing message
+    // The actual LLM call will be handled separately
+    return {
+        text: getRandomResponse('processing'),
+        command: commands.PROCESS_CODE_QUESTION
     };
 }
 
@@ -159,15 +173,60 @@ export function suggestCorrection(message: string): string | null {
         'architecure': 'architecture',
         'architecures': 'architectures'
     };
-    
+
     // Check for misspellings
     const words = message.toLowerCase().split(/\s+/);
     const correctedWords = words.map(word => corrections[word] || word);
-    
+
     // If any words were corrected, return the corrected message
     if (words.some((word, i) => word !== correctedWords[i])) {
         return correctedWords.join(' ');
     }
-    
+
     return null;
+}
+
+/**
+ * Process a code question using the LLM
+ * @param question The question to process
+ * @returns A promise that resolves to the LLM's response
+ */
+export async function processCodeQuestion(question: string): Promise<string> {
+    try {
+        // Path to the run_code_chat.sh script
+        const scriptPath = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis/run_code_chat.sh';
+
+        // Check if the script exists
+        if (!fs.existsSync(scriptPath)) {
+            return `Error: Script not found at ${scriptPath}`;
+        }
+
+        // Make the script executable
+        await exec(`chmod +x ${scriptPath}`);
+
+        // Execute the script with the question
+        const { stdout, stderr } = await exec(`${scriptPath} "${question}"`);
+
+        // Check if there was an error
+        if (stderr) {
+            console.error(`Error processing code question: ${stderr}`);
+        }
+
+        // Get the response from the output file
+        const outputDir = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output';
+        const responseFile = path.join(outputDir, 'chat-response.txt');
+
+        // Check if the response file exists
+        if (fs.existsSync(responseFile)) {
+            // Read the response file
+            const response = fs.readFileSync(responseFile, 'utf8');
+            return response;
+        } else {
+            // Return the stdout if the response file doesn't exist
+            return stdout || 'No response received from the LLM.';
+        }
+    } catch (error) {
+        console.error(`Error processing code question: ${error}`);
+        return `Error processing your question: ${error instanceof Error ? error.message : String(error)}`;
+    }
 }

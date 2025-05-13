@@ -1,0 +1,69 @@
+--- Document 1: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+import com.company.service.EmployeeService;
+
+--- Document 2: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/model/Employee.java ---
+
+public String getDepartment() { return department; }
+
+--- Document 3: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/model/Employee.java ---
+
+
+
+    public Employee(int id, String name, String department) {
+        this.id = id;
+        this.name = name;
+        this.department = department;
+    }
+
+--- Document 4: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+public List<Employee> getAllEmployees() {
+        return employees;
+    }
+
+--- Document 5: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+package com.company.app;
+
+import com.company.model.Employee;
+import com.company.service.EmployeeService;
+
+public class Main {
+    public static void main(String[] args) {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Alice", "HR"));
+        service.addEmployee(new Employee(2, "Bob", "IT"));
+
+        for (Employee e : service.getAllEmployees()) {
+            System.out.println(e);
+        }
+    }
+}
+
+--- Document 6: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java ---
+
+public static void main(String[] args) {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Alice", "HR"));
+        service.addEmployee(new Employee(2, "Bob", "IT"));
+
+        for (Employee e : service.getAllEmployees()) {
+            System.out.println(e);
+        }
+    }
+
+--- Document 7: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java ---
+
+public class EmployeeService {
+    private List<Employee> employees = new ArrayList<>();
+
+    public void addEmployee(Employee employee) {
+        employees.add(employee);
+    }
+
+    public List<Employee> getAllEmployees() {
+        return employees;
+    }
+}
+

@@ -1,0 +1,376 @@
+"""
+Multi-Hop RAG module.
+
+This module provides functionality for implementing multi-hop graph-based RAG.
+"""
+
+import os
+import sys
+import logging
+from typing import Dict, List, Any, Optional, Union, Tuple
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+# Import local modules
+from src.vector_search import VectorSearch
+from src.graph_enhancer import GraphEnhancer
+from src.context_builder import ContextBuilder
+from src.relevance_scorer import RelevanceScorer
+from src.utils import save_json, load_json, ensure_dir
+
+class MultiHopRAG:
+    """Implementation of multi-hop graph-based RAG."""
+    
+    def __init__(
+        self,
+        db_path: str = ".lancedb",
+        output_dir: str = None,
+        max_context_length: int = 4000
+    ):
+        """Initialize the multi-hop RAG implementation.
+        
+        Args:
+            db_path: Path to the LanceDB database
+            output_dir: Path to the output directory
+            max_context_length: Maximum length of the context in tokens
+        """
+        self.db_path = db_path
+        self.output_dir = output_dir
+        self.max_context_length = max_context_length
+        
+        # Initialize components
+        self.vector_search = None
+        self.graph_enhancer = None
+        self.context_builder = None
+        self.relevance_scorer = None
+        
+        try:
+            # Initialize vector search
+            self.vector_search = VectorSearch(db_path=db_path)
+            logger.info(f"Initialized vector search with database at {db_path}")
+            
+            # Initialize graph enhancer
+            self.graph_enhancer = GraphEnhancer(db_path=db_path)
+            logger.info("Initialized graph enhancer")
+            
+            # Initialize context builder
+            self.context_builder = ContextBuilder(
+                max_context_length=max_context_length,
+                include_metadata=True,
+                format_type="markdown"
+            )
+            logger.info("Initialized context builder")
+            
+            # Initialize relevance scorer
+            self.relevance_scorer = RelevanceScorer()
+            logger.info("Initialized relevance scorer")
+            
+            # Create output directory if specified
+            if output_dir:
+                ensure_dir(output_dir)
+        except Exception as e:
+            logger.error(f"Error initializing multi-hop RAG: {e}")
+            raise
+    
+    def _get_architectural_patterns(
+        self,
+        query: str,
+        project_id: str = None,
+        limit: int = 5
+    ) -> List[Dict[str, Any]]:
+        """Get architectural patterns related to the query.
+        
+        Args:
+            query: Search query
+            project_id: Project ID to filter results
+            limit: Maximum number of results
+            
+        Returns:
+            List of architectural patterns
+        """
+        try:
+            # Search for architectural components (classes, interfaces, packages)
+            results = self.vector_search.search(
+                query=query,
+                project_id=project_id,
+                limit=limit * 2  # Get more results to filter
+            )
+            
+            # Filter for architectural components
+            architectural_components = []
+            for result in results:
+                chunk_type = result.get("chunk_type", "").lower()
+                if chunk_type in ["class", "interface", "package"]:
+                    architectural_components.append(result)
+            
+            # Limit the number of components
+            if limit > 0 and len(architectural_components) > limit:
+                architectural_components = architectural_components[:limit]
+            
+            return architectural_components
+        
+        except Exception as e:
+            logger.error(f"Error getting architectural patterns: {e}")
+            return []
+    
+    def _get_implementation_details(
+        self,
+        architectural_components: List[Dict[str, Any]],
+        project_id: str = None,
+        limit_per_component: int = 3
+    ) -> List[Dict[str, Any]]:
+        """Get implementation details for architectural components.
+        
+        Args:
+            architectural_components: List of architectural components
+            project_id: Project ID to filter results
+            limit_per_component: Maximum number of details per component
+            
+        Returns:
+            List of implementation details
+        """
+        try:
+            # Initialize implementation details
+            implementation_details = []
+            
+            # Track visited nodes to avoid duplicates
+            visited_nodes = set()
+            
+            # Process each architectural component
+            for component in architectural_components:
+                node_id = component.get("node_id")
+                if not node_id:
+                    continue
+                
+                # Mark this node as visited
+                visited_nodes.add(node_id)
+                
+                # Get neighbors (implementation details)
+                neighbors = self.graph_enhancer.get_node_neighbors(
+                    node_id=node_id,
+                    relationship_types=["CONTAINS", "IMPLEMENTS", "EXTENDS"],
+                    max_neighbors=limit_per_component
+                )
+                
+                # Add unique neighbors
+                for neighbor in neighbors:
+                    neighbor_id = neighbor.get("node_id")
+                    if neighbor_id and neighbor_id not in visited_nodes:
+                        # Get the full chunk data
+                        chunk = self.vector_search.get_chunk_by_id(neighbor_id)
+                        if chunk:
+                            # Add relationship information
+                            chunk["relationship_to_component"] = neighbor.get("relationship_type", "UNKNOWN")
+                            chunk["related_to"] = node_id
+                            
+                            # Add to implementation details
+                            implementation_details.append(chunk)
+                            visited_nodes.add(neighbor_id)
+            
+            return implementation_details
+        
+        except Exception as e:
+            logger.error(f"Error getting implementation details: {e}")
+            return []
+    
+    def _get_related_components(
+        self,
+        components: List[Dict[str, Any]],
+        project_id: str = None,
+        max_hops: int = 2,
+        limit_per_hop: int = 3
+    ) -> List[Dict[str, Any]]:
+        """Get related components through graph traversal.
+        
+        Args:
+            components: List of components
+            project_id: Project ID to filter results
+            max_hops: Maximum number of hops
+            limit_per_hop: Maximum number of components per hop
+            
+        Returns:
+            List of related components
+        """
+        try:
+            # Initialize related components
+            related_components = []
+            
+            # Track visited nodes to avoid duplicates
+            visited_nodes = set()
+            
+            # Add initial components to visited nodes
+            for component in components:
+                node_id = component.get("node_id")
+                if node_id:
+                    visited_nodes.add(node_id)
+            
+            # Process each component
+            for component in components:
+                node_id = component.get("node_id")
+                if not node_id:
+                    continue
+                
+                # Get multi-hop neighbors
+                multi_hop_neighbors = self.graph_enhancer.get_multi_hop_neighbors(
+                    node_id=node_id,
+                    max_hops=max_hops,
+                    max_neighbors_per_hop=limit_per_hop
+                )
+                
+                # Process each hop
+                for hop, neighbors in multi_hop_neighbors.items():
+                    for neighbor in neighbors:
+                        neighbor_id = neighbor.get("node_id")
+                        if neighbor_id and neighbor_id not in visited_nodes:
+                            # Get the full chunk data
+                            chunk = self.vector_search.get_chunk_by_id(neighbor_id)
+                            if chunk:
+                                # Add relationship information
+                                chunk["hop_distance"] = hop
+                                chunk["related_to"] = node_id
+                                
+                                # Add to related components
+                                related_components.append(chunk)
+                                visited_nodes.add(neighbor_id)
+            
+            return related_components
+        
+        except Exception as e:
+            logger.error(f"Error getting related components: {e}")
+            return []
+    
+    def multi_hop_rag(
+        self,
+        query: str,
+        project_id: str = None,
+        architectural_limit: int = 5,
+        implementation_limit: int = 3,
+        related_limit: int = 3
+    ) -> Dict[str, Any]:
+        """Implement multi-hop graph-based RAG.
+        
+        Args:
+            query: Search query
+            project_id: Project ID to filter results
+            architectural_limit: Maximum number of architectural components
+            implementation_limit: Maximum number of implementation details per component
+            related_limit: Maximum number of related components per hop
+            
+        Returns:
+            Dictionary containing search results and context
+        """
+        try:
+            # Step 1: Get architectural patterns (first hop)
+            architectural_patterns = self._get_architectural_patterns(
+                query=query,
+                project_id=project_id,
+                limit=architectural_limit
+            )
+            
+            # Step 2: Get implementation details (second hop)
+            implementation_details = self._get_implementation_details(
+                architectural_components=architectural_patterns,
+                project_id=project_id,
+                limit_per_component=implementation_limit
+            )
+            
+            # Step 3: Get related components (additional hops)
+            all_components = architectural_patterns + implementation_details
+            related_components = self._get_related_components(
+                components=all_components,
+                project_id=project_id,
+                max_hops=2,
+                limit_per_hop=related_limit
+            )
+            
+            # Combine all results
+            all_results = architectural_patterns + implementation_details + related_components
+            
+            # Rank results by relevance
+            ranked_results = self.relevance_scorer.rank_results(all_results, query)
+            
+            # Build hierarchical context
+            context_result = self.context_builder.build_hierarchical_context(
+                chunks=ranked_results,
+                query=query
+            )
+            
+            # Create result
+            rag_result = {
+                "query": query,
+                "project_id": project_id,
+                "architectural_patterns": architectural_patterns,
+                "implementation_details": implementation_details,
+                "related_components": related_components,
+                "all_results": all_results,
+                "ranked_results": ranked_results,
+                "context": context_result["context"],
+                "context_chunks": context_result["context_chunks"],
+                "total_tokens": context_result["total_tokens"],
+                "truncated": context_result["truncated"]
+            }
+            
+            # Save the result if output directory is specified
+            if self.output_dir:
+                output_file = os.path.join(self.output_dir, "multi_hop_rag_result.json")
+                save_json(rag_result, output_file)
+                logger.info(f"Saved multi-hop RAG result to {output_file}")
+            
+            return rag_result
+        
+        except Exception as e:
+            logger.error(f"Error implementing multi-hop RAG: {e}")
+            return {"error": str(e)}
+    
+    def close(self):
+        """Close the database connection."""
+        try:
+            if self.vector_search:
+                self.vector_search.close()
+            if self.graph_enhancer:
+                self.graph_enhancer.close()
+            logger.info("Closed database connections")
+        except Exception as e:
+            logger.error(f"Error closing database connections: {e}")
+
+
+# Example usage
+if __name__ == "__main__":
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Implement multi-hop graph-based RAG")
+    parser.add_argument("--query", required=True, help="Search query")
+    parser.add_argument("--project-id", help="Project ID to filter results")
+    parser.add_argument("--db-path", default=".lancedb", help="Path to the LanceDB database")
+    parser.add_argument("--output-dir", default="output", help="Path to the output directory")
+    args = parser.parse_args()
+    
+    # Initialize multi-hop RAG
+    rag = MultiHopRAG(
+        db_path=args.db_path,
+        output_dir=args.output_dir
+    )
+    
+    # Implement multi-hop RAG
+    result = rag.multi_hop_rag(
+        query=args.query,
+        project_id=args.project_id
+    )
+    
+    # Print summary
+    print(f"\nMulti-Hop RAG Summary:")
+    print(f"Query: {args.query}")
+    print(f"Project ID: {args.project_id or 'None'}")
+    print(f"Found {len(result.get('architectural_patterns', []))} architectural patterns")
+    print(f"Found {len(result.get('implementation_details', []))} implementation details")
+    print(f"Found {len(result.get('related_components', []))} related components")
+    print(f"Context length: {result.get('total_tokens', 0)} tokens")
+    print(f"Output directory: {args.output_dir}")
+    
+    # Close the connection
+    rag.close()

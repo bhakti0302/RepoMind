@@ -1,0 +1,88 @@
+Multi-Hop RAG Results
+====================
+
+Query: yes
+
+Full Business Requirement:
+Business Requirement: Display Employees by Department
+
+Objective:
+Allow the system to list all employees belonging to a specific department.
+
+Functional Requirements:
+1. Filter by Department
+   - Users should be able to enter a department name (e.g., "Engineering", "HR").
+   - The system should display all employees working in that department.
+
+2. Display Details
+   - For each matching employee, display their name, ID, and role.
+
+Suggested Code Enhancements:
+- Add a method `getEmployeesByDepartment(String department)` in the `EmployeeManager` class.
+- Use this method in the main class to demonstrate filtering functionality.
+
+Prompt: Only give the output path files and the code that needs to be modified in it.
+Do not give testing approach.
+Only Overview, key components and Code Changes these three sections.
+DO NOT give implementation plan or testing plan.
+The output should be in this format :
+
+Overview :
+
+
+Key Components :
+
+
+Code Changes :
+  Create to path_of the file 
+  ```
+    // Your code here
+  ```
+
+ Add to path_of the file 
+  ```
+    // Your code here
+  ```
+
+  Modify to path_of the file 
+  ```
+    // Your code here
+  ```
+  Update to path_of the file 
+  ```
+    // Your code here
+  ```
+  Insert to path_of the file 
+  ```
+    // Your code here
+  ```
+
+ Just fill the parts that have code changes according to you.
+  If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords.
+  Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.
+
+Domain Entities:
+
+Architectural Patterns:
+  - MVC (Model-View-Controller)
+  - Repository Pattern
+
+Implementation Details:
+  - Entity classes for domain objects
+  - Service classes for business logic
+  - Repository classes for data access
+
+Related Components:
+  - Entity
+  - Service
+  - Repository
+
+Context:
+--- Document 1: /Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java ---
+
+import com.company.model.Employee;
+
+--- Document 2: /Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java ---
+
+package com.company.model;
+

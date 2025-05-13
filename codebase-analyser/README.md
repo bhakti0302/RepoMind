@@ -13,6 +13,7 @@ The main script for analyzing any codebase is `run_codebase_analysis.py`. This s
 ```bash
 python scripts/run_codebase_analysis.py --repo-path <path_to_repo> [options]
 ```
+python3 scripts/run_codebase_analysis.py --repo-path /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-bhakti [options]
 
 Or use the convenient shell wrapper:
 
@@ -54,6 +55,11 @@ For Java projects specifically, you can use the `analyze_java.py` script which i
 
 ```bash
 python scripts/analyze_java.py <path_to_java_project> [options]
+python3 scripts/analyze_java.py /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-bhakti [options]
+
+
+python3 scripts/analyze_java.py /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-bhakti --clear-db --mock-embeddings --visualize --project-id 
+
 ```
 
 Options:

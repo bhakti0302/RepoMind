@@ -365,22 +365,104 @@ class DatabaseManager:
         Returns:
             List of code chunks as dictionaries
         """
-        # Open the table
-        table = self.get_code_chunks_table()
+        try:
+            # Open the table
+            table = self.get_code_chunks_table()
 
-        # Create the search query
-        search_query = table.search(query)
+            # Try to use the built-in search first
+            try:
+                # Create the search query
+                search_query = table.search(query)
 
-        # Apply filters if provided
-        if filters:
-            for key, value in filters.items():
-                search_query = search_query.where(f"{key} = '{value}'")
+                # Apply filters if provided
+                if filters:
+                    for key, value in filters.items():
+                        search_query = search_query.where(f"{key} = '{value}'")
 
-        # Execute the search
-        results = search_query.limit(limit).to_pandas()
+                # Execute the search
+                results = search_query.limit(limit).to_pandas()
 
-        # Convert to list of dictionaries
-        return results.to_dict('records')
+                # Convert to list of dictionaries
+                return results.to_dict('records')
+
+            except Exception as e:
+                # If the built-in search fails (e.g., due to missing tantivy),
+                # fall back to a basic text search implementation
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Built-in search failed: {e}. Falling back to basic text search.")
+
+                # Get all data from the table
+                all_data = table.to_pandas()
+
+                # Apply filters if provided
+                if filters:
+                    for key, value in filters.items():
+                        all_data = all_data[all_data[key] == value]
+
+                # Split query into keywords
+                keywords = query.lower().split()
+
+                # Score each row based on keyword matches
+                scores = []
+                for idx, row in all_data.iterrows():
+                    score = 0
+
+                    # Check for matches in content field
+                    if 'content' in row:
+                        content = str(row['content']).lower()
+                        for keyword in keywords:
+                            if keyword in content:
+                                score += 1
+
+                    # Check for matches in name field
+                    if 'name' in row:
+                        name = str(row['name']).lower()
+                        for keyword in keywords:
+                            if keyword in name:
+                                score += 2  # Name matches are more important
+
+                    # Check for matches in qualified_name field
+                    if 'qualified_name' in row:
+                        qualified_name = str(row['qualified_name']).lower()
+                        for keyword in keywords:
+                            if keyword in qualified_name:
+                                score += 1.5
+
+                    # Check for matches in file_path field
+                    if 'file_path' in row:
+                        file_path = str(row['file_path']).lower()
+                        for keyword in keywords:
+                            if keyword in file_path:
+                                score += 0.5
+
+                    # Add the score
+                    scores.append((idx, score))
+
+                # Sort by score (descending)
+                scores.sort(key=lambda x: x[1], reverse=True)
+
+                # Get the top results
+                top_indices = [idx for idx, score in scores[:limit] if score > 0]
+
+                # Get the corresponding rows
+                results = all_data.loc[top_indices]
+
+                # Add score to results
+                results_with_scores = []
+                for idx, row in results.iterrows():
+                    row_dict = row.to_dict()
+                    score = next(score for i, score in scores if i == idx)
+                    row_dict['score'] = score / len(keywords) if keywords else 0
+                    results_with_scores.append(row_dict)
+
+                return results_with_scores
+
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in search_code_chunks: {e}")
+            return []
 
     def update_last_sync_time(self, project_id: str) -> str:
         """Update the last sync time for a project.

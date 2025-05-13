@@ -1,0 +1,13 @@
+{
+  "classes": [],
+  "methods": [],
+  "variables": [],
+  "imports": [
+    "com.company.model.Employee"
+  ],
+  "interfaces": [],
+  "annotations": [],
+  "packages": [
+    "com.company.model"
+  ]
+}

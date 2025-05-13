@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./codebase-analyser/nlp-analysis"
+    ]
+}

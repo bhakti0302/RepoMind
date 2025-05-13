@@ -147,16 +147,19 @@ export const commands = {
     // Chat view commands
     SEND_MESSAGE: 'sendMessage',
     ADD_MESSAGE: 'addMessage',
+    UPDATE_MESSAGE: 'updateMessage',
     SYNC_CODEBASE: 'syncCodebase',
     ATTACH_FILE: 'attachFile',
     VISUALIZE_RELATIONSHIPS: 'visualizeRelationships',
     OPEN_IMAGE: 'openImage',
+    PROCESS_CODE_QUESTION: 'processCodeQuestion',
 
     // Extension commands
     OPEN_CHAT_VIEW: 'extension-v1.openChatView',
     START_ASSISTANT: 'extension-v1.startAssistant',
     SYNC_CODEBASE_COMMAND: 'extension-v1.syncCodebase',
-    CHAT_VIEW_FOCUS: 'workbench.view.extension.repomind-chat-view'
+    CHAT_VIEW_FOCUS: 'workbench.view.extension.repomind-chat-view',
+    PROCESS_CODE_QUESTION_COMMAND: 'extension-v1.processCodeQuestion'
 };
 
 /**

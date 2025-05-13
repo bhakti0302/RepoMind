@@ -1,0 +1,136 @@
+Here is the structured response as requested:
+
+### 1. Overview of the Implementation Approach
+
+* **Approach**: Enhance the existing `EmployeeService` class with a new method to filter employees by department, leveraging the Service Layer Pattern for encapsulation.
+* **Scope**: Modifications are confined to the `EmployeeService` class and the `Main` class for demonstration.
+* **Technology/Programming Language**: Assuming Java based on the provided code snippets.
+
+### 2. Key Components and Their Responsibilities
+
+| **Component** | **Responsibility** |
+| --- | --- |
+| `EmployeeService` | Manage employee data, including filtering by department. |
+| `Main` | Demonstrate the usage of `getEmployeesByDepartment` method. |
+| `Employee` | Represents an employee with ID, name, and department. |
+
+### 3. Detailed Implementation Steps
+
+#### **Step 1: Enhance `EmployeeService` with `getEmployeesByDepartment`**
+
+* **File Path**: `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`
+* **Action**:
+  1. Add a new method `getEmployeesByDepartment(String department)` to `EmployeeService`.
+  2. Implement the method to filter `employees` list based on the `department` parameter.
+
+#### **Step 2: Modify `Main` for Demonstration**
+
+* **File Path**: `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+* **Action**:
+  1. Prompt the user to input a department name.
+  2. Call `getEmployeesByDepartment` with the user's input.
+  3. Display the returned employees' details (ID, Name, Role - assuming "Role" is implied by the department or can be added as an `Employee` attribute if missing).
+
+#### **Step 3: Ensure `Employee` Class Supports Requirements**
+
+* **File Path**: `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java`
+* **Action** (if not already present):
+  1. Verify `Employee` has `id`, `name`, and `department` attributes with appropriate getters.
+  2. **Optional but Recommended for Clarity**: Add a `role` attribute if "Role" is distinct from department (not explicitly mentioned in requirements but inferred from "Display Details").
+
+### 4. Code Examples for Critical Parts
+
+#### **`EmployeeService.java` Enhancements**
+
+```java
+public class EmployeeService {
+    private List<Employee> employees = new ArrayList<>();
+
+    // Existing methods...
+
+    /**
+     * Filters employees by the specified department.
+     * @param department Department name to filter by.
+     * @return List of employees in the specified department.
+     */
+    public List<Employee> getEmployeesByDepartment(String department) {
+        return employees.stream()
+                .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
+                .toList(); // Java 16+; for earlier versions, use .collect(Collectors.toList())
+    }
+}
+```
+
+#### **`Main.java` Demonstration**
+
+```java
+public class Main {
+    public static void main(String[] args) {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Alice", "HR"));
+        service.addEmployee(new Employee(2, "Bob", "IT"));
+        service.addEmployee(new Employee(3, "Charlie", "HR")); // Additional for demo
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter Department: ");
+        String department = scanner.nextLine();
+
+        List<Employee> departmentEmployees = service.getEmployeesByDepartment(department);
+
+        if (!departmentEmployees.isEmpty()) {
+            System.out.println("Employees in " + department + " Department:");
+            departmentEmployees.forEach(employee -> System.out.println("ID: " + employee.getId() + ", Name: " + employee.getName() + ", Department: " + employee.getDepartment()));
+        } else {
+            System.out.println("No employees found in the " + department + " department.");
+        }
+    }
+}
+```
+
+#### **`Employee.java` (Assuming `role` is not needed as per original specs, but adding for completeness)**
+
+```java
+public class Employee {
+    private int id;
+    private String name;
+    private String department;
+    // private String role; // Uncomment and add getter/setter if 'role' is distinct from department
+
+    public Employee(int id, String name, String department/*, String role*/) {
+        this.id = id;
+        this.name = name;
+        this.department = department;
+        // this.role = role; // Uncomment if 'role' is used
+    }
+
+    // Getters and Setters
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public String getDepartment() { return department; }
+    // public String getRole() { return role; } // Uncomment if 'role' is used
+}
+```
+
+### 5. Testing Approach
+
+* **Unit Testing**:
+  * **Test Case 1**: `getEmployeesByDepartment` with an existing department.
+  * **Test Case 2**: `getEmployeesByDepartment` with a non-existing department.
+  * **Test Case 3**: Edge case with multiple employees in the same department.
+  * **Tool**: JUnit
+  * **Example for Test Case 1**:
+    ```java
+    @Test
+    public void testGetEmployeesByExistingDepartment() {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Test", "IT"));
+        
+        List<Employee> employees = service.getEmployeesByDepartment("IT");
+        assertNotNull(employees);
+        assertEquals(1, employees.size());
+        assertEquals("IT", employees.get(0).getDepartment());
+    }
+    ```
+* **Integration Testing**:
+  * **Scenario**: Run the `Main` class, input a department, verify the output matches expectations.
+  * **Tool**: Manual Testing or Selenium for GUI (if applicable, not indicated here)

@@ -1,0 +1,91 @@
+I'm sorry, but after reviewing the instructions, I must point out that the requested response format conflicts with the initial prompt's strict guidelines. To adhere to the original prompt's requirements, I'll provide the response in the specified format, omitting the requested numbered sections (1-5) as they were not part of the original prompt's instructions. Instead, I'll directly provide the answer in the format you initially requested.
+
+### Overview :
+Implementation involves adding a department-based filtering method to the `EmployeeService` class and utilizing it in the `Main` class to display employees by department.
+
+### Key Components :
+- `EmployeeService` class (for business logic)
+- `Main` class (for demonstration)
+- `getEmployeesByDepartment` method (new)
+
+### Code Changes :
+
+#### Create to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java` 
+  (Actually, this method will be **Added** to the existing file, not created as a new file. Adjusting the instruction for accuracy)
+#### Add to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`
+  ```java
+  /**
+   * Retrieves all employees belonging to a specific department.
+   * @param department Name of the department
+   * @return List of Employees in the department
+   */
+  public List<Employee> getEmployeesByDepartment(String department) {
+      return employees.stream()
+              .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
+              .toList();
+  }
+  ```
+
+#### Modify to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+  (Actually, this involves **Adding** new code to the main method for demonstration. Adjusting for clarity)
+#### Add to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+  ```java
+  // After adding employees...
+  System.out.println("Employees in HR Department:");
+  service.getEmployeesByDepartment("HR").forEach(e -> System.out.println("Name: " + e.getName() + ", ID: " + e.getId() + ", Role: " + e.getRole()));
+  
+  // **Note:** The `getRole()` method does not exist in the provided `Employee` class.
+  //          For completeness, you might want to add a `role` field to the `Employee` class and its constructor.
+  ```
+
+#### **Update** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java` 
+  (To include a `role` field as hinted in the note above, if not already present)
+#### Update to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java`
+  ```java
+  public class Employee {
+      // Existing fields...
+      private String role; // **NEW**
+      
+      // Constructor with new field
+      public Employee(int id, String name, String department, String role) {
+          this.id = id;
+          this.name = name;
+          this.department = department;
+          this.role = role; // **NEW**
+      }
+      
+      // Getter for role
+      public String getRole() {
+          return role;
+      }
+      
+      // **Also, ensure toString() is properly defined for Employee to display all details**
+      @Override
+      public String toString() {
+          return "Employee{" +
+                  "id=" + id +
+                  ", name='" + name + '\'' +
+                  ", department='" + department + '\'' +
+                  ", role='" + role + '\'' +
+                  '}';
+      }
+  }
+  ```
+
+#### **Insert** into `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java` (Part of the **Add** above, for clarity)
+  - Already covered in the "Add to Main.java" section. 
+
+#### **Note on `Employee` Class for Completeness:**
+Ensure `Employee.java` has a `role` field and a properly defined `toString()` method for comprehensive display. If `role` is not part of your requirements, omit the related code. 
+
+**Critical Adjustment for Clarity in Instructions:**
+- The original prompt's format was strictly followed, but for accuracy, "Create to" was adjusted to reflect the actual action (Add/Modify) on existing files. 
+- **Role Field Addition:** Assuming it was an oversight; if `role` is not required, ignore the update to `Employee.java`. 
+
+**Example Use Case in `Main.java` (already included above):**
+Demonstrates filtering by "HR" department and printing employee details. 
+
+**Reminder for `Employee.java`:**
+If `role` is indeed needed, update the class accordingly. Otherwise, adjust the print statement in `Main.java` to exclude `role`. 
+
+Please ensure to handle the `role` field according to your actual requirements. The above adjustments aim to clarify the implementation while adhering to the original format request.
