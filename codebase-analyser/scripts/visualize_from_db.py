@@ -12,8 +12,93 @@ import logging
 import networkx as nx
 import matplotlib.pyplot as plt
 from pathlib import Path
+import math
 
 from codebase_analyser.database.unified_storage import UnifiedStorage
+
+def hierarchical_layout(G, root=None, width=1.0, height=1.0, iterations=50):
+    """Create a hierarchical layout for a directed graph.
+
+    Args:
+        G: NetworkX graph
+        root: Root node (if None, will be determined automatically)
+        width: Width of the layout
+        height: Height of the layout
+        iterations: Number of iterations for the layout algorithm
+
+    Returns:
+        Dictionary mapping nodes to positions
+    """
+    # If the graph is empty, return an empty layout
+    if len(G) == 0:
+        return {}
+
+    # Convert to directed graph if it's not already
+    if not isinstance(G, nx.DiGraph):
+        G = nx.DiGraph(G)
+
+    # Find root nodes (nodes with no incoming edges or with only self-loops)
+    if root is None:
+        roots = [n for n in G.nodes() if G.in_degree(n) == 0 or
+                 (G.in_degree(n) == 1 and n in G.predecessors(n))]
+
+        # If no root nodes found, use nodes with the lowest in-degree
+        if not roots:
+            min_in_degree = min(G.in_degree(n) for n in G.nodes())
+            roots = [n for n in G.nodes() if G.in_degree(n) == min_in_degree]
+
+        # If still no roots, just use the first node
+        if not roots:
+            roots = [list(G.nodes())[0]]
+    else:
+        roots = [root]
+
+    # Create a tree from the graph
+    tree = nx.bfs_tree(G.to_undirected(), roots[0])
+
+    # Get the depth of each node
+    depths = nx.single_source_shortest_path_length(tree, roots[0])
+
+    # Group nodes by depth
+    nodes_by_depth = {}
+    for node, depth in depths.items():
+        if depth not in nodes_by_depth:
+            nodes_by_depth[depth] = []
+        nodes_by_depth[depth].append(node)
+
+    # Calculate positions
+    max_depth = max(depths.values())
+    pos = {}
+
+    for depth, nodes in nodes_by_depth.items():
+        # Calculate y-coordinate based on depth
+        y = height * (1 - depth / (max_depth + 1))
+
+        # Calculate x-coordinates to spread nodes evenly
+        n_nodes = len(nodes)
+        for i, node in enumerate(nodes):
+            if n_nodes == 1:
+                x = width / 2
+            else:
+                x = width * i / (n_nodes - 1) if n_nodes > 1 else width / 2
+            pos[node] = (x, y)
+
+    # Add any remaining nodes not reached by BFS
+    remaining_nodes = set(G.nodes()) - set(pos.keys())
+    if remaining_nodes:
+        # Place them at the bottom
+        y = 0
+        n_nodes = len(remaining_nodes)
+        for i, node in enumerate(remaining_nodes):
+            x = width * i / (n_nodes - 1) if n_nodes > 1 else width / 2
+            pos[node] = (x, y)
+
+    # Refine the layout with iterations of spring layout
+    if iterations > 0:
+        # Use the calculated positions as initial positions for spring layout
+        pos = nx.spring_layout(G, pos=pos, fixed=roots, iterations=iterations, k=0.2)
+
+    return pos
 
 # Configure logging
 logging.basicConfig(
@@ -53,11 +138,23 @@ def visualize_graph(G, output_file, title):
     plt.figure(figsize=(16, 12))
     plt.title(title, fontsize=16)
 
-    # Use a more sophisticated layout
+    # Use a hierarchical layout for better visualization
     try:
-        pos = nx.kamada_kawai_layout(G)
-    except:
-        # Fall back to spring layout if kamada_kawai fails
+        # Try to use graphviz for a hierarchical layout
+        try:
+            import pygraphviz
+            pos = nx.nx_agraph.graphviz_layout(G, prog='dot')
+        except ImportError:
+            # If pygraphviz is not available, try using pydot
+            try:
+                import pydot
+                pos = nx.nx_pydot.graphviz_layout(G, prog='dot')
+            except ImportError:
+                # If both fail, use a custom hierarchical layout
+                pos = hierarchical_layout(G)
+    except Exception as e:
+        logger.warning(f"Failed to use hierarchical layout: {e}")
+        # Fall back to spring layout if hierarchical layout fails
         pos = nx.spring_layout(G, k=0.3, iterations=50, seed=42)
 
     # Draw nodes with different colors based on type

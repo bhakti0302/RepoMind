@@ -570,13 +570,81 @@ def main():
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Analyze the project
-    chunks, dependency_graph = analyze_project(repo_path)
+    # Get data from the database
+    logger.info("Reading data from the database...")
 
-    # If no chunks are found, use sample data for visualization
-    if not chunks or not dependency_graph:
-        logger.warning("No chunks found in the repository. Using sample data for visualization.")
-        chunks, dependency_graph = create_sample_data(project_id)
+    from codebase_analyser.database.unified_storage import UnifiedStorage
+    from codebase_analyser.chunking.code_chunk import CodeChunk
+    from codebase_analyser.parsing.dependency_types import DependencyType, Dependency
+
+    # Connect to the database
+    try:
+        storage = UnifiedStorage(db_path='.lancedb', read_only=True)
+
+        # Get chunks from the database
+        db_chunks = []
+
+        # Get all chunks for this project from the database
+        table = storage.db_manager.get_code_chunks_table()
+        chunks_df = table.search().where(f'project_id = \"{project_id}\"').to_pandas()
+
+        if len(chunks_df) > 0:
+            logger.info(f"Found {len(chunks_df)} chunks in the database for project {project_id}")
+
+            # Convert database chunks to CodeChunk objects
+            for _, row in chunks_df.iterrows():
+                chunk = CodeChunk(
+                    chunk_type=row.get('chunk_type', 'unknown'),
+                    name=row.get('name', ''),
+                    content=row.get('content', ''),
+                    node_id=row.get('node_id', ''),
+                    qualified_name=row.get('qualified_name', ''),
+                    file_path=row.get('file_path', ''),
+                    start_line=row.get('start_line', 0),
+                    end_line=row.get('end_line', 0),
+                    language=row.get('language', 'java')
+                )
+
+                # Add context if available
+                if 'context' in row and row['context']:
+                    chunk.context = row['context']
+
+                # Add metadata if available
+                if 'metadata' in row and row['metadata']:
+                    try:
+                        if isinstance(row['metadata'], str):
+                            chunk.metadata = json.loads(row['metadata'])
+                        else:
+                            chunk.metadata = row['metadata']
+                    except json.JSONDecodeError:
+                        logger.warning(f"Failed to parse metadata for chunk {chunk.node_id}")
+
+                db_chunks.append(chunk)
+
+            # Get dependency graph from the database
+            db_dependency_graph = storage.get_dependency_graph(project_id)
+
+            # Log the number of edges found
+            if db_dependency_graph:
+                logger.info(f"Found dependency graph with {len(db_dependency_graph.edges)} edges in the database")
+            else:
+                logger.warning("No dependency graph found in the database")
+
+            # Use the data from the database
+            chunks, dependency_graph = db_chunks, db_dependency_graph
+            logger.info("Successfully loaded data from the database")
+        else:
+            logger.error(f"No chunks found in the database for project {project_id}")
+            logger.error("Please sync your codebase first")
+            sys.exit(1)
+
+        # Close the database connection
+        storage.close()
+
+    except Exception as e:
+        logger.error(f"Error reading from database: {e}")
+        logger.error("Please make sure the database exists and is properly configured")
+        sys.exit(1)
 
     # Create filenames with timestamp if provided
     if timestamp:

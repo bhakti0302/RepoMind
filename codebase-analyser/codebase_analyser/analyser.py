@@ -156,9 +156,19 @@ class CodebaseAnalyser:
 
     def parse(self):
         """Parse all supported files in the repository."""
-        # This is a placeholder - you'd implement the full parsing logic here
         print(f"Parsing repository at {self.repo_path}")
-        # Actual implementation would scan the repo and parse each file
+
+        # Parse Java files
+        java_results = self.parse_java_files()
+
+        # Get chunks from the parsed Java files
+        all_chunks = []
+        for parsed_file in java_results:
+            chunks = self.get_chunks(parsed_file)
+            all_chunks.extend(chunks)
+
+        print(f"Created a total of {len(all_chunks)} chunks from the repository")
+        return all_chunks
 
     def parse_java_files(self) -> List[Dict[str, Any]]:
         """Parse all Java files in the repository.
@@ -177,6 +187,12 @@ class CodebaseAnalyser:
         try:
             java_files = list(self.repo_path.glob('**/*.java'))
             print(f"Found {len(java_files)} Java files")
+
+            # Print the paths of all Java files for debugging
+            print("Java files found:")
+            for file in java_files:
+                print(f"  - {file}")
+
         except Exception as e:
             print(f"Error finding Java files: {e}")
             return []

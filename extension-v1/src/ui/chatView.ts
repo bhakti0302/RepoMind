@@ -216,6 +216,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private _showVisualizationInChat(webview: vscode.Webview, imagePath: string, caption: string) {
+        // Log the visualization being shown
+        console.log(`SHOWING VISUALIZATION: ${caption} - ${imagePath}`);
+
         // Perform thorough checks to ensure the image exists
         try {
             // Check if the file exists
@@ -289,11 +292,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         try {
             // Create a URI for the image file
             const imageUri = vscode.Uri.file(imagePath);
+            console.log(`DEBUG: Created image URI: ${imageUri.toString()}`);
 
             // Convert the URI to a webview URI
             const webviewUri = webview.asWebviewUri(imageUri);
+            console.log(`DEBUG: Converted image path: ${imagePath} to webview URI: ${webviewUri}`);
 
-            console.log(`Converted image path: ${imagePath} to webview URI: ${webviewUri}`);
+            // Check if the webview URI is valid
+            if (!webviewUri) {
+                console.error(`DEBUG: Failed to create webview URI for ${imagePath}`);
+            }
 
             // Send the image with additional metadata to help the frontend
             webview.postMessage({
@@ -407,8 +415,28 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
      * @param caption Optional caption to display with the image
      */
     public sendImageToChat(imagePath: string, caption?: string) {
+        console.log(`DEBUG: sendImageToChat called with path: ${imagePath}, caption: ${caption || ''}`);
+
+        // Check if the file exists
+        if (!fs.existsSync(imagePath)) {
+            console.error(`DEBUG: Image file does not exist: ${imagePath}`);
+        } else {
+            console.log(`DEBUG: Image file exists: ${imagePath}`);
+
+            // Check file size
+            try {
+                const stats = fs.statSync(imagePath);
+                console.log(`DEBUG: Image file size: ${stats.size} bytes`);
+            } catch (error) {
+                console.error(`DEBUG: Error checking file stats: ${error}`);
+            }
+        }
+
         if (this._view) {
+            console.log(`DEBUG: View exists, calling _showVisualizationInChat`);
             this._showVisualizationInChat(this._view.webview, imagePath, caption || '');
+        } else {
+            console.error(`DEBUG: View does not exist, cannot show visualization`);
         }
     }
 
@@ -643,15 +671,27 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                             if (loadingText.parentNode === imageContainer) {
                                 imageContainer.removeChild(loadingText);
                             }
-                            console.log('Image loaded successfully:', imageSrc);
+                            console.log('DEBUG: Image loaded successfully in webview:', imageSrc);
 
                             // Add a subtle animation to show the image has loaded
                             image.style.animation = 'fadeIn 0.5s';
+
+                            // Log additional details about the loaded image
+                            console.log('DEBUG: Image dimensions:', image.naturalWidth, 'x', image.naturalHeight);
+                            console.log('DEBUG: Image complete:', image.complete);
                         };
 
                         // Add onerror event to show error message
-                        image.onerror = () => {
-                            console.error('Error loading image:', imageSrc);
+                        image.onerror = (error) => {
+                            console.error('DEBUG: Error loading image in webview:', imageSrc);
+                            console.error('DEBUG: Error details:', error);
+
+                            // Try to get more information about the image
+                            const img = new Image();
+                            img.onload = () => console.log('DEBUG: Image loads in separate Image object:', imageSrc);
+                            img.onerror = () => console.error('DEBUG: Image also fails in separate Image object:', imageSrc);
+                            img.src = imageSrc;
+
                             loadingText.textContent = 'Error loading visualization. Click to try opening externally.';
                             loadingText.style.color = '#ff6b6b';
                             loadingText.style.border = '1px solid #ff6b6b';

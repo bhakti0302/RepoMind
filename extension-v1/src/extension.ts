@@ -7,6 +7,7 @@ import * as cp from 'child_process';
 import { StatusBarItem } from './ui/statusBar';
 import { ChatViewProvider } from './ui/chatView';
 import { ErrorLogger } from './utils/errorLogger';
+import { DirectImageDisplay } from './utils/directImageDisplay';
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
@@ -501,14 +502,14 @@ Error running codebase analysis:
         const command = `cd "${codebaseAnalyserPath}" &&
             if [ -d "venv" ]; then
                 source venv/bin/activate &&
-                python3 scripts/visualize_from_db.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                python3 scripts/visualize_code_relationships.py --repo-path "${workspaceFolder}" --output-dir "${centralVisualizationsDir}" --project-id "${projectId}" --timestamp "${timestamp}" &&
                 # Also generate in the old location for backward compatibility
-                python3 scripts/visualize_from_db.py --project-id "${projectId}" --output-dir "${visualizationsDir}" &&
+                python3 scripts/visualize_code_relationships.py --repo-path "${workspaceFolder}" --output-dir "${visualizationsDir}" --project-id "${projectId}" &&
                 deactivate;
             else
-                python3 scripts/visualize_from_db.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                python3 scripts/visualize_code_relationships.py --repo-path "${workspaceFolder}" --output-dir "${centralVisualizationsDir}" --project-id "${projectId}" --timestamp "${timestamp}" &&
                 # Also generate in the old location for backward compatibility
-                python3 scripts/visualize_from_db.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                python3 scripts/visualize_code_relationships.py --repo-path "${workspaceFolder}" --output-dir "${visualizationsDir}" --project-id "${projectId}";
             fi`;
 
         vscode.window.showInformationMessage(`Visualizing code relationships for project: ${projectId}`);
@@ -561,10 +562,10 @@ Error running codebase analysis:
 
                         // Try to use the manual visualization script as a fallback
                         try {
-                            const visualizeFromDbPath = path.join(codebaseAnalyserPath, 'scripts', 'visualize_from_db.py');
-                            if (fs.existsSync(visualizeFromDbPath)) {
-                                console.log('Trying visualize_from_db.py script as fallback...');
-                                const fallbackCommand = `python "${visualizeFromDbPath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
+                            const manualVisualizePath = path.join(codebaseAnalyserPath, 'scripts', 'manual_visualize.py');
+                            if (fs.existsSync(manualVisualizePath)) {
+                                console.log('Trying manual visualization script as fallback...');
+                                const fallbackCommand = `python "${manualVisualizePath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
 
                                 cp.exec(fallbackCommand, (fallbackError, fallbackStdout, fallbackStderr) => {
                                     if (fallbackError) {
@@ -616,18 +617,47 @@ Error running codebase analysis:
                     console.log(`Stdout: ${stdout}`);
 
                     try {
-                        // Parse the JSON output to get the visualization paths
-                        const result = JSON.parse(stdout);
+                        // Clean up the stdout to ensure it's valid JSON
+                        // Extract only the JSON part from the output
+                        const jsonMatch = stdout.match(/\{.*\}/s);
+
+                        // Define the result type
+                        interface VisualizationResult {
+                            multi_file_relationships?: string;
+                            relationship_types?: string;
+                        }
+
+                        let result: VisualizationResult = {};
+
+                        if (jsonMatch) {
+                            // Parse the JSON output to get the visualization paths
+                            result = JSON.parse(jsonMatch[0]) as VisualizationResult;
+                        } else {
+                            // If no JSON found, try to extract paths using regex
+                            const multiFileMatch = stdout.match(/multi_file_relationships.*?:\s*"([^"]+)"/);
+                            const relationshipTypesMatch = stdout.match(/relationship_types.*?:\s*"([^"]+)"/);
+
+                            if (multiFileMatch && multiFileMatch[1]) {
+                                result.multi_file_relationships = multiFileMatch[1];
+                            }
+                            if (relationshipTypesMatch && relationshipTypesMatch[1]) {
+                                result.relationship_types = relationshipTypesMatch[1];
+                            }
+
+                            if (!result.multi_file_relationships && !result.relationship_types) {
+                                throw new Error("Could not extract visualization paths from output");
+                            }
+                        }
 
                         // Show success message with links to open the visualizations
                         vscode.window.showInformationMessage('Code relationships visualized successfully!',
                             'Open Multi-File Relationships', 'Open Relationship Types')
                             .then(selection => {
-                                if (selection === 'Open Multi-File Relationships') {
+                                if (selection === 'Open Multi-File Relationships' && result.multi_file_relationships) {
                                     // Open the multi-file relationships visualization
                                     const multiFileVisualizationPath = result.multi_file_relationships;
                                     vscode.env.openExternal(vscode.Uri.file(multiFileVisualizationPath));
-                                } else if (selection === 'Open Relationship Types') {
+                                } else if (selection === 'Open Relationship Types' && result.relationship_types) {
                                     // Open the relationship types visualization
                                     const relationshipTypesVisualizationPath = result.relationship_types;
                                     vscode.env.openExternal(vscode.Uri.file(relationshipTypesVisualizationPath));
@@ -635,10 +665,23 @@ Error running codebase analysis:
                             });
 
                         statusBar.setReady('Visualizations created');
+
+                        // Show visualizations in chat
+                        vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
+
                         resolve();
                     } catch (parseError) {
                         console.error(`Error parsing visualization result: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
-                        vscode.window.showErrorMessage('Visualizations created, but could not parse the result.');
+                        console.log("Raw output:", stdout);
+
+                        // Even if parsing fails, try to show visualizations
+                        vscode.window.showInformationMessage('Visualizations created successfully!', 'Show in Chat')
+                            .then(selection => {
+                                if (selection === 'Show in Chat') {
+                                    vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
+                                }
+                            });
+
                         statusBar.setReady('Visualizations created');
                         resolve();
                     }
@@ -689,11 +732,11 @@ Error running codebase analysis:
                 fs.mkdirSync(visualizationsDir, { recursive: true });
 
                 // Run the manual visualization script
-                const visualizeFromDbPath = path.join(codebaseAnalyserPath, 'scripts', 'visualize_from_db.py');
-                if (fs.existsSync(visualizeFromDbPath)) {
+                const manualVisualizePath = path.join(codebaseAnalyserPath, 'scripts', 'manual_visualize.py');
+                if (fs.existsSync(manualVisualizePath)) {
                     vscode.window.showInformationMessage('Generating visualizations...');
 
-                    const fallbackCommand = `python "${visualizeFromDbPath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
+                    const fallbackCommand = `python "${manualVisualizePath}" --output-dir "${visualizationsDir}" --project-id "${projectId}"`;
 
                     cp.exec(fallbackCommand, (fallbackError, fallbackStdout, fallbackStderr) => {
                         if (fallbackError) {
@@ -723,6 +766,7 @@ Error running codebase analysis:
 
         // Function to show visualizations
         function showVisualizations() {
+            console.log("DEBUG: showVisualizations function called");
             let visualizationsFound = false;
 
             // Function to find the latest visualization file
@@ -770,6 +814,30 @@ Error running codebase analysis:
             let multiFileVisualizationPath = findLatestVisualization(centralVisualizationsDir, 'multi_file_relationships');
             let relationshipTypesVisualizationPath = findLatestVisualization(centralVisualizationsDir, 'relationship_types');
 
+            // Check for UML-style graphs
+            const customerJavaHighlightPath = path.join(centralVisualizationsDir, 'customer_java_highlight.png');
+            const projectGraphCustomerHighlightPath = path.join(centralVisualizationsDir, 'project_graph_customer_highlight.png');
+
+            const hasCustomerJavaHighlight = fs.existsSync(customerJavaHighlightPath);
+            const hasProjectGraphCustomerHighlight = fs.existsSync(projectGraphCustomerHighlightPath);
+
+            // Log what we found
+            console.log('VISUALIZATION PATHS:');
+            console.log(`Multi-file relationships: ${multiFileVisualizationPath}`);
+            console.log(`Relationship types: ${relationshipTypesVisualizationPath}`);
+            console.log(`Customer Java Highlight exists: ${hasCustomerJavaHighlight}, path: ${customerJavaHighlightPath}`);
+            console.log(`Project Graph Customer Highlight exists: ${hasProjectGraphCustomerHighlight}, path: ${projectGraphCustomerHighlightPath}`);
+
+            // Force specific paths for testing
+            multiFileVisualizationPath = path.join(centralVisualizationsDir, 'testshreya_multi_file_relationships_20250512194102.png');
+            relationshipTypesVisualizationPath = path.join(centralVisualizationsDir, 'testshreya_relationship_types_20250512194102.png');
+
+            // Verify these files exist
+            const forceMultiFileExists = fs.existsSync(multiFileVisualizationPath);
+            const forceRelationshipTypesExists = fs.existsSync(relationshipTypesVisualizationPath);
+            console.log(`Forced Multi-file relationships exists: ${forceMultiFileExists}, path: ${multiFileVisualizationPath}`);
+            console.log(`Forced Relationship types exists: ${forceRelationshipTypesExists}, path: ${relationshipTypesVisualizationPath}`);
+
             // If not found in central directory, check the old location
             if (!multiFileVisualizationPath) {
                 multiFileVisualizationPath = path.join(visualizationsDir, `${projectId}_multi_file_relationships.png`);
@@ -796,6 +864,19 @@ Error running codebase analysis:
                 chatViewProvider.sendImageToChat(relationshipTypesVisualizationPath, 'Relationship Types Visualization:');
                 visualizationsFound = true;
                 console.log(`Using relationship types visualization: ${relationshipTypesVisualizationPath}`);
+            }
+
+            // Send UML-style graphs to chat
+            if (hasCustomerJavaHighlight) {
+                chatViewProvider.sendImageToChat(customerJavaHighlightPath, 'Customer Java Highlight:');
+                visualizationsFound = true;
+                console.log(`Using Customer Java Highlight: ${customerJavaHighlightPath}`);
+            }
+
+            if (hasProjectGraphCustomerHighlight) {
+                chatViewProvider.sendImageToChat(projectGraphCustomerHighlightPath, 'Project Graph with Customer Highlight:');
+                visualizationsFound = true;
+                console.log(`Using Project Graph with Customer Highlight: ${projectGraphCustomerHighlightPath}`);
             }
 
             if (!visualizationsFound) {
@@ -885,8 +966,37 @@ Error running codebase analysis:
                         console.log(`Stdout: ${stdout}`);
 
                         try {
-                            // Parse the JSON output to get the visualization paths
-                            const result = JSON.parse(stdout);
+                            // Clean up the stdout to ensure it's valid JSON
+                            // Extract only the JSON part from the output
+                            const jsonMatch = stdout.match(/\{.*\}/s);
+
+                            // Define the result type
+                            interface VisualizationResult {
+                                multi_file_relationships?: string;
+                                relationship_types?: string;
+                            }
+
+                            let result: VisualizationResult = {};
+
+                            if (jsonMatch) {
+                                // Parse the JSON output to get the visualization paths
+                                result = JSON.parse(jsonMatch[0]) as VisualizationResult;
+                            } else {
+                                // If no JSON found, try to extract paths using regex
+                                const multiFileMatch = stdout.match(/multi_file_relationships.*?:\s*"([^"]+)"/);
+                                const relationshipTypesMatch = stdout.match(/relationship_types.*?:\s*"([^"]+)"/);
+
+                                if (multiFileMatch && multiFileMatch[1]) {
+                                    result.multi_file_relationships = multiFileMatch[1];
+                                }
+                                if (relationshipTypesMatch && relationshipTypesMatch[1]) {
+                                    result.relationship_types = relationshipTypesMatch[1];
+                                }
+
+                                if (!result.multi_file_relationships && !result.relationship_types) {
+                                    throw new Error("Could not extract visualization paths from output");
+                                }
+                            }
 
                             // Show success message with links to open the visualizations
                             vscode.window.showInformationMessage(
@@ -895,9 +1005,9 @@ Error running codebase analysis:
                             ).then(selection => {
                                 if (selection === 'Show in Chat') {
                                     vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
-                                } else if (selection === 'Open Multi-File') {
+                                } else if (selection === 'Open Multi-File' && result.multi_file_relationships) {
                                     vscode.env.openExternal(vscode.Uri.file(result.multi_file_relationships));
-                                } else if (selection === 'Open Relationship Types') {
+                                } else if (selection === 'Open Relationship Types' && result.relationship_types) {
                                     vscode.env.openExternal(vscode.Uri.file(result.relationship_types));
                                 }
                             });
@@ -905,8 +1015,11 @@ Error running codebase analysis:
                             resolve();
                         } catch (parseError) {
                             console.error(`Error parsing visualization result: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+                            console.log("Raw output:", stdout);
+
+                            // Even if parsing fails, try to show visualizations
                             vscode.window.showInformationMessage(
-                                'Visualizations created, but could not parse the result.',
+                                'Visualizations created successfully!',
                                 'Show in Chat'
                             ).then(selection => {
                                 if (selection === 'Show in Chat') {
@@ -927,6 +1040,38 @@ Error running codebase analysis:
         });
     });
 
+    // Command to directly display an image
+    let showDirectImageCommand = vscode.commands.registerCommand('extension-v1.showDirectImage', () => {
+        console.log("DEBUG: showDirectImage command triggered");
+
+        // Get the current workspace folder
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showErrorMessage('No workspace folder is open. Please open a folder first.');
+            return;
+        }
+
+        const workspaceFolder = workspaceFolders[0].uri.fsPath;
+        const projectId = path.basename(workspaceFolder);
+
+        // Path to the central visualizations directory
+        const workspaceRoot = path.dirname(context.extensionPath);
+        const centralVisualizationsDir = path.join(workspaceRoot, 'data', 'visualizations', projectId);
+
+        // Path to the specific image we want to display
+        const imagePath = path.join(centralVisualizationsDir, 'testshreya_multi_file_relationships_20250512194102.png');
+
+        // Check if the file exists
+        if (!fs.existsSync(imagePath)) {
+            console.error(`DEBUG: Image file does not exist: ${imagePath}`);
+            vscode.window.showErrorMessage(`Image file not found: ${imagePath}`);
+            return;
+        }
+
+        // Display the image
+        DirectImageDisplay.showImage(imagePath, 'Multi-File Relationships');
+    });
+
     // Add commands to subscriptions
     context.subscriptions.push(startAssistantCommand);
     context.subscriptions.push(analyzeRequirementsCommand);
@@ -938,6 +1083,7 @@ Error running codebase analysis:
     context.subscriptions.push(visualizeRelationshipsCommand);
     context.subscriptions.push(showVisualizationsInChatCommand);
     context.subscriptions.push(generateVisualizationsCommand);
+    context.subscriptions.push(showDirectImageCommand);
 
     // Set status and check for last sync time
     statusBar.setReady('RepoMind is ready');

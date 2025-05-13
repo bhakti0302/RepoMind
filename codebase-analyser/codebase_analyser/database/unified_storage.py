@@ -120,51 +120,48 @@ class UnifiedStorage:
                     description='Contains'
                 )
 
-        # Add edges based on references
-        for _, chunk in chunks.iterrows():
-            if 'reference_ids' in chunk and chunk['reference_ids']:
-                # Get reference types if available
-                reference_types = {}
-                if 'metadata' in chunk and chunk['metadata']:
-                    try:
-                        metadata = json.loads(chunk['metadata']) if isinstance(chunk['metadata'], str) else chunk['metadata']
-                        if 'reference_types' in metadata:
-                            reference_types = metadata['reference_types']
-                    except (json.JSONDecodeError, TypeError):
-                        pass
+        # Check if dependencies table exists
+        if "dependencies" in self.db.table_names():
+            try:
+                # Get dependencies from the dependencies table
+                dependencies_table = self.db.open_table("dependencies")
+                dependencies = dependencies_table.to_pandas()
 
-                for ref_id in chunk['reference_ids']:
-                    # Determine the relationship type
-                    rel_type = 'REFERENCES'
-                    rel_strength = 0.8
-                    rel_description = 'References'
+                # Add edges from dependencies
+                for _, dep in dependencies.iterrows():
+                    # Get relationship attributes
+                    source_id = dep.get('source_id')
+                    target_id = dep.get('target_id')
+                    rel_type = dep.get('type', 'REFERENCES')
+                    description = dep.get('description', 'References')
 
-                    if ref_id in reference_types:
-                        rel_type = reference_types[ref_id]
+                    # Determine relationship strength
+                    rel_strength = 0.8  # Default strength
+                    if rel_type == 'IMPORTS':
+                        rel_strength = 0.7
+                    elif rel_type == 'EXTENDS':
+                        rel_strength = 1.0
+                    elif rel_type == 'IMPLEMENTS':
+                        rel_strength = 0.9
+                    elif rel_type == 'USES':
+                        rel_strength = 0.8
+                    elif rel_type == 'HAS_FIELD':
+                        rel_strength = 0.8
 
-                        # Set strength and description based on relationship type
-                        if rel_type == 'IMPORTS':
-                            rel_strength = 0.7
-                            rel_description = 'Imports'
-                        elif rel_type == 'EXTENDS':
-                            rel_strength = 1.0
-                            rel_description = 'Extends'
-                        elif rel_type == 'IMPLEMENTS':
-                            rel_strength = 0.9
-                            rel_description = 'Implements'
-                        elif rel_type == 'HAS_FIELD':
-                            rel_strength = 0.8
-                            rel_description = 'Has Field'
-
+                    # Add the edge to the graph
                     graph.add_edge(
-                        chunk['node_id'],
-                        ref_id,
+                        source_id,
+                        target_id,
                         type=rel_type,
                         strength=rel_strength,
                         is_direct=True,
                         is_required=(rel_type in ['EXTENDS', 'IMPLEMENTS']),
-                        description=rel_description
+                        description=description
                     )
+
+                print(f"Added {len(dependencies)} edges from dependencies table")
+            except Exception as e:
+                print(f"Error reading dependencies table: {e}")
 
         return graph
 
@@ -284,6 +281,131 @@ class UnifiedStorage:
             Timestamp string in ISO format, or None if not found
         """
         return self.db_manager.get_last_sync_time(project_id)
+
+    def get_dependency_graph(self, project_id: str):
+        """Get the dependency graph for a project.
+
+        Args:
+            project_id: Project ID
+
+        Returns:
+            Dependency graph object or None if not found
+        """
+        from codebase_analyser.parsing.dependency_analyzer import DependencyGraph
+        from codebase_analyser.parsing.dependency_types import DependencyType, Dependency
+
+        # Create a new dependency graph
+        dependency_graph = DependencyGraph()
+
+        # Get all chunks for this project
+        table = self.db_manager.get_code_chunks_table()
+        chunks_df = table.search().where(f'project_id = \"{project_id}\"').to_pandas()
+
+        # Get node IDs for this project
+        project_nodes = chunks_df['node_id'].tolist()
+
+        # Add nodes to the dependency graph
+        for _, chunk in chunks_df.iterrows():
+            node_id = chunk['node_id']
+            dependency_graph.add_node(
+                node_id=node_id,
+                node_type=chunk['chunk_type'],
+                name=chunk['name'],
+                qualified_name=chunk['qualified_name']
+            )
+
+        # Check if dependencies table exists
+        if "dependencies" in self.db.table_names():
+            try:
+                # Get dependencies for this project
+                dependencies_table = self.db.open_table("dependencies")
+                dependencies_df = dependencies_table.search().where(f'project_id = \"{project_id}\"').to_pandas()
+
+                # Add edges from dependencies
+                for _, dep in dependencies_df.iterrows():
+                    source_id = dep['source_id']
+                    target_id = dep['target_id']
+
+                    # Skip if source or target is not in project nodes
+                    if source_id not in project_nodes or target_id not in project_nodes:
+                        continue
+
+                    # Convert type string to DependencyType enum
+                    try:
+                        dep_type = DependencyType[dep['type']]
+                    except (KeyError, ValueError):
+                        dep_type = DependencyType.REFERENCES
+
+                    # Create dependency object
+                    dependency = Dependency(
+                        source_id=source_id,
+                        target_id=target_id,
+                        dep_type=dep_type,
+                        strength=0.8,  # Default strength
+                        is_required=(dep['type'] in ['EXTENDS', 'IMPLEMENTS']),
+                        description=dep['description']
+                    )
+
+                    # Add edge to dependency graph
+                    dependency_graph.add_edge(dependency)
+
+                print(f"Added {len(dependencies_df)} dependencies from dependencies table")
+            except Exception as e:
+                print(f"Error getting dependencies: {e}")
+
+                # Fall back to building from the general graph
+                graph = self._build_graph_from_dependencies()
+
+                # Add edges to the dependency graph
+                for u, v, attrs in graph.edges(data=True):
+                    if u in project_nodes and v in project_nodes:
+                        # Convert edge type string to DependencyType enum
+                        try:
+                            dep_type = DependencyType[attrs.get('type', 'REFERENCES')]
+                        except (KeyError, ValueError):
+                            dep_type = DependencyType.REFERENCES
+
+                        # Create a dependency object
+                        dependency = Dependency(
+                            source_id=u,
+                            target_id=v,
+                            dep_type=dep_type,
+                            strength=attrs.get('strength', 0.5),
+                            is_required=attrs.get('is_required', False),
+                            description=attrs.get('description', '')
+                        )
+
+                        # Add the edge to the dependency graph
+                        dependency_graph.add_edge(dependency)
+        else:
+            print("No dependencies table found, using general graph")
+
+            # Build the graph from the database
+            graph = self._build_graph_from_dependencies()
+
+            # Add edges to the dependency graph
+            for u, v, attrs in graph.edges(data=True):
+                if u in project_nodes and v in project_nodes:
+                    # Convert edge type string to DependencyType enum
+                    try:
+                        dep_type = DependencyType[attrs.get('type', 'REFERENCES')]
+                    except (KeyError, ValueError):
+                        dep_type = DependencyType.REFERENCES
+
+                    # Create a dependency object
+                    dependency = Dependency(
+                        source_id=u,
+                        target_id=v,
+                        dep_type=dep_type,
+                        strength=attrs.get('strength', 0.5),
+                        is_required=attrs.get('is_required', False),
+                        description=attrs.get('description', '')
+                    )
+
+                    # Add the edge to the dependency graph
+                    dependency_graph.add_edge(dependency)
+
+        return dependency_graph
 
     def close(self) -> None:
         """Close the database connection."""
