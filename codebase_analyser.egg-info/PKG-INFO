@@ -1,0 +1,32 @@
+Metadata-Version: 2.4
+Name: codebase_analyser
+Version: 0.1.0
+Summary: A tool for analyzing codebases and generating embeddings
+Home-page: https://github.com/yourusername/repomind
+Author: RepoMind Team
+Author-email: example@example.com
+Keywords: code,analysis,embeddings,ast,parsing
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Requires-Python: >=3.8
+Requires-Dist: tree-sitter
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: transformers
+Requires-Dist: torch
+Requires-Dist: lancedb
+Requires-Dist: pyarrow
+Requires-Dist: matplotlib
+Requires-Dist: networkx
+Requires-Dist: pydot
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

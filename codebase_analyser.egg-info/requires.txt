@@ -1,0 +1,10 @@
+tree-sitter
+numpy
+pandas
+transformers
+torch
+lancedb
+pyarrow
+matplotlib
+networkx
+pydot

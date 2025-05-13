@@ -1,418 +1,524 @@
-# RepoMind - Intelligent Coding Assistant
+# RepoMind Codebase Analyser
 
-RepoMind is an AI-powered coding assistant that provides intelligent code understanding and generation capabilities. The project consists of a codebase analysis system for deep code understanding and a VS Code extension for the user interface.
+This service is responsible for analyzing codebases using Tree-sitter, generating semantic code chunks, creating embeddings for the vector database, and building dependency graphs.
 
-## Project Components
+## Main Run Scripts
 
-1. **Codebase Analyser**: Advanced code analysis system for parsing, chunking, and understanding code
-2. **VS Code Extension**: User interface for interacting with the codebase analyser
-3. **Documentation**: Comprehensive documentation for the project
+You can choose between two main analysis scripts depending on your needs:
 
-## Features
+### 1. Complete Codebase Analysis
 
-### Codebase Analysis System
-- AST parsing with Tree-sitter for multiple languages
-- Hierarchical semantic code chunking
-- Dependency analysis and relationship mapping
-- Structural integrity and context preservation
-- Comprehensive metadata for code understanding
-- Memory-optimized processing for large codebases
-- Vector database integration with LanceDB
-- Code embedding generation using CodeBERT
-- Optional dependency graph visualization
-- Unified storage for vectors and graph metadata
-- Command-line interface for various operations
-
-### VS Code Extension
-- Interactive chat interface for querying the codebase
-- One-click codebase synchronization
-- Project-specific context for accurate responses
-- File attachment capability for additional context
-- Status bar integration for quick access
-- Multi-project support with automatic project ID management
-- Code relationship visualization directly in the chat UI
-- Incremental codebase updates for improved performance
-- Comprehensive error logging for debugging
-
-### Enhanced Java Parser
-- Parses Java files and extracts classes, methods, fields, and their relationships
-- Creates CodeChunk objects with proper parent-child relationships
-- Stores chunks in the database
-- Supports complex Java projects with multiple files and packages
-
-### Requirements Processing System (New)
-- Analyzes business requirements from text files
-- Extracts key functionality and specifications
-- Generates code based on requirements and existing codebase patterns
-- Supports multiple output formats (text, code files)
-- Integrates with LLM providers for intelligent code generation
-- Customizable language and file type options
-- Project-specific context for accurate code generation
-
-## Quick Start
-
-### Prerequisites
-- Python 3.8 or later
-- Node.js and npm (for VS Code extension)
-- Visual Studio Code
-
-### Installation
-
-1. Set up the codebase analyser:
-```bash
-cd codebase-analyser
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-2. Set up the VS Code extension:
-```bash
-cd ../extension-v1
-npm install
-npm run compile
-```
-
-### Primary User Flow: Using the VS Code Extension
-
-The recommended way to use RepoMind is through the VS Code extension:
-
-1. **Open your project in VS Code with the extension**:
-```bash
-# Navigate to the extension directory
-cd extension-v1
-
-# Compile the extension
-npm run compile
-
-# Open VS Code with your project and the extension
-code --extensionDevelopmentPath=$(pwd) /path/to/your/project
-```
-
-2. **Use the extension**:
-   - Look for the RepoMind icon in the activity bar
-   - Click the "Sync" button to analyze your codebase
-   - Wait for the synchronization to complete
-   - Click the "Show Visualizations" button to see code relationships
-   - Use the chat interface to query your codebase
-
-3. **Process requirements and generate code** (New):
-   - Click the "Analyze Requirements" button in the extension
-   - Select a requirements file to analyze
-   - Review the analyzed requirements
-   - Click "Generate Code" to create implementation based on requirements
-   - Review and apply the generated code
-
-The extension automatically:
-- Detects your project folder
-- Assigns a project ID based on the folder name
-- Runs the codebase analysis
-- Populates the database with code chunks and relationships
-- Provides a chat interface for querying your codebase
-- Analyzes requirements and generates code based on your project context
-
-### Alternative: Command-Line Requirements Processing
-
-For advanced users or testing purposes, you can also run the requirements processor directly from the command line:
+The main script for analyzing any codebase is `run_codebase_analysis.py`. This script supports multiple programming languages and provides a comprehensive analysis of your codebase.
 
 ```bash
-cd codebase-analyser
-python scripts/process_requirements.py \
-  --project-id "your-project" \
-  --requirement-file "path/to/requirements.txt" \
-  --language java \
-  --file-type class \
-  --output-format text \
-  --output-dir "output" \
-  --model "nvidia/llama-3.3-nemotron-super-49b-v1:free" \
-  --api-key "your-api-key" \
-  --db-path ".lancedb"
-```
-
-For debugging the requirements processor, you can use the provided debug scripts:
-
-```bash
-# Run with logger interceptor
-./run_logger_intercept.sh
-
-# Run with prompt printer
-./run_print_prompt.sh
-
-# Run with full debugging
-./run_logger_test.sh
-```
-
-### Alternative: Command-Line Codebase Analysis
-
-For advanced users or testing purposes, you can also run the codebase analyzer directly from the command line. Detailed instructions are available in the [Codebase Analyser README](codebase-analyser/README.md).
-
-The codebase analyzer provides scripts for analyzing codebases:
-
-```bash
-cd codebase-analyser
 python scripts/run_codebase_analysis.py --repo-path <path_to_repo> [options]
 ```
 
-For more details and options, see the [Codebase Analyser README](codebase-analyser/README.md).
-
-### Accessing the Vector Database (for RAG Implementation)
-
-The system stores code chunks and their embeddings in a LanceDB database. Here's how to access it for RAG implementation:
-
-#### Direct Python Access (Recommended)
-
-```python
-# Import the UnifiedStorage class
-from codebase_analyser.database.unified_storage import UnifiedStorage
-
-# Initialize the database connection
-db = UnifiedStorage()
-
-# Search for code chunks by project ID
-results = db.search_code_chunks(
-    query="interface",  # Search query
-    limit=10,           # Maximum number of results
-    filters={"project_id": "demo"}  # Filter by project ID
-)
-
-# Access the dependency graph
-graph = db._build_graph_from_dependencies()
-
-# Calculate graph-based relevance
-# (For implementing custom relevance scoring combining vector similarity with graph proximity)
-import networkx as nx
-source_node = "class:MyClass"
-target_node = "class:Interface"
-if nx.has_path(graph, source_node, target_node):
-    path_length = nx.shortest_path_length(graph, source_node, target_node)
-    graph_score = 1.0 / (1.0 + path_length)  # Higher score for shorter paths
-```
-
-#### Command-Line Examples
+Or use the convenient shell wrapper:
 
 ```bash
-# Navigate to the codebase-analyser directory
-cd codebase-analyser
-
-# List all projects in the database
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); print(table.to_arrow().to_pandas()['project_id'].unique())"
-
-# Count chunks for a specific project
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); print(len(table.to_arrow().to_pandas()[table.to_arrow().to_pandas()['project_id'] == 'demo']))"
-
-# Search for chunks containing a specific term
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); results = table.search('class').limit(5).to_pandas(); print(results[['node_id', 'name', 'project_id']])"
+./scripts/analyze.sh <path_to_repo> [options]
 ```
 
-#### Vector Search Examples
+Options:
+- `--db-path`: Path to the LanceDB database (default: codebase-analyser/.lancedb)
+- `--clear-db`: Clear the database before processing
+- `--minimal-schema`: Use minimal schema for reduced storage
+- `--embedding-model`: Model to use for embeddings (default: microsoft/codebert-base)
+- `--embedding-batch-size`: Batch size for embedding generation (default: 8)
+- `--mock-embeddings`: Use mock embeddings instead of a real model
+- `--visualize`: Generate dependency graph visualization
+- `--output-dir`: Directory to save visualization outputs (default: samples)
+- `--graph-format`: Format for graph visualization (png or dot)
+- `--project-id`: Project ID for multi-project support
+- `--max-files`: Maximum number of files to process (for testing)
+- `--skip-large-files`: Skip files larger than 1MB
 
-```python
-from codebase_analyser.database.unified_storage import UnifiedStorage
+Ready-to-run examples with sample projects:
 
-# Initialize database
-db = UnifiedStorage()
-
-# Simple vector search with project filter
-results = db.search_code_chunks(
-    query="interface",  # Search query
-    limit=10,           # Maximum number of results
-    filters={"project_id": "demo2"}  # Filter by project ID
-)
-
-# Access the dependency graph
-graph = db._build_graph_from_dependencies()
-
-# Print node information
-for node_id in graph.nodes():
-    print(f"Node: {node_id}, Type: {graph.nodes[node_id].get('type')}")
-
-# Print edge information
-for source, target, data in graph.edges(data=True):
-    print(f"Edge: {source} -> {target}, Type: {data.get('type')}")
+For the complex Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/run_codebase_analysis.py --repo-path samples/complex_java --clear-db --mock-embeddings --visualize
 ```
 
-### Running the VS Code Extension
+For the simple Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/run_codebase_analysis.py --repo-path samples/java_test_project --clear-db --mock-embeddings --visualize
+```
 
-To run the VS Code extension:
+### 2. Java-Specific Analysis
+
+For Java projects specifically, you can use the `analyze_java.py` script which is optimized for Java code with enhanced parsing capabilities:
 
 ```bash
-# Navigate to the extension directory
-cd extension-v1
-
-# Compile the extension
-npm run compile
-
-# Run the extension in development mode with your project
-code --extensionDevelopmentPath=$(pwd) /path/to/your/project
+python scripts/analyze_java.py <path_to_java_project> [options]
 ```
 
-Once VS Code opens with your project:
-1. Look for the RepoMind icon in the activity bar
-2. Click the "Sync" button to analyze your codebase
-3. Wait for the synchronization to complete
-4. Use the chat interface to query your codebase
-5. Click "Analyze Requirements" to process requirements files
-6. Click "Generate Code" to create implementations based on requirements
+Options:
+- `--clear-db`: Clear the database before adding new chunks
+- `--mock-embeddings`: Use mock embeddings instead of generating real ones
+- `--visualize`: Generate visualization of the dependency graph
+- `--project-id`: Project ID for the chunks
+- `--max-files`: Maximum number of files to process (default: 100)
+- `--skip-large-files`: Skip files larger than 1MB
+- `--minimal-schema`: Use minimal schema for the database
 
-The extension automatically:
-- Detects your project folder
-- Assigns a project ID based on the folder name
-- Runs the codebase analysis
-- Populates the database with code chunks and relationships
+Ready-to-run examples with sample projects:
 
-#### Visualization Queries
-
-You can use natural language queries in the chat to display code visualizations. Here are some example queries you can try:
-
-- "Show me the code relationships"
-- "Visualize the codebase structure"
-- "Show me how files are connected"
-- "Display class relationships"
-- "I want to see the code architecture"
-- "Show me inheritance relationships"
-- "Can you visualize the code dependencies?"
-- "Let's visualize the code structure"
-- "Show me the file dependencies"
-
-Alternatively, you can click the "Show Visualizations" button to display the visualizations directly.
-
-This is the recommended workflow for most users, as it provides a simple and intuitive interface for analyzing and querying your codebase.
-
-## Testing the VS Code Extension
-
-### Quick Verification Flow
-
-To quickly test that the VS Code extension is working correctly:
-
-1. **Open a Java project with the extension**:
-   ```bash
-   cd extension-v1
-   npm run compile
-   code --extensionDevelopmentPath=$(pwd) /path/to/your/java/project
-   ```
-
-2. **Synchronize the codebase**:
-   - Look for the RepoMind icon in the VS Code activity bar
-   - Click the "Sync" button to analyze your codebase
-   - Wait for the synchronization to complete
-
-3. **Verify database population**:
-   - The database should be populated with chunks from your project
-   - You can verify this by checking the LanceDB database:
-   ```bash
-   cd codebase-analyser
-   python -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); import pandas as pd; df = table.to_arrow().to_pandas(); print('Project IDs:', df['project_id'].unique()); print('Number of chunks:', len(df))"
-   ```
-
-4. **Check the dependency graph**:
-   - A visualization of the dependency graph should be generated
-   - You can find it at: `data/projects/<project_id>/visualizations/<project_id>_dependency_graph.png`
-
-5. **Test requirements processing** (New):
-   - Create a simple requirements file with business requirements
-   - Click the "Analyze Requirements" button in the extension
-   - Select your requirements file
-   - Verify that the requirements are analyzed correctly
-   - Click "Generate Code" to create an implementation
-   - Review the generated code
-
-This simple flow allows you to verify that the extension is correctly analyzing your codebase, populating the database, generating visualizations, and processing requirements.
-
-## Project Structure
-
-```
-RepoMind/
-├── codebase-analyser/           # Codebase analysis system
-│   ├── codebase_analyser/       # Main package
-│   │   ├── parsing/             # Code parsing and chunking
-│   │   ├── database/            # Database integration with LanceDB
-│   │   ├── embeddings/          # Code embedding generation
-│   │   ├── visualization/       # Visualization utilities
-│   │   └── llm/                 # LLM integration for code generation
-│   ├── scripts/                 # Utility scripts
-│   │   ├── analyze_java.py      # Main script for analyzing Java projects
-│   │   ├── visualize_code_relationships.py  # Visualization script
-│   │   ├── update_codebase.py   # Incremental update script
-│   │   ├── process_requirements.py  # Requirements processing script
-│   │   └── ...
-│   ├── tests/                   # Test directory
-│   │   ├── parsing/             # Tests for parsing components
-│   │   ├── database/            # Tests for database components
-│   │   └── ...
-│   └── samples/                 # Sample files and outputs
-│       ├── java_test_project/   # Simple Java project
-│       ├── complex_java/        # Complex Java project
-│       └── ...
-│
-├── data/                        # Data storage
-│   └── projects/                # Project-specific data
-│       └── <project_id>/        # Data for each project
-│           ├── chunks/          # Chunked code
-│           ├── embeddings/      # Code embeddings
-│           ├── visualizations/  # Code visualizations
-│           └── requirements/    # Generated code from requirements
-│
-├── extension-v1/                # VS Code extension
-│   ├── src/                     # TypeScript source code
-│   │   ├── ui/                  # UI components
-│   │   └── utils/               # Utility functions
-│   └── media/                   # CSS and other assets
-│
-└── docs/                        # Documentation
-    └── PLAN.MD                  # Project plan and roadmap
+For the complex Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
 ```
 
-## Completed Components
+For the simple Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/analyze_java.py samples/java_test_project --clear-db --mock-embeddings --visualize
+```
 
-### 1. Tree-sitter Integration
-- Integrated Tree-sitter for AST parsing
-- Added support for multiple programming languages
-- Implemented utility functions for AST traversal and analysis
-- Created specialized Java parser for detailed analysis
+To run tests on the sample projects:
+```bash
+# Run from the codebase-analyser directory
+python samples/test/run_sample_tests.py
+```
 
-### 2. Semantic Code Chunking
-- Designed and implemented semantic chunking algorithm based on AST structure
-- Created hierarchical chunking with fine-grained and container-level chunks
-- Ensured structural integrity and context preservation
-- Added comprehensive metadata for dependency relationships
-- Implemented visualization utilities for chunk hierarchy
+Both scripts will:
+1. Parse all files in the specified directory
+2. Extract code structures and their relationships
+3. Generate embeddings for the code chunks
+4. Store the chunks in the LanceDB database
+5. Generate a visualization of the dependency graph (if requested)
 
-### 3. Vector Database Integration
-- Installed and configured LanceDB for storing code embeddings
-- Created comprehensive schema for code chunks and dependency relationships
-- Implemented version-compatible database manager with schema validation
-- Added robust error handling and logging
-- Designed flexible schema with minimal and full versions
-- Created database utility scripts for connection management
+Choose the script that best fits your needs:
+- Use `run_codebase_analysis.py` for multi-language projects or general analysis
+- Use `analyze_java.py` for Java-specific projects with enhanced Java parsing
 
-### 4. Code Embedding Generation
-- Implemented embedding generation using CodeBERT
-- Added batch processing for efficient embedding generation
-- Implemented caching to avoid regenerating embeddings for the same code
-- Created utility scripts for embedding code chunks and storing them in the database
+## Quick Test
 
-### 5. Dependency Graph Construction
-- Built dependency graph construction system
-- Implemented visualization utilities for code relationships
-- Created command-line interface for dependency graph operations
-- Added database integration for storing and querying dependencies
+Here are some ready-to-run commands to quickly test the system:
 
-### 6. Requirements Processing System (New)
-- Implemented business requirements analysis
-- Created code generation based on requirements and codebase patterns
-- Added LLM integration for intelligent code generation
-- Implemented customizable output formats and language options
-- Created debugging utilities for LLM prompts and responses
-- Added project-specific context for accurate code generation
+```bash
+# Run the complete analysis pipeline with mock embeddings (fast)
+python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
 
-## Documentation
+# Run the analysis on the simple Java project
+python scripts/analyze_java.py samples/java_test_project --clear-db --mock-embeddings --visualize
 
-For more detailed information, see the following documentation:
+# Run the general codebase analysis on a sample project
+python scripts/run_codebase_analysis.py --repo-path samples/complex_java --clear-db --mock-embeddings --visualize
 
-- [Project Plan](docs/PLAN.MD) - Detailed project plan and roadmap
-- [Codebase Analyser README](codebase-analyser/README.md) - Detailed documentation for the codebase analyser
-- [Contributing Guide](docs/CONTRIBUTING.md) - Guidelines for contributing to the project
+# Run the sample tests
+python samples/test/run_sample_tests.py
 
-## License
+# Run individual tests
+python -m unittest tests/parsing/test_java_parser_adapter.py
+python -m unittest tests/database/test_database_integration.py
+```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+All these commands can be run directly from the codebase-analyser directory without any modifications.
+
+## Key Features
+
+- **AST Parsing**: Tree-sitter integration for multiple languages with specialized Java support
+- **Semantic Code Chunking**: Hierarchical chunking with structural integrity and context preservation
+- **Dependency Analysis**: Comprehensive analysis of relationships between code components
+- **Vector Database**: LanceDB integration for storing and querying code embeddings
+- **Code Embeddings**: Generation using CodeBERT with batch processing and caching
+- **Dependency Graphs**: Optional construction and visualization of code relationships
+- **Command-line Interface**: Tools for various operations including graph visualization
+
+## Setup
+
+1. Create a Python virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Note: When running the code for the first time, model files will be downloaded and cached in the `.cache` directory. This directory is not included in the repository and will be created automatically when needed.
+
+## Quick Start
+
+### Complete Analysis Pipeline
+
+```bash
+# Run the complete analysis pipeline
+./analyze.sh /path/to/repo
+
+# With options
+./analyze.sh /path/to/repo --clear-db --visualize --project-id my-project
+```
+
+### Individual Components
+
+```bash
+# Parse a Java file and generate chunks
+python tests/test_parser.py samples/SimpleClass.java
+
+# Generate embeddings for code chunks
+python tests/test_embeddings.py
+
+# Build a dependency graph from code chunks
+python tests/test_dependency_graph.py
+```
+
+### Visualizing Dependency Graphs
+
+```bash
+# Visualize a dependency graph
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --output-file samples/graph.png
+```
+
+## API Usage
+
+```python
+from codebase_analyser import CodebaseAnalyser
+from codebase_analyser.database import LanceDBManager
+from codebase_analyser.embeddings import EmbeddingGenerator
+
+# Parse a codebase
+analyser = CodebaseAnalyser(repo_path="/path/to/repo")
+analyser.parse()
+chunks = analyser.get_chunks()
+
+# Generate embeddings
+generator = EmbeddingGenerator()
+for chunk in chunks:
+    chunk.embedding = generator.generate_embedding(chunk.content, chunk.language)
+
+# Store in database
+db_manager = LanceDBManager(db_path="codebase-analyser/.lancedb")
+db_manager.add_code_chunks([chunk.to_dict() for chunk in chunks])
+
+# Search for similar code
+query_embedding = generator.generate_embedding("def calculate_sum(a, b):", "python")
+results = db_manager.search_code_chunks(query_embedding, limit=5)
+```
+
+## Java Parsing
+
+The analyser includes specialized support for Java files with two parser implementations:
+
+### Standard Java Parser
+- Basic parsing of Java files
+- Extracts package declarations, imports, classes, fields, and methods
+- Treats each file as a single unit
+
+### Enhanced Java Parser (New)
+- Granular extraction of code elements as separate chunks
+- Hierarchical structure with parent-child relationships
+- Automatic dependency detection between chunks:
+  - Import dependencies
+  - Inheritance relationships (extends)
+  - Interface implementation (implements)
+  - Method calls
+  - Field usage
+- Better support for multi-file projects
+- Improved visualization with more detailed dependency graphs
+
+To test Java parsing:
+
+```bash
+# Test standard Java parser
+python tests/test_java_parser.py /path/to/your/JavaFile.java
+
+# Test enhanced Java parser (automatically used by the analysis service)
+./analyze.sh /path/to/java/project --clear-db --mock-embeddings --visualize
+```
+
+## Testing
+
+All tests are located in the `tests` folder. Run them from the project root:
+
+```bash
+# Basic parsing test
+python tests/test_parser.py /path/to/your/file.ext
+
+# Java-specific parsing
+python tests/test_java_parser.py /path/to/your/JavaFile.java
+
+# Comprehensive Java parsing with AST analysis
+python tests/test_java_parser_comprehensive.py /path/to/your/JavaFile.java
+
+# AST utility functions
+python tests/test_ast_utils.py /path/to/your/file.ext
+
+# Hierarchical code chunking
+python tests/test_hierarchical_chunking.py /path/to/your/file.ext
+
+# Context preservation and structural integrity
+python tests/test_context_preservation.py /path/to/your/file.ext
+
+# Dependency analysis and relationship mapping
+python tests/test_dependency_analysis.py /path/to/your/file.ext
+
+# Visualization utilities
+python tests/test_simple_visualization.py /path/to/your/file.ext
+
+# End-to-end integration test
+python tests/test_end_to_end_integration.py --clear-db
+
+# Custom relevance scoring test
+python tests/test_custom_relevance.py --clear-db --alpha 0.7 --beta 0.3
+```
+
+## Database Operations
+
+```bash
+# Test LanceDB installation and configuration
+python tests/test_lancedb.py
+
+# Clear and recreate tables
+python tests/test_lancedb.py --clear
+
+# Use a custom database path
+python tests/test_lancedb.py --db-path codebase-analyser/.lancedb
+```
+
+## Embedding Operations
+
+```bash
+# Test the embedding generator
+python tests/test_embeddings.py
+
+# Visualize embeddings
+python tests/test_embeddings.py --visualize
+
+# Embed chunks and store in database
+python tests/test_embed_chunks.py
+
+# Clear database before embedding
+python tests/test_embed_chunks.py --clear-db
+
+# Use a specific model
+python tests/test_embed_chunks.py --model microsoft/codebert-base
+```
+
+## Dependency Graph Operations
+
+```bash
+# Build graph
+python -m codebase_analyser.graph.cli build samples/sample_chunks.json --output-file samples/dependency_graph.json
+python -m codebase_analyser.graph.cli build samples/sample_chunks.json --db-path codebase-analyser/.lancedb --store-in-db
+
+# Visualize graph
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --output-file samples/dependency_graph.png
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --format dot --layout circular --node-size 1500
+
+# Query dependencies
+python -m codebase_analyser.graph.cli query
+python -m codebase_analyser.graph.cli query --source-id "file:sample1.java" --type "CONTAINS"
+
+# Test graph construction
+python tests/test_dependency_graph.py --input samples/sample_chunks.json --output-dir samples/graphs
+```
+
+
+
+## Large Project Support
+
+```
+Project
+├── File 1
+│   ├── Class A
+│   │   ├── Method X
+│   │   └── Method Y
+│   └── Class B
+└── File 2
+    └── Function Z
+```
+
+**Optimizations**:
+- Minimal schema option for reduced storage
+- Batch processing for embedding generation
+- Caching to avoid regenerating embeddings
+- Optional dimensionality reduction (PCA) for very large codebases
+
+## Database Management
+
+```bash
+# Database utilities
+python -m codebase_analyser.database.db_utils --info
+python -m codebase_analyser.database.db_utils --clear --full --db-path codebase-analyser/.lancedb
+```
+
+```python
+# Direct database API
+from codebase_analyser.database import open_db_connection, close_db_connection
+
+db_manager = open_db_connection(db_path="codebase-analyser/.lancedb", use_minimal_schema=True)
+db_manager.add_code_chunks(code_chunks)
+db_manager.add_dependencies(dependencies)
+results = db_manager.search_code_chunks(query_embedding, limit=10)
+close_db_connection(db_manager)
+```
+
+### LanceDB Options
+- **Schema**: Minimal (default) or full schema with additional metadata
+- **Compatibility**: Works with different LanceDB versions via adaptive API handling
+- **Storage**: Default path is `codebase-analyser/.lancedb`
+
+## Embedding Generation
+
+```python
+from codebase_analyser.embeddings import EmbeddingGenerator
+
+# Create generator
+generator = EmbeddingGenerator(
+    model_name="microsoft/codebert-base",
+    cache_dir=".cache",
+    batch_size=8
+)
+
+# Generate embeddings
+embedding = generator.generate_embedding(code, language="python")
+embeddings = generator.generate_embeddings_batch(codes, languages)
+
+# Store in database
+from codebase_analyser.embeddings import embed_and_store_chunks
+embed_and_store_chunks(chunks=code_chunks, db_path="codebase-analyser/.lancedb")
+```
+
+### Performance Options
+- **Dimensions**: 768 (default) or reduce to 384-512 with PCA for large codebases
+- **Batch Processing**: Process multiple chunks at once (8-16 recommended)
+- **Caching**: Avoid regenerating embeddings for unchanged code
+
+## Unified Storage
+
+```bash
+# Test unified storage
+python tests/test_unified_storage.py --clear-db
+
+# Options
+python tests/test_unified_storage.py --db-path codebase-analyser/.lancedb --full-schema
+```
+
+### Unified Storage API
+
+```python
+from codebase_analyser import open_unified_storage, close_unified_storage
+
+storage_manager = open_unified_storage(
+    db_path="codebase-analyser/.lancedb",
+    embedding_dim=768,
+    use_minimal_schema=True
+)
+
+# Add chunks with graph metadata
+storage_manager.add_code_chunks_with_graph_metadata(chunks=code_chunks)
+
+# Search with dependency filtering
+results = storage_manager.search_with_dependencies(
+    query_embedding=query_vector,
+    dependency_filter={"has_imports": True},
+    limit=10
+)
+
+# Search with combined scoring
+results = storage_manager.search_with_combined_scoring(
+    query_embedding=query_vector,
+    query_node_id="file:path/to/file.py",
+    alpha=0.7,  # Semantic weight
+    beta=0.3,   # Graph weight
+    limit=10
+)
+
+# Get chunk with dependencies
+chunk = storage_manager.get_chunk_with_dependencies(node_id)
+
+# Close connection
+close_unified_storage(storage_manager)
+```
+
+### Graph Metadata Schema
+
+```json
+{
+  "graph_metadata": {
+    "dependency_count": 5,
+    "incoming_count": 2,
+    "outgoing_count": 3,
+    "in_cycle": false,
+    "graph_position": "intermediate",
+    "instability": 0.6,
+    "has_imports": true,
+    "has_extends": false,
+    "has_implements": true,
+    "has_calls": true,
+    "has_uses": false,
+    "incoming_dependencies": ["node1", "node2"],
+    "outgoing_dependencies": ["node3", "node4", "node5"]
+  }
+}
+```
+
+## Custom Relevance Scoring
+
+```bash
+# Test with default weights (α=0.7, β=0.3)
+python tests/test_custom_relevance.py --clear-db
+
+# Customize weights
+python tests/test_custom_relevance.py --alpha 0.5 --beta 0.5
+```
+
+Formula: `final_score = α * semantic_similarity + β * (1 / (1 + graph_distance))`
+
+- Combines vector similarity with graph proximity
+- Adjustable weights to prioritize semantic or structural relevance
+- Uses NetworkX for graph distance calculations
+
+## End-to-End Integration Testing
+
+```bash
+# Basic test
+python tests/test_end_to_end_integration.py --clear-db
+
+# Options
+python tests/test_end_to_end_integration.py --db-path /path/to/db --real-embeddings --full-schema
+python tests/test_end_to_end_integration.py --test-dir /path/to/test/files --keep-test-dir
+```
+
+Tests the complete pipeline:
+- Parses files in multiple languages (Java, Python, JavaScript)
+- Generates chunks and embeddings
+- Stores in database with graph metadata
+- Tests search methods (vector, dependency-filtered, combined scoring)
+- Validates chunk retrieval with dependencies
+
+## Codebase Analysis Service
+
+```bash
+# Basic usage
+./analyze.sh /path/to/repo
+
+# With options
+./analyze.sh /path/to/repo --clear-db --visualize --minimal-schema
+```
+
+### Service Options
+
+```
+--repo-path PATH         Path to the repository to analyze (required)
+--db-path PATH           Path to the LanceDB database (default: codebase-analyser/.lancedb)
+--clear-db               Clear the database before processing
+--minimal-schema         Use minimal schema for reduced storage
+--embedding-model MODEL  Model to use for embeddings (default: microsoft/codebert-base)
+--embedding-batch-size N Batch size for embedding generation (default: 8)
+--mock-embeddings        Use mock embeddings instead of a real model (faster for testing)
+--visualize              Generate dependency graph visualization
+--output-dir DIR         Directory to save visualization outputs (default: samples)
+--graph-format FORMAT    Format for graph visualization (png or dot)
+--project-id ID          Project ID for multi-project support
+--max-files N            Maximum number of files to process (for testing)
+--skip-large-files       Skip files larger than 1MB
+```
