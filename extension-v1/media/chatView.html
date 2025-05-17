@@ -507,44 +507,90 @@
             } else {
                 // Check if this is an assistant message (for Markdown rendering)
                 if (!isUser) {
-                    // Enhanced Markdown rendering with support for headings, lists, and code blocks
-                    let formattedText = text
-                        // Handle headings (# Heading 1, ## Heading 2, etc.)
-                        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                    // Check if the text contains HTML
+                    const containsHTML = text.includes('<') && text.includes('>');
 
-                        // Handle unordered lists
-                        .replace(/^\s*[-*+]\s+(.*$)/gm, '<li>$1</li>')
+                    if (containsHTML) {
+                        // If the text already contains HTML, use it directly
+                        messageElement.innerHTML = text;
 
-                        // Handle ordered lists
-                        .replace(/^\s*(\d+)\.\s+(.*$)/gm, '<li>$2</li>')
+                        // After setting the HTML, attach event listeners to any buttons
+                        setTimeout(() => {
+                            // Find all buttons in the message
+                            const buttons = messageElement.querySelectorAll('button');
 
-                        // Handle code blocks
-                        .replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>')
+                            buttons.forEach(button => {
+                                // Check if this is the Run Merge Agent button
+                                if (button.id === 'run-merge-agent') {
+                                    console.log('Found Run Merge Agent button, attaching event listener');
 
-                        // Handle inline formatting
-                        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-                        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-                        .replace(/`([^`]+)`/g, '<code>$1</code>')
+                                    // Add the event listener
+                                    button.addEventListener('click', () => {
+                                        console.log('Run Merge Agent button clicked');
+                                        vscode.postMessage({
+                                            command: 'runMergeAgent'
+                                        });
+                                    });
+                                }
 
-                        // Handle line breaks
-                        .replace(/\n/g, '<br>');
+                                // Check if this is the Open LLM Instructions File button
+                                if (button.id === 'open-llm-file') {
+                                    console.log('Found Open LLM Instructions File button, attaching event listener');
 
-                    // Wrap lists in <ul> or <ol> tags
-                    formattedText = formattedText
-                        .replace(/<li>.*?<\/li>/gs, match => {
-                            return '<ul>' + match + '</ul>';
-                        });
+                                    // Get the file path from the data attribute
+                                    const filePath = button.getAttribute('data-path');
 
-                    // Apply some basic styling
-                    const styledText = `
-                        <div style="line-height: 1.5; margin-bottom: 10px;">
-                            ${formattedText}
-                        </div>
-                    `;
+                                    // Add the event listener
+                                    button.addEventListener('click', () => {
+                                        console.log('Open LLM Instructions File button clicked, path:', filePath);
+                                        vscode.postMessage({
+                                            command: 'openFile',
+                                            path: filePath
+                                        });
+                                    });
+                                }
+                            });
+                        }, 0);
+                    } else {
+                        // Enhanced Markdown rendering with support for headings, lists, and code blocks
+                        let formattedText = text
+                            // Handle headings (# Heading 1, ## Heading 2, etc.)
+                            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
 
-                    messageElement.innerHTML = styledText;
+                            // Handle unordered lists
+                            .replace(/^\s*[-*+]\s+(.*$)/gm, '<li>$1</li>')
+
+                            // Handle ordered lists
+                            .replace(/^\s*(\d+)\.\s+(.*$)/gm, '<li>$2</li>')
+
+                            // Handle code blocks
+                            .replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>')
+
+                            // Handle inline formatting
+                            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+                            .replace(/`([^`]+)`/g, '<code>$1</code>')
+
+                            // Handle line breaks
+                            .replace(/\n/g, '<br>');
+
+                        // Wrap lists in <ul> or <ol> tags
+                        formattedText = formattedText
+                            .replace(/<li>.*?<\/li>/gs, match => {
+                                return '<ul>' + match + '</ul>';
+                            });
+
+                        // Apply some basic styling
+                        const styledText = `
+                            <div style="line-height: 1.5; margin-bottom: 10px;">
+                                ${formattedText}
+                            </div>
+                        `;
+
+                        messageElement.innerHTML = styledText;
+                    }
                 } else {
                     // Regular text message
                     messageElement.textContent = text;
@@ -580,6 +626,44 @@
             if (containsHTML) {
                 // If the text contains HTML, use innerHTML
                 messageElement.innerHTML = newText;
+
+                // After updating the HTML, attach event listeners to any buttons
+                setTimeout(() => {
+                    // Find all buttons in the message
+                    const buttons = messageElement.querySelectorAll('button');
+
+                    buttons.forEach(button => {
+                        // Check if this is the Run Merge Agent button
+                        if (button.id === 'run-merge-agent') {
+                            console.log('Found Run Merge Agent button, attaching event listener');
+
+                            // Add the event listener
+                            button.addEventListener('click', () => {
+                                console.log('Run Merge Agent button clicked');
+                                vscode.postMessage({
+                                    command: 'runMergeAgent'
+                                });
+                            });
+                        }
+
+                        // Check if this is the Open LLM Instructions File button
+                        if (button.id === 'open-llm-file') {
+                            console.log('Found Open LLM Instructions File button, attaching event listener');
+
+                            // Get the file path from the data attribute
+                            const filePath = button.getAttribute('data-path');
+
+                            // Add the event listener
+                            button.addEventListener('click', () => {
+                                console.log('Open LLM Instructions File button clicked, path:', filePath);
+                                vscode.postMessage({
+                                    command: 'openFile',
+                                    path: filePath
+                                });
+                            });
+                        }
+                    });
+                }, 0);
             } else if (hasChildren) {
                 // If it has children (like images), find the text node or first div and update it
                 const textNode = messageElement.childNodes[0];

@@ -881,6 +881,7 @@ Error running codebase analysis:
                                         // Add only the Run Merge Agent button
                                         outputMessage += `<div style="margin-top: 10px; margin-bottom: 10px;">
                                             <button id="open-llm-file" style="background-color: #0078d4; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px;"
+                                                    data-path="${llmInstructionsFile.replace(/\\/g, '\\\\')}">
                                                 Open LLM Instructions File
                                             </button>
                                             <button id="run-merge-agent" style="background-color: #d83b01; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
