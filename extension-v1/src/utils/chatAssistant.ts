@@ -186,12 +186,16 @@ export function suggestCorrection(message: string): string | null {
     return null;
 }
 
+// Store conversation history in memory
+let conversationHistory: { user: string, assistant: string }[] = [];
+
 /**
  * Process a code question using the LLM
  * @param question The question to process
+ * @param useHistory Whether to use conversation history
  * @returns A promise that resolves to the LLM's response
  */
-export async function processCodeQuestion(question: string): Promise<string> {
+export async function processCodeQuestion(question: string, useHistory: boolean = true): Promise<string> {
     try {
         // Path to the run_code_chat.sh script
         const scriptPath = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis/run_code_chat.sh';
@@ -204,8 +208,26 @@ export async function processCodeQuestion(question: string): Promise<string> {
         // Make the script executable
         await exec(`chmod +x ${scriptPath}`);
 
-        // Execute the script with the question
-        const { stdout, stderr } = await exec(`${scriptPath} "${question}"`);
+        // Create a temporary file with conversation history if needed
+        let historyArg = '';
+        if (useHistory && conversationHistory.length > 0) {
+            const outputDir = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output';
+
+            // Create the output directory if it doesn't exist
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            const historyFile = path.join(outputDir, 'conversation-history.json');
+            fs.writeFileSync(historyFile, JSON.stringify(conversationHistory, null, 2));
+            historyArg = ` --history-file "${historyFile}"`;
+
+            console.log(`Using conversation history with ${conversationHistory.length} entries`);
+        }
+
+        // Execute the script with the question and history
+        console.log(`Executing: ${scriptPath} "${question}"${historyArg}`);
+        const { stdout, stderr } = await exec(`${scriptPath} "${question}"${historyArg}`);
 
         // Check if there was an error
         if (stderr) {
@@ -217,16 +239,37 @@ export async function processCodeQuestion(question: string): Promise<string> {
         const responseFile = path.join(outputDir, 'chat-response.txt');
 
         // Check if the response file exists
+        let response: string;
         if (fs.existsSync(responseFile)) {
             // Read the response file
-            const response = fs.readFileSync(responseFile, 'utf8');
-            return response;
+            response = fs.readFileSync(responseFile, 'utf8');
         } else {
             // Return the stdout if the response file doesn't exist
-            return stdout || 'No response received from the LLM.';
+            response = stdout || 'No response received from the LLM.';
         }
+
+        // Update conversation history
+        conversationHistory.push({
+            user: question,
+            assistant: response
+        });
+
+        // Limit history to last 10 exchanges to prevent context overflow
+        if (conversationHistory.length > 10) {
+            conversationHistory = conversationHistory.slice(conversationHistory.length - 10);
+        }
+
+        return response;
     } catch (error) {
         console.error(`Error processing code question: ${error}`);
         return `Error processing your question: ${error instanceof Error ? error.message : String(error)}`;
     }
+}
+
+/**
+ * Clear the conversation history
+ */
+export function clearConversationHistory(): void {
+    conversationHistory = [];
+    console.log('Conversation history cleared');
 }

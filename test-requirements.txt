@@ -1,0 +1,19 @@
+# Employee Management System Requirements
+
+## Overview
+We need to implement a feature to manage departments in our employee management system.
+
+## Requirements
+1. Create a Department class that will store department information
+2. The Department class should have the following properties:
+   - id (integer)
+   - name (string)
+   - location (string)
+   - budget (double)
+   - manager (string)
+
+3. The Department class should include appropriate getters and setters for all properties
+4. The Department class should include a toString method that displays all department information
+
+## Implementation Details
+The Department class should be created in the src directory and should be part of the com.employee package.

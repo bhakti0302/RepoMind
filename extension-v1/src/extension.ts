@@ -25,6 +25,14 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
+    // Add a command handler for the sendMessage command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('extension-v1.handleSendMessageFromWebview', (text: string) => {
+            console.log('Handling sendMessage command in extension.ts with text:', text);
+            vscode.commands.executeCommand('extension-v1.handleSendMessage', text);
+        })
+    );
+
     // Register commands
     let startAssistantCommand = vscode.commands.registerCommand('extension-v1.startAssistant', () => {
         vscode.window.showInformationMessage('RepoMind started!');
@@ -672,13 +680,9 @@ Error running codebase analysis:
                             vscode.window.showInformationMessage(`Codebase synced successfully at ${formattedTime}!`);
                             statusBar.setReady(`Synced at ${formattedTime}`);
 
-                            // Send timestamp to chat view if available
+                            // Update the sync message with success
                             if (chatViewProvider) {
-                                chatViewProvider.sendMessageToWebviews({
-                                    command: 'addMessage',
-                                    text: `Codebase synced successfully at ${formattedTime}`,
-                                    isUser: false
-                                });
+                                chatViewProvider.updateSyncMessage(`Codebase synced successfully at ${formattedTime}`);
                             }
 
                             // Automatically regenerate visualizations after syncing
@@ -688,6 +692,11 @@ Error running codebase analysis:
                             console.error(`Error getting last sync time: ${error}`);
                             vscode.window.showInformationMessage('Codebase synced successfully!');
                             statusBar.setReady('Codebase synced');
+
+                            // Update the sync message with success
+                            if (chatViewProvider) {
+                                chatViewProvider.updateSyncMessage('Codebase synced successfully');
+                            }
                         }
 
                         resolve();
@@ -697,6 +706,12 @@ Error running codebase analysis:
                         syncProcess.kill();
                         vscode.window.showInformationMessage('Codebase sync cancelled.');
                         statusBar.setDefault();
+
+                        // Update the sync message with cancellation
+                        if (chatViewProvider) {
+                            chatViewProvider.updateSyncMessage('Codebase sync cancelled');
+                        }
+
                         resolve();
                     });
                 });
@@ -841,27 +856,41 @@ Error running codebase analysis:
 
                                     // Define output file paths
                                     const outputDir = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output';
-                                    const llmInstructionsFile = path.join(outputDir, 'LLM-instructions.txt');
+                                    let llmInstructionsFile = path.join(outputDir, 'LLM-instructions.txt');
 
-                                    // Create a concise message with just the file paths
+                                    // Check if the file exists, if not, try the alternative file name
+                                    if (!fs.existsSync(llmInstructionsFile)) {
+                                        const alternativeFile = path.join(outputDir, 'llm-output.txt');
+                                        if (fs.existsSync(alternativeFile)) {
+                                            llmInstructionsFile = alternativeFile;
+                                        }
+                                    }
+
+                                    // Create a concise message with just the essential information
                                     let outputMessage = `✅ Requirements have been analyzed successfully!\n\n`;
 
                                     // Check if the LLM instructions file exists
                                     if (fs.existsSync(llmInstructionsFile)) {
-                                        outputMessage += `The code changes have been generated and saved to:\n`;
-                                        outputMessage += `📄 ${llmInstructionsFile}\n\n`;
+                                        outputMessage += `The code changes have been generated successfully.\n\n`;
 
-                                        // Add a button to open the file
+                                        // Add information about the Merge Agent
+                                        outputMessage += `🔄 The code changes are ready to be applied to the target project.\n\n`;
+                                        outputMessage += `Click the "Run Merge Agent" button below to apply the changes interactively.\n`;
+                                        outputMessage += `You will be able to approve or reject each change in the terminal.\n\n`;
+
+                                        // Add only the Run Merge Agent button
                                         outputMessage += `<div style="margin-top: 10px; margin-bottom: 10px;">
-                                            <button id="open-llm-file" style="background-color: #0078d4; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;"
-                                                    data-path="${llmInstructionsFile.replace(/\\/g, '\\\\')}">
+                                            <button id="open-llm-file" style="background-color: #0078d4; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px;"
                                                 Open LLM Instructions File
+                                            </button>
+                                            <button id="run-merge-agent" style="background-color: #d83b01; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer;">
+                                                Run Merge Agent
                                             </button>
                                         </div>`;
 
-                                        // Add a fallback link in case the button doesn't work
-                                        outputMessage += `Click the button above to view the detailed implementation instructions. `;
-                                        outputMessage += `If the button doesn't work, you can find the file at: ${llmInstructionsFile}`;
+                                        // Add a simplified fallback message
+                                        outputMessage += `Click the buttons above to view the instructions or run the Merge Agent.\n\n`;
+                                        outputMessage += `You can also run the Merge Agent manually by opening a terminal and running the merge agent script.`;
                                     } else {
                                         outputMessage += `⚠️ LLM instructions file was not generated. Please check the logs for errors.`;
                                     }
@@ -873,16 +902,8 @@ Error running codebase analysis:
                                         isUser: false
                                     });
 
-                                    // Also add a direct message to open the file
-                                    if (fs.existsSync(llmInstructionsFile)) {
-                                        setTimeout(() => {
-                                            chatViewProvider.sendMessageToWebviews({
-                                                command: 'addMessage',
-                                                text: `You can also click this link to open the file: <a href="#" style="color: #0078d4; text-decoration: underline; cursor: pointer;" data-path="${llmInstructionsFile.replace(/\\/g, '\\\\')}">Open LLM Instructions File</a>`,
-                                                isUser: false
-                                            });
-                                        }, 500);
-                                    }
+                                    // We no longer need to add a direct message to open the file
+                                    // The button in the main message is sufficient
                                 }
 
                                 resolve();
@@ -1038,20 +1059,100 @@ Error running codebase analysis:
         const command = `cd "${codebaseAnalyserPath}" &&
             if [ -d "venv" ]; then
                 source venv/bin/activate &&
-                python3 scripts/fixed_visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
-                # Also generate in the old location for backward compatibility
-                python3 scripts/fixed_visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}" &&
+                # Try the fixed_visualize.py script first
+                if [ -f "scripts/fixed_visualize.py" ]; then
+                    python3 scripts/fixed_visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                    # Also generate in the old location for backward compatibility
+                    python3 scripts/fixed_visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                # If that doesn't exist, try the manual_visualize.py script
+                elif [ -f "scripts/manual_visualize.py" ]; then
+                    python3 scripts/manual_visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                    # Also generate in the old location for backward compatibility
+                    python3 scripts/manual_visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                # If neither exists, try the visualize.py script
+                elif [ -f "scripts/visualize.py" ]; then
+                    python3 scripts/visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                    # Also generate in the old location for backward compatibility
+                    python3 scripts/visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                # If none of the above exist, try the fallback script
+                elif [ -f "scripts/fallback_visualize.py" ]; then
+                    python3 scripts/fallback_visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                    # Also generate in the old location for backward compatibility
+                    python3 scripts/fallback_visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                else
+                    echo "Error: No visualization script found";
+                    exit 1;
+                fi &&
                 deactivate;
             else
-                python3 scripts/fixed_visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
-                # Also generate in the old location for backward compatibility
-                python3 scripts/fixed_visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                # Try the fixed_visualize.py script first
+                if [ -f "scripts/fixed_visualize.py" ]; then
+                    python3 scripts/fixed_visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                    # Also generate in the old location for backward compatibility
+                    python3 scripts/fixed_visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                # If that doesn't exist, try the manual_visualize.py script
+                elif [ -f "scripts/manual_visualize.py" ]; then
+                    python3 scripts/manual_visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                    # Also generate in the old location for backward compatibility
+                    python3 scripts/manual_visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                # If neither exists, try the visualize.py script
+                elif [ -f "scripts/visualize.py" ]; then
+                    python3 scripts/visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                    # Also generate in the old location for backward compatibility
+                    python3 scripts/visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                # If none of the above exist, try the fallback script
+                elif [ -f "scripts/fallback_visualize.py" ]; then
+                    python3 scripts/fallback_visualize.py --project-id "${projectId}" --output-dir "${centralVisualizationsDir}" --timestamp "${timestamp}" &&
+                    # Also generate in the old location for backward compatibility
+                    python3 scripts/fallback_visualize.py --project-id "${projectId}" --output-dir "${visualizationsDir}";
+                else
+                    echo "Error: No visualization script found";
+                    exit 1;
+                fi;
             fi`;
 
         vscode.window.showInformationMessage(`Visualizing code relationships for project: ${projectId}`);
+
+        // Enhanced logging for debugging
+        console.log('=== Visualization Debug Info ===');
         console.log(`Workspace folder: ${workspaceFolder}`);
         console.log(`Project ID: ${projectId}`);
-        console.log(`Visualizations directory: ${visualizationsDir}`);
+        console.log(`Local visualizations directory: ${visualizationsDir}`);
+        console.log(`Central visualizations directory: ${centralVisualizationsDir}`);
+        console.log(`Codebase analyser path: ${codebaseAnalyserPath}`);
+
+        // Check if the scripts directory exists
+        const scriptsDir = path.join(codebaseAnalyserPath, 'scripts');
+        console.log(`Scripts directory: ${scriptsDir}`);
+        console.log(`Scripts directory exists: ${fs.existsSync(scriptsDir)}`);
+
+        // Check if the visualization scripts exist
+        const fixedVisualizePath = path.join(scriptsDir, 'fixed_visualize.py');
+        const manualVisualizePath = path.join(scriptsDir, 'manual_visualize.py');
+        const visualizePath = path.join(scriptsDir, 'visualize.py');
+        const fallbackVisualizePath = path.join(scriptsDir, 'fallback_visualize.py');
+
+        console.log(`fixed_visualize.py exists: ${fs.existsSync(fixedVisualizePath)}`);
+        console.log(`manual_visualize.py exists: ${fs.existsSync(manualVisualizePath)}`);
+        console.log(`visualize.py exists: ${fs.existsSync(visualizePath)}`);
+        console.log(`fallback_visualize.py exists: ${fs.existsSync(fallbackVisualizePath)}`);
+
+        // Create the fallback script if it doesn't exist
+        if (!fs.existsSync(fallbackVisualizePath) && fs.existsSync(scriptsDir)) {
+            try {
+                // Copy the fallback script from the extension directory
+                const extensionFallbackPath = path.join(context.extensionPath, 'resources', 'fallback_visualize.py');
+                if (fs.existsSync(extensionFallbackPath)) {
+                    fs.copyFileSync(extensionFallbackPath, fallbackVisualizePath);
+                    console.log(`Created fallback visualization script: ${fallbackVisualizePath}`);
+                } else {
+                    console.log(`Extension fallback script not found: ${extensionFallbackPath}`);
+                }
+            } catch (error) {
+                console.error(`Error creating fallback script: ${error instanceof Error ? error.message : String(error)}`);
+            }
+        }
+
         console.log(`Running command: ${command}`);
 
         // Show progress notification
@@ -1205,6 +1306,33 @@ Error running codebase analysis:
                 console.error(`Error opening file: ${error}`);
                 vscode.window.showErrorMessage(`Error opening file: ${error}`);
             }
+        }
+    });
+
+    // Command to run the Merge Agent in a terminal
+    let runMergeAgentCommand = vscode.commands.registerCommand('extension-v1.runMergeAgent', () => {
+        console.log('Executing extension-v1.runMergeAgent command');
+        try {
+            // Create a terminal
+            const terminal = vscode.window.createTerminal('Merge Agent');
+
+            // Show the terminal
+            terminal.show();
+
+            // Change to the nlp-analysis directory
+            terminal.sendText('cd /Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis');
+
+            // Run the mergeCodeAgent script
+            terminal.sendText('./run_merge_agent.sh');
+
+            // Focus the terminal
+            vscode.commands.executeCommand('workbench.action.terminal.focus');
+
+            // Show a notification
+            vscode.window.showInformationMessage('Merge Agent is running in the terminal. You can approve or reject each change interactively.');
+        } catch (error) {
+            console.error(`Error running Merge Agent: ${error}`);
+            vscode.window.showErrorMessage(`Error running Merge Agent: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
 
@@ -1568,6 +1696,46 @@ Error running codebase analysis:
     context.subscriptions.push(generateVisualizationsCommand);
     context.subscriptions.push(openFileCommand);
     context.subscriptions.push(processCodeQuestionCommand);
+    context.subscriptions.push(runMergeAgentCommand);
+
+    // Register a command handler for the sendMessage command from the webview
+    let handleSendMessageCommand = vscode.commands.registerCommand('extension-v1.handleSendMessage', (text: string) => {
+        console.log('Received sendMessage command with text:', text);
+        if (chatViewProvider) {
+            // Add the message to the chat view
+            chatViewProvider.sendMessageToWebviews({
+                command: 'addMessage',
+                text: text,
+                isUser: true
+            });
+
+            // Process the message
+            setTimeout(() => {
+                // Generate a response using the chat assistant
+                const { generateResponse } = require('./utils/chatAssistant');
+                const response = generateResponse(text);
+                console.log('Generated response:', response);
+
+                if (response.command === 'processCodeQuestion') {
+                    // Process the code question using the command
+                    vscode.commands.executeCommand('extension-v1.processCodeQuestion', text);
+                } else if (response.command === 'visualizeRelationships') {
+                    // Visualize relationships using the command
+                    vscode.commands.executeCommand('extension-v1.visualizeRelationships');
+                } else {
+                    // Send a simple text response
+                    chatViewProvider.sendMessageToWebviews({
+                        command: 'addMessage',
+                        text: response.text,
+                        isUser: false
+                    });
+                }
+            }, 500);
+        }
+    });
+
+    // Add the command to subscriptions
+    context.subscriptions.push(handleSendMessageCommand);
 
     // Set status and check for last sync time
     statusBar.setReady('RepoMind is ready');

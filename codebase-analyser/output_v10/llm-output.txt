@@ -1,0 +1,110 @@
+Based on the requirements and context provided, here are the necessary code changes to achieve the "Display Employees by Department" functionality:
+
+### Overview
+The system will be enhanced to filter and display employees by their department.
+
+### Key Components
+- **`EmployeeManager` Class**: Introduced to manage department-wise employee filtering (assumed not present, thus created).
+- **`EmployeeService` Enhancements**: Utilized for data access.
+- **`Main` Class Updates**: For demonstration of the new functionality.
+
+### Code Changes
+
+#### **Create** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeManager.java**
+```java
+package com.company.service;
+
+import com.company.model.Employee;
+import com.company.service.EmployeeService;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class EmployeeManager {
+    private final EmployeeService employeeService;
+
+    public EmployeeManager(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
+
+    /**
+     * Retrieves all employees belonging to a specified department.
+     * @param department Name of the department.
+     * @return List of employees in the department.
+     */
+    public List<Employee> getEmployeesByDepartment(String department) {
+        return employeeService.getAllEmployees().stream()
+                .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
+                .collect(Collectors.toList());
+    }
+}
+```
+
+#### **Modify** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`
+*(No direct modification for the new requirement, but ensuring `getAllEmployees()` is as provided)*
+```java
+// No Change Needed, Confirmation of Existence
+public List<Employee> getAllEmployees() {
+    return employees;
+}
+```
+
+#### **Update** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+```java
+import com.company.service.EmployeeManager;
+import com.company.service.EmployeeService;
+
+public class Main {
+    public static void main(String[] args) {
+        EmployeeService service = new EmployeeService();
+        EmployeeManager manager = new EmployeeManager(service);
+        
+        // Example Employees
+        service.addEmployee(new Employee(1, "John Doe", "Engineering"));
+        service.addEmployee(new Employee(2, "Jane Doe", "HR"));
+        service.addEmployee(new Employee(3, "Bob Smith", "Engineering"));
+
+        System.out.println("All Employees:");
+        for (Employee e : service.getAllEmployees()) {
+            System.out.println(e);
+        }
+
+        String targetDepartment = "Engineering";
+        System.out.println("\nEmployees in '" + targetDepartment + "':");
+        for (Employee e : manager.getEmployeesByDepartment(targetDepartment)) {
+            System.out.println("Name: " + e.getName() + ", ID: " + e.getId() + ", Role: (Assumed Not Provided in Model)");
+        }
+    }
+}
+```
+
+#### **Insert** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java` *(Assuming Role is Needed but Not Provided)*
+```java
+// **ASSUMPTION**: Since 'Role' is mentioned in requirements but not in the model, adding it.
+private String role;
+
+public Employee(int id, String name, String department, String role) {
+    this.id = id;
+    this.name = name;
+    this.department = department;
+    this.role = role; // New
+}
+
+public String getRole() { return role; } // New
+
+@Override
+public String toString() {
+    return "Employee{id=" + id + ", name='" + name + "', department='" + department + "', role='" + role + "'}";
+}
+```
+**AND** Update the `Main` class's employee additions to include roles (not shown again, but would look like `new Employee(1, "John Doe", "Engineering", "Software Engineer")`).
+
+### Note
+- The `Employee` model update for `role` is an assumption based on the requirement to display the role, which was not present in the provided model.
+- The `EmployeeManager` is introduced as it was not present in the context but suggested in the requirements.
+- **Deployment and Dependency Considerations**: Ensure all new classes are properly compiled and included in the project's build path. Dependencies (if any new libraries are used, e.g., for streaming in `EmployeeManager`) should be managed accordingly (e.g., via Maven or Gradle if applicable). 
+
+### Key Takeaways for Implementation
+- **Dependency Management**: If using a build tool, declare dependencies for Java Stream operations (already part of Java 8+).
+- **Classpath Update**: Ensure `EmployeeManager` and updated `Employee` class are in the classpath.
+- **Testing**: Though not provided, unit tests for `EmployeeManager#getEmployeesByDepartment` and integration tests for the `Main` class's new functionality are recommended.

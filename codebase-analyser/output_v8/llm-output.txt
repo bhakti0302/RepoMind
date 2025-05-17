@@ -1,0 +1,109 @@
+### Overview :
+
+The system will be enhanced to display employees by department, allowing users to filter by department name and view corresponding employee details.
+
+### Key Components :
+
+* `EmployeeManager` class with a new method `getEmployeesByDepartment(String department)`
+* Integration in `Main` class to demonstrate filtering functionality
+* Employee model with department attribute (assumed, as not provided, but necessary for the functionality)
+
+### Code Changes :
+
+#### **Create** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeManager.java**
+```java
+// Assuming Employee class has getters for name, id, role, and department
+import com.company.model.Employee;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class EmployeeManager {
+    private List<Employee> employees; // Initialize through constructor or setter, assuming similar to EmployeeService
+
+    public EmployeeManager(List<Employee> employees) {
+        this.employees = employees;
+    }
+
+    /**
+     * Filters employees by department.
+     * @param department Name of the department to filter by.
+     * @return List of employees in the specified department.
+     */
+    public List<Employee> getEmployeesByDepartment(String department) {
+        return employees.stream()
+                .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
+                .collect(Collectors.toList());
+    }
+}
+```
+
+#### **Modify** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`
+```java
+// Add department to Employee (if not already present) and ensure getters/setters are available
+// Assuming Employee class modification is out of scope but necessary for this to work
+
+// No direct code change here unless initializing EmployeeManager, 
+// but for completeness in context, showing how Employee might look:
+
+// public class Employee {
+//     private String name;
+//     private String id;
+//     private String role;
+//     private String department; // New attribute
+
+//     // Getters and Setters
+//     public String getDepartment() { return department; }
+//     public void setDepartment(String department) { this.department = department; }
+//     // ...
+// }
+```
+
+#### **Update** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+```java
+import com.company.service.EmployeeManager; // New import
+import com.company.service.EmployeeService;
+import com.company.model.Employee;
+
+public class Main {
+    public static void main(String[] args) {
+        EmployeeService service = new EmployeeService();
+        // Assuming some employees are added for demonstration
+        service.addEmployee(new Employee("John", "E001", "Dev", "Engineering"));
+        service.addEmployee(new Employee("Doe", "E002", "HR", "HR"));
+        service.addEmployee(new Employee("Jane", "E003", "Dev", "Engineering"));
+
+        EmployeeManager manager = new EmployeeManager(service.getAllEmployees());
+
+        System.out.println("Employees in Engineering Department:");
+        String targetDepartment = "Engineering";
+        for (Employee e : manager.getEmployeesByDepartment(targetDepartment)) {
+            System.out.println("Name: " + e.getName() + ", ID: " + e.getId() + ", Role: " + e.getRole());
+        }
+    }
+}
+```
+
+#### **Assumed Update** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java` (Not Provided, But Necessary)
+```java
+// Necessary fields and getters/setters for name, id, role, and department
+public class Employee {
+    private String name;
+    private String id;
+    private String role;
+    private String department;
+
+    public Employee(String name, String id, String role, String department) {
+        this.name = name;
+        this.id = id;
+        this.role = role;
+        this.department = department;
+    }
+
+    public String getName() { return name; }
+    public String getId() { return id; }
+    public String getRole() { return role; }
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+}
+```

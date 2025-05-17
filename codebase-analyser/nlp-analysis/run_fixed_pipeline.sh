@@ -43,6 +43,17 @@ if [ $? -eq 0 ]; then
     echo "Pipeline completed successfully!" | tee -a "$LOG_FILE"
     echo "Check the output files in $OUTPUT_DIR" | tee -a "$LOG_FILE"
     echo "Log file: $LOG_FILE"
+
+    # Step 3: Notify that the pipeline is complete and Merge Agent will be launched in a separate terminal
+    echo "Pipeline completed successfully!" | tee -a "$LOG_FILE"
+    echo "The Merge Agent will now be launched in a separate terminal window." | tee -a "$LOG_FILE"
+    echo "You will be able to interact with it directly to approve or reject code changes." | tee -a "$LOG_FILE"
+
+    # Create a marker file to indicate the pipeline has completed successfully
+    PIPELINE_COMPLETE_MARKER="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output/pipeline_complete"
+    echo "$(date)" > "$PIPELINE_COMPLETE_MARKER"
+
+    # Exit successfully - the extension will handle launching the mergeCodeAgent in a terminal
     exit 0
 else
     echo "Pipeline failed! Check the log file for details: $LOG_FILE" | tee -a "$LOG_FILE"

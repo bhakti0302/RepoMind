@@ -1,0 +1,478 @@
+{
+  "original_text": "Business Requirement: Display Employees by Department\n\nObjective:\nAllow the system to list all employees belonging to a specific department.\n\nFunctional Requirements:\n1. Filter by Department\n   - Users should be able to enter a department name (e.g., \"Engineering\", \"HR\").\n   - The system should display all employees working in that department.\n\n2. Display Details\n   - For each matching employee, display their name, ID, and role.\n\nSuggested Code Enhancements:\n- Add a method `getEmployeesByDepartment(String department)` in the `EmployeeManager` class.\n- Use this method in the main class to demonstrate filtering functionality.\n\nPrompt:\nThe output should be in this format :\n\nOverview :\n\n\nKey Components :\n\n\nCode Changes :\n  Create to path_of the file \n  ```\n    // Your code here\n  ```\n\n Add to path_of the file \n  ```\n    // Your code here\n  ```\n\n  Modify to path_of the file \n  ```\n    // Your code here\n  ```\n  Update to path_of the file \n  ```\n    // Your code here\n  ```\n  Insert to path_of the file \n  ```\n    // Your code here\n  ```\nDo not give testing approach.\nDO NOT give implementation plan or testing plan.\nJust fill the parts in the above format that have code changes according to you.\nYou do not need to fill all the above parts , just the one that needs to be changed. \nIf there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords.\nStructure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.",
+  "preprocessed_text": "Business Requirement: Display Employees by Department Objective: Allow the system to list all employees belonging to a specific department. Functional Requirements: 1. Filter by Department - Users should be able to enter a department name (e.g., Engineering , HR ). - The system should display all employees working in that department. 2. Display Details - For each matching employee, display their name, ID, and role. Suggested Code Enhancements: - Add a method getEmployeesByDepartment(String department) in the EmployeeManager class. - Use this method in the main class to demonstrate filtering functionality. Prompt: The output should be in this format : Overview : Key Components : Code Changes : Create to path_of the file Your code here Add to path_of the file Your code here Modify to path_of the file Your code here Update to path_of the file Your code here Insert to path_of the file Your code here Do not give testing approach. DO NOT give implementation plan or testing plan. Just fill the parts in the above format that have code changes according to you. You do not need to fill all the above parts , just the one that needs to be changed. If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords. Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.",
+  "cleaned_text": "Business Requirement: Display Employees by Department Objective: Allow the system to list all employees belonging to a specific department. Functional Requirements: 1. Filter by Department - Users should be able to enter a department name (e . g., Engineering , HR ). - The system should display all employees working in that department. 2. Display Details - For each matching employee, display their name, ID, and role. Suggested Code Enhancements: - Add a method get Employees By Department(String department) in the Employee Manager class. - Use this method in the main class to demonstrate filtering functionality. Prompt: The output should be in this format : Overview : Key Components : Code Changes : Create to path of the file Your code here Add to path of the file Your code here Modify to path of the file Your code here Update to path of the file Your code here Insert to path of the file Your code here Do not give testing approach. DO NOT give implementation plan or testing plan. Just fill the parts in the above format that have code changes according to you. You do not need to fill all the above parts , just the one that needs to be changed. If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords. Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.",
+  "parsed_data": {
+    "sentences": [
+      "Business Requirement:",
+      "Display Employees by Department Objective: Allow the system to list all employees belonging to a specific department.",
+      "Functional Requirements:",
+      "1. Filter by Department - Users should be able to enter a department name (e.g., Engineering , HR ).",
+      "- The system should display all employees working in that department.",
+      "2. Display Details - For each matching employee, display their name, ID, and role.",
+      "Suggested Code Enhancements: - Add a method getEmployeesByDepartment(String department) in the EmployeeManager class. - Use this method in the main class to demonstrate filtering functionality.",
+      "Prompt:",
+      "The output should be in this format : Overview : Key Components : Code Changes : Create to path_of the file Your code here Add to path_of the file Your code here Modify to path_of the file Your code here Update to path_of the file Your code here Insert to path_of the file Your code here Do not give testing approach.",
+      "DO NOT give implementation plan or testing plan.",
+      "Just fill the parts in the above format that have code changes according to you.",
+      "You do not need to fill all the above parts , just the one that needs to be changed.",
+      "If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords.",
+      "Structure the output in this format.",
+      "You can use other synonyms for the above keywords but strictly follow the format."
+    ],
+    "entities": [
+      {
+        "text": "1",
+        "label": "CARDINAL",
+        "start": 165,
+        "end": 166
+      },
+      {
+        "text": "Department - Users",
+        "label": "ORG",
+        "start": 178,
+        "end": 196
+      },
+      {
+        "text": "2",
+        "label": "CARDINAL",
+        "start": 336,
+        "end": 337
+      },
+      {
+        "text": "EmployeeManager",
+        "label": "LOC",
+        "start": 514,
+        "end": 529
+      }
+    ],
+    "noun_phrases": [
+      "Business Requirement",
+      "Display Employees",
+      "Department Objective",
+      "the system",
+      "all employees",
+      "a specific department",
+      "Functional Requirements",
+      "1. Filter",
+      "Department - Users",
+      "a department name",
+      "e.g., Engineering",
+      "HR",
+      "The system",
+      "all employees",
+      "that department",
+      "2. Display Details",
+      "each matching employee",
+      "their name",
+      "ID",
+      "role",
+      "Suggested",
+      "Code Enhancements",
+      "a method",
+      "getEmployeesByDepartment(String department",
+      "the EmployeeManager class",
+      "this method",
+      "the main class",
+      "filtering functionality",
+      "Prompt",
+      "The output",
+      "this format",
+      "Key Components",
+      "Code Changes",
+      "the file",
+      "Your code",
+      "the file",
+      "Your code",
+      "the file",
+      "Your code",
+      "path_of",
+      "the file",
+      "Your code",
+      "Insert",
+      "the file",
+      "Your code",
+      "testing approach",
+      "implementation plan",
+      "testing plan",
+      "the parts",
+      "the above format",
+      "that",
+      "code changes",
+      "you",
+      "You",
+      "all the above parts",
+      "just the one",
+      "that",
+      "any other changes",
+      "that",
+      "Create",
+      "Add",
+      "Modify",
+      "Update",
+      "Insert",
+      "you",
+      "other keywords",
+      "the output",
+      "this format",
+      "You",
+      "other synonyms",
+      "the above keywords",
+      "the format"
+    ],
+    "actions": [
+      "allow",
+      "list",
+      "belong",
+      "enter",
+      "display",
+      "work",
+      "match",
+      "display",
+      "add",
+      "getemployeesbydepartment(stre",
+      "use",
+      "demonstrate",
+      "filter",
+      "create",
+      "path_of",
+      "add",
+      "path_of",
+      "modify",
+      "give",
+      "give",
+      "fill",
+      "have",
+      "accord",
+      "need",
+      "fill",
+      "need",
+      "change",
+      "be",
+      "need",
+      "do",
+      "use",
+      "structure",
+      "use",
+      "follow"
+    ],
+    "full_text": "Business Requirement: Display Employees by Department Objective: Allow the system to list all employees belonging to a specific department. Functional Requirements: 1. Filter by Department - Users should be able to enter a department name (e.g., Engineering , HR ). - The system should display all employees working in that department. 2. Display Details - For each matching employee, display their name, ID, and role. Suggested Code Enhancements: - Add a method getEmployeesByDepartment(String department) in the EmployeeManager class. - Use this method in the main class to demonstrate filtering functionality. Prompt: The output should be in this format : Overview : Key Components : Code Changes : Create to path_of the file Your code here Add to path_of the file Your code here Modify to path_of the file Your code here Update to path_of the file Your code here Insert to path_of the file Your code here Do not give testing approach. DO NOT give implementation plan or testing plan. Just fill the parts in the above format that have code changes according to you. You do not need to fill all the above parts , just the one that needs to be changed. If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords. Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format."
+  },
+  "entities": {
+    "nouns": [
+      "Business",
+      "Requirement",
+      "Display",
+      "Employees",
+      "Department",
+      "Objective",
+      "system",
+      "Functional",
+      "Requirements",
+      "Filter",
+      "Users",
+      "name",
+      "Engineering",
+      "HR",
+      "Details",
+      "employee",
+      "ID",
+      "role",
+      "Suggested",
+      "Code",
+      "Enhancements",
+      "method",
+      "EmployeeManager",
+      "class",
+      "functionality",
+      "Prompt",
+      "output",
+      "format",
+      "Overview",
+      "Key",
+      "Components",
+      "Changes",
+      "file",
+      "path_of",
+      "Insert",
+      "testing",
+      "approach",
+      "implementation",
+      "plan",
+      "parts",
+      "one",
+      "Create",
+      "Add",
+      "Modify",
+      "Update",
+      "keywords",
+      "synonyms"
+    ],
+    "technical_terms": [
+      "Business Requirement",
+      "Display Employees",
+      "Department Objective",
+      "the system",
+      "all employees",
+      "a specific department",
+      "Functional Requirements",
+      "1. Filter",
+      "Department - Users",
+      "a department name",
+      "e.g., Engineering",
+      "that department",
+      "2. Display Details",
+      "each matching employee",
+      "their name",
+      "Code Enhancements",
+      "a method",
+      "getEmployeesByDepartment(String department",
+      "the EmployeeManager class",
+      "this method",
+      "the main class",
+      "filtering functionality",
+      "The output",
+      "this format",
+      "Key Components",
+      "Code Changes",
+      "the file",
+      "Your code",
+      "testing approach",
+      "implementation plan",
+      "testing plan",
+      "the parts",
+      "the above format",
+      "all the above parts",
+      "just the one",
+      "any other changes",
+      "other keywords",
+      "other synonyms",
+      "the above keywords",
+      "the format"
+    ],
+    "actions": [
+      "allow",
+      "list",
+      "belong",
+      "enter",
+      "display",
+      "work",
+      "match",
+      "add",
+      "getemployeesbydepartment(stre",
+      "use",
+      "demonstrate",
+      "filter",
+      "create",
+      "path_of",
+      "modify",
+      "give",
+      "fill",
+      "have",
+      "accord",
+      "need",
+      "change",
+      "be",
+      "do",
+      "structure",
+      "follow"
+    ]
+  },
+  "components": {
+    "functional_requirements": [
+      {
+        "text": "Business Requirement: Display Employees by Department Objective: Allow the system to list all employees belonging to a specific department.",
+        "start": 0,
+        "end": 139
+      },
+      {
+        "text": "Filter by Department - Users should be able to enter a department name (e.g., Engineering , HR ).",
+        "start": 168,
+        "end": 265
+      },
+      {
+        "text": "- The system should display all employees working in that department.",
+        "start": 266,
+        "end": 335
+      },
+      {
+        "text": "Prompt: The output should be in this format : Overview : Key Components : Code Changes : Create to path_of the file Your code here Add to path_of the file Your code here Modify to path_of the file Your code here Update to path_of the file Your code here Insert to path_of the file Your code here Do not give testing approach.",
+        "start": 613,
+        "end": 938
+      },
+      {
+        "text": "You do not need to fill all the above parts , just the one that needs to be changed.",
+        "start": 1069,
+        "end": 1153
+      },
+      {
+        "text": "Filter by Department - Users should be able to enter a department name (e.g., Engineering , HR ). - The system should display all employees working in that department.",
+        "start": 168,
+        "end": 335
+      },
+      {
+        "text": "Display Details - For each matching employee, display their name, ID, and role. Suggested Code Enhancements: - Add a method getEmployeesByDepartment(String department) in the EmployeeManager class. - Use this method in the main class to demonstrate filtering functionality. Prompt: The output should be in this format : Overview : Key Components : Code Changes : Create to path_of the file Your code here Add to path_of the file Your code here Modify to path_of the file Your code here Update to path_of the file Your code here Insert to path_of the file Your code here Do not give testing approach. DO NOT give implementation plan or testing plan. Just fill the parts in the above format that have code changes according to you. You do not need to fill all the above parts , just the one that needs to be changed. If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords. Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.",
+        "start": 339,
+        "end": 1407
+      },
+      {
+        "text": "Users should be able to enter a department name (e.g., Engineering , HR ).",
+        "start": 191,
+        "end": 265
+      },
+      {
+        "text": "The system should display all employees working in that department. 2. Display Details",
+        "start": 268,
+        "end": 354
+      },
+      {
+        "text": "For each matching employee, display their name, ID, and role. Suggested Code Enhancements:",
+        "start": 357,
+        "end": 447
+      },
+      {
+        "text": "Add a method getEmployeesByDepartment(String department) in the EmployeeManager class.",
+        "start": 450,
+        "end": 536
+      },
+      {
+        "text": "Use this method in the main class to demonstrate filtering functionality. Prompt: The output should be in this format : Overview : Key Components : Code Changes : Create to path_of the file Your code here Add to path_of the file Your code here Modify to path_of the file Your code here Update to path_of the file Your code here Insert to path_of the file Your code here Do not give testing approach. DO NOT give implementation plan or testing plan. Just fill the parts in the above format that have code changes according to you. You do not need to fill all the above parts , just the one that needs to be changed. If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords. Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.",
+        "start": 539,
+        "end": 1407
+      }
+    ],
+    "non_functional_requirements": [],
+    "constraints": [
+      {
+        "type": "modal",
+        "text": "Filter by Department - Users should be able to enter a department name (e.g., Engineering , HR ).",
+        "start": 168,
+        "end": 265
+      },
+      {
+        "type": "modal",
+        "text": "- The system should display all employees working in that department.",
+        "start": 266,
+        "end": 335
+      },
+      {
+        "type": "modal",
+        "text": "Prompt: The output should be in this format : Overview : Key Components : Code Changes : Create to path_of the file Your code here Add to path_of the file Your code here Modify to path_of the file Your code here Update to path_of the file Your code here Insert to path_of the file Your code here Do not give testing approach.",
+        "start": 613,
+        "end": 938
+      },
+      {
+        "type": "modal",
+        "text": "If there are any other changes that needs to be done, other than Create, Add, Modify, Update, Insert, then you can use other keywords.",
+        "start": 1154,
+        "end": 1288
+      },
+      {
+        "type": "modal",
+        "text": "You can use other synonyms for the above keywords but strictly follow the format.",
+        "start": 1326,
+        "end": 1407
+      }
+    ],
+    "actions": [
+      {
+        "verb": "allow",
+        "text": "allow",
+        "subjects": [
+          "Department"
+        ],
+        "objects": [
+          "the"
+        ],
+        "start": 65,
+        "end": 70
+      },
+      {
+        "verb": "filter",
+        "text": "filter",
+        "subjects": [
+          "Department"
+        ],
+        "objects": [
+          "by"
+        ],
+        "start": 168,
+        "end": 174
+      },
+      {
+        "verb": "display",
+        "text": "display",
+        "subjects": [
+          "system"
+        ],
+        "objects": [
+          "all"
+        ],
+        "start": 286,
+        "end": 293
+      },
+      {
+        "verb": "display",
+        "text": "display",
+        "subjects": [
+          "employee"
+        ],
+        "objects": [
+          "Details"
+        ],
+        "start": 339,
+        "end": 346
+      },
+      {
+        "verb": "add",
+        "text": "add",
+        "subjects": [
+          "department"
+        ],
+        "objects": [
+          "a"
+        ],
+        "start": 450,
+        "end": 453
+      },
+      {
+        "verb": "create",
+        "text": "create",
+        "subjects": [],
+        "objects": [
+          "to"
+        ],
+        "start": 702,
+        "end": 708
+      },
+      {
+        "verb": "plan",
+        "text": "plan",
+        "subjects": [],
+        "objects": [
+          "or"
+        ],
+        "start": 966,
+        "end": 970
+      },
+      {
+        "verb": "create",
+        "text": "create",
+        "subjects": [],
+        "objects": [
+          "Add"
+        ],
+        "start": 1219,
+        "end": 1225
+      }
+    ]
+  },
+  "search_queries": [
+    "Business Requirement: Display Employees by Department Objective: Allow the system to list all employees belonging to a specific department.",
+    "e.g",
+    "HR",
+    "- The system should display all employees working in that department.",
+    "path_of"
+  ],
+  "project_id": "EmployeeManagementSystem"
+}

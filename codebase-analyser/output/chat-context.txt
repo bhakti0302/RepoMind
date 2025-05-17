@@ -1,0 +1,63 @@
+--- Document 1: /Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java ---
+
+import com.company.service.EmployeeService;
+
+--- Document 2: /Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java ---
+
+public class EmployeeService {
+    private List<Employee> employees = new ArrayList<>();
+
+    public void addEmployee(Employee employee) {
+        employees.add(employee);
+    }
+
+    public List<Employee> getAllEmployees() {
+        return employees;
+    }
+}
+
+--- Document 3: /Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java ---
+
+package com.company.app;
+
+import com.company.model.Employee;
+import com.company.service.EmployeeService;
+
+public class Main {
+    public static void main(String[] args) {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Alice", "HR"));
+        service.addEmployee(new Employee(2, "Bob", "IT"));
+
+        for (Employee e : service.getAllEmployees()) {
+            System.out.println(e);
+        }
+    }
+}
+
+--- Document 4: /Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java ---
+
+public static void main(String[] args) {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Alice", "HR"));
+        service.addEmployee(new Employee(2, "Bob", "IT"));
+
+        for (Employee e : service.getAllEmployees()) {
+            System.out.println(e);
+        }
+    }
+
+--- Document 5: /Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java ---
+
+public class Main {
+    public static void main(String[] args) {
+        EmployeeService service = new EmployeeService();
+        service.addEmployee(new Employee(1, "Alice", "HR"));
+        service.addEmployee(new Employee(2, "Bob", "IT"));
+
+        for (Employee e : service.getAllEmployees()) {
+            System.out.println(e);
+        }
+    }
+}
+

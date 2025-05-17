@@ -1,0 +1,60 @@
+Given the strict format requirement and the explicit instructions to **not** provide testing approach, implementation plan, or fill in all parts if unnecessary, I'll tailor the response to fit the requested format while addressing the essential code changes. Since the format provided in the prompt is more suited for the final code changes section, I'll use it for that part and provide a brief overview and key components as requested, followed by the detailed code changes in the specified format.
+
+### 1. Overview of the Implementation Approach
+To fulfill the business requirement of displaying employees by department, we will enhance the existing `EmployeeService` class by adding a method to filter employees by department. We will then utilize this method in the `Main` class to demonstrate the functionality.
+
+### 2. Key Components and Their Responsibilities
+- **`EmployeeService` Class**: Manages employee data, including filtering by department.
+- **`Main` Class**: Demonstrates the usage of `EmployeeService` to display employees by department.
+
+### 3. Detailed Implementation Steps
+(Embedded in the Code Changes section for brevity, as per the format request)
+
+### 4. Code Examples for Critical Parts
+#### **Code Changes**
+
+- **Create** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java` (Assuming `toString` isn't defined for Employee details display)
+  ```java
+  @Override
+  public String toString() {
+      return "Employee{" +
+              "id=" + id +
+              ", name='" + name + '\'' +
+              ", department='" + department + '\'' +
+              ", role='" + role + '\'' + // Assuming 'role' exists, if not, add it to the Employee constructor and class
+              '}';
+  }
+  ```
+  **Note**: If `role` doesn't exist in `Employee.java`, **Add** it to the constructor and class variables.
+
+- **Add** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`
+  ```java
+  /**
+   * Filters employees by the specified department.
+   * @param department Name of the department to filter by.
+   * @return List of employees in the specified department.
+   */
+  public List<Employee> getEmployeesByDepartment(String department) {
+      return employees.stream()
+              .filter(employee -> employee.department.equalsIgnoreCase(department))
+              .toList();
+  }
+  ```
+
+- **Modify** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java` (Example usage)
+  ```java
+  public static void main(String[] args) {
+      EmployeeService service = new EmployeeService();
+      service.addEmployee(new Employee(1, "Alice", "HR", "Manager")); // Assuming 'role' is added
+      service.addEmployee(new Employee(2, "Bob", "IT", "Developer"));
+      service.addEmployee(new Employee(3, "Charlie", "HR", "Assistant"));
+
+      System.out.println("Employees in HR Department:");
+      for (Employee e : service.getEmployeesByDepartment("HR")) {
+          System.out.println(e);
+      }
+  }
+  ```
+  **Note**: If `role` wasn't previously in `Employee.java`, you'd also **Modify** the `Employee` constructor calls to include it.
+
+### 5. (Excluded as per instructions) Testing Approach

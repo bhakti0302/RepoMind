@@ -153,13 +153,20 @@ export const commands = {
     VISUALIZE_RELATIONSHIPS: 'visualizeRelationships',
     OPEN_IMAGE: 'openImage',
     PROCESS_CODE_QUESTION: 'processCodeQuestion',
+    CLEAR_HISTORY: 'clearHistory',
 
     // Extension commands
     OPEN_CHAT_VIEW: 'extension-v1.openChatView',
     START_ASSISTANT: 'extension-v1.startAssistant',
     SYNC_CODEBASE_COMMAND: 'extension-v1.syncCodebase',
     CHAT_VIEW_FOCUS: 'workbench.view.extension.repomind-chat-view',
-    PROCESS_CODE_QUESTION_COMMAND: 'extension-v1.processCodeQuestion'
+    PROCESS_CODE_QUESTION_COMMAND: 'extension-v1.processCodeQuestion',
+    VISUALIZE_RELATIONSHIPS_COMMAND: 'extension-v1.visualizeRelationships',
+    SHOW_VISUALIZATIONS_IN_CHAT: 'extension-v1.showVisualizationsInChat',
+    GENERATE_VISUALIZATIONS: 'extension-v1.generateVisualizations',
+    OPEN_FILE: 'extension-v1.openFile',
+    RUN_MERGE_AGENT: 'extension-v1.runMergeAgent',
+    CLEAR_HISTORY_COMMAND: 'extension-v1.clearHistory'
 };
 
 /**

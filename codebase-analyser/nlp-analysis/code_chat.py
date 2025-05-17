@@ -69,9 +69,19 @@ def process_code_question(
 
         # Get the RAG output
         chat_context_file = os.path.join(output_dir, "chat-context.txt")
-        with open(chat_context_file, 'w') as f:
-            f.write(rag_result)
-        logger.info(f"Saved RAG context to {chat_context_file}")
+
+        # Check if rag_result is a dictionary or a string
+        if isinstance(rag_result, dict):
+            # If it's a dictionary, extract the context
+            context = rag_result.get("context", "")
+            with open(chat_context_file, 'w') as f:
+                f.write(context)
+            logger.info(f"Saved RAG context to {chat_context_file}")
+        else:
+            # If it's a string, write it directly
+            with open(chat_context_file, 'w') as f:
+                f.write(str(rag_result))
+            logger.info(f"Saved RAG context to {chat_context_file}")
 
         # Step 2: Send to LLM
         logger.info("Step 2: Sending to LLM")
@@ -112,8 +122,50 @@ def process_code_question(
 
         # Create the prompt for LLM
         prompt = f"# Question\n\n{question}\n\n"
-        prompt += f"# Code Context\n\n{rag_result}\n\n"
-        
+
+        # Check if rag_result is a dictionary or a string
+        if isinstance(rag_result, dict):
+            # If it's a dictionary, extract the context and other relevant information
+            context = rag_result.get("context", "")
+            architectural_patterns = rag_result.get("architectural_patterns", [])
+            implementation_details = rag_result.get("implementation_details", [])
+            related_components = rag_result.get("related_components", [])
+            domain_entities = rag_result.get("domain_entities", [])
+
+            # Add the context to the prompt
+            prompt += f"# Code Context\n\n{context}\n\n"
+
+            # Add architectural patterns if available
+            if architectural_patterns:
+                prompt += f"# Architectural Patterns\n\n"
+                for pattern in architectural_patterns:
+                    prompt += f"- {pattern}\n"
+                prompt += "\n"
+
+            # Add implementation details if available
+            if implementation_details:
+                prompt += f"# Implementation Details\n\n"
+                for detail in implementation_details:
+                    prompt += f"- {detail}\n"
+                prompt += "\n"
+
+            # Add related components if available
+            if related_components:
+                prompt += f"# Related Components\n\n"
+                for component in related_components:
+                    prompt += f"- {component}\n"
+                prompt += "\n"
+
+            # Add domain entities if available
+            if domain_entities:
+                prompt += f"# Domain Entities\n\n"
+                for entity in domain_entities:
+                    prompt += f"- {entity}\n"
+                prompt += "\n"
+        else:
+            # If it's a string, add it directly
+            prompt += f"# Code Context\n\n{rag_result}\n\n"
+
         # Add conversation history if available
         if conversation_history:
             prompt += "# Conversation History\n\n"
@@ -175,6 +227,7 @@ def main():
                         help="Temperature for LLM generation")
     parser.add_argument("--max-tokens", type=int, default=2000,
                         help="Maximum tokens for LLM generation")
+    parser.add_argument("--history-file", help="Path to the conversation history JSON file")
 
     args = parser.parse_args()
 
@@ -184,11 +237,23 @@ def main():
     logger.info(f"Output directory: {args.output_dir}")
     logger.info(f"LLM model: {args.llm_model}")
 
+    # Load conversation history if provided
+    conversation_history = None
+    if args.history_file and os.path.exists(args.history_file):
+        try:
+            with open(args.history_file, 'r') as f:
+                conversation_history = json.load(f)
+            logger.info(f"Loaded conversation history from {args.history_file} with {len(conversation_history)} entries")
+        except Exception as e:
+            logger.error(f"Error loading conversation history: {e}")
+            conversation_history = None
+
     # Process the question
     response = process_code_question(
         question=args.question,
         db_path=args.db_path,
         output_dir=args.output_dir,
+        conversation_history=conversation_history,
         llm_model_name=args.llm_model,
         temperature=args.temperature,
         max_tokens=args.max_tokens

@@ -38,19 +38,35 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
         // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage(message => {
-            if (message.command === commands.SEND_MESSAGE) {
-                this._handleUserMessage(webviewView.webview, message.text);
-            } else if (message.command === commands.SYNC_CODEBASE) {
+            console.log('Received message from webview:', message);
+
+            if (message.command === 'sendMessage') {
+                console.log('Received sendMessage command with text:', message.text);
+                // Forward to the command handler in extension.ts
+                vscode.commands.executeCommand('extension-v1.handleSendMessageFromWebview', message.text);
+            } else if (message.command === 'syncCodebase') {
+                console.log('Handling syncCodebase command');
                 this._handleSyncCodebase(webviewView.webview);
-            } else if (message.command === commands.ATTACH_FILE) {
+            } else if (message.command === 'attachFile') {
+                console.log('Handling attachFile command');
                 this._handleAttachFile(webviewView.webview);
             } else if (message.command === commands.OPEN_IMAGE) {
                 this._handleOpenImage(message.path);
             } else if (message.command === 'openFile') {
                 // Handle openFile command
-                vscode.commands.executeCommand('extension-v1.openFile', message.path);
+                vscode.commands.executeCommand(commands.OPEN_FILE, message.path);
+            } else if (message.command === 'runMergeAgent') {
+                // Handle runMergeAgent command
+                console.log('ChatViewProvider: Executing runMergeAgent command');
+                vscode.commands.executeCommand(commands.RUN_MERGE_AGENT);
+            } else if (message.command === commands.CLEAR_HISTORY) {
+                // Handle clearHistory command
+                console.log('ChatViewProvider: Executing clearHistory command');
+                this._handleClearHistory(webviewView.webview);
             } else if (message.command === commands.VISUALIZE_RELATIONSHIPS) {
                 this._handleVisualizeRelationships(webviewView.webview);
+            } else {
+                console.log('Unknown command:', message.command);
             }
         });
     }
@@ -65,6 +81,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private async _handleUserMessage(webview: vscode.Webview, text: string) {
+        console.log('_handleUserMessage called with text:', text);
+
         // Check for misspellings and suggest corrections
         const correction = suggestCorrection(text);
         if (correction && correction !== text) {
@@ -86,21 +104,28 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private async _processUserMessage(webview: vscode.Webview, text: string) {
+        console.log('_processUserMessage called with text:', text);
+
         // Generate a response using the chat assistant
         const response = generateResponse(text);
+        console.log('Generated response:', response);
 
         // Handle any commands detected
         if (response.command === commands.VISUALIZE_RELATIONSHIPS) {
             // Handle visualization request
             this._handleVisualizeRelationships(webview);
         } else if (response.command === commands.PROCESS_CODE_QUESTION) {
-            // Send the initial processing message
+            // Create a unique ID for the processing message
             const processingMessageId = `processing-${Date.now()}`;
+
+            // Send the initial processing message with a loading indicator
             webview.postMessage({
                 command: commands.ADD_MESSAGE,
                 text: response.text,
                 isUser: false,
-                id: processingMessageId
+                id: processingMessageId,
+                isLoading: true,
+                loadingType: 'llm'
             });
 
             try {
@@ -108,22 +133,27 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 const { processCodeQuestion } = require('../utils/chatAssistant');
 
                 // Process the code question
+                console.log(`Processing code question: ${text}`);
                 const llmResponse = await processCodeQuestion(text);
+                console.log(`Received LLM response of length: ${llmResponse.length}`);
 
-                // Send the LLM response
+                // Update the processing message with the LLM response
                 webview.postMessage({
-                    command: commands.ADD_MESSAGE,
-                    text: llmResponse,
-                    isUser: false
+                    command: commands.UPDATE_MESSAGE,
+                    id: processingMessageId,
+                    text: llmResponse
                 });
+
+                // Log the conversation for debugging
+                console.log(`Added message to conversation history: ${text.substring(0, 50)}...`);
             } catch (error) {
                 console.error(`Error processing code question: ${error}`);
 
-                // Send an error message
+                // Update the processing message with an error
                 webview.postMessage({
-                    command: commands.ADD_MESSAGE,
-                    text: `Error processing your question: ${error instanceof Error ? error.message : String(error)}`,
-                    isUser: false
+                    command: commands.UPDATE_MESSAGE,
+                    id: processingMessageId,
+                    text: `Error processing your question: ${error instanceof Error ? error.message : String(error)}`
                 });
             }
         } else {
@@ -203,39 +233,83 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             console.log(`Generating visualizations for project: ${projectId}`);
 
             // Execute the command to generate visualizations
-            vscode.commands.executeCommand('extension-v1.visualizeRelationships');
+            vscode.commands.executeCommand(commands.VISUALIZE_RELATIONSHIPS_COMMAND);
 
-            // Add a message after a delay to simulate completion
+            // Add a message after a delay to check for completion
             setTimeout(() => {
-                // Check if visualizations were created
-                if (fs.existsSync(multiFilePath) || fs.existsSync(relationshipTypesPath)) {
-                    console.log(`Visualizations created at: ${multiFilePath} and/or ${relationshipTypesPath}`);
+                try {
+                    // Check if visualizations were created
+                    if (fs.existsSync(multiFilePath) || fs.existsSync(relationshipTypesPath)) {
+                        console.log(`Visualizations created at: ${multiFilePath} and/or ${relationshipTypesPath}`);
 
-                    // Visualization completed successfully
-                    webview.postMessage({
-                        command: commands.ADD_MESSAGE,
-                        text: 'Code relationships visualized successfully! Here are the visualizations:',
-                        isUser: false
-                    });
+                        // Visualization completed successfully
+                        webview.postMessage({
+                            command: commands.ADD_MESSAGE,
+                            text: 'Code relationships visualized successfully! Here are the visualizations:',
+                            isUser: false
+                        });
 
-                    // Show visualizations in the chat
-                    if (fs.existsSync(multiFilePath)) {
-                        this._showVisualizationInChat(webview, multiFilePath, 'Multi-File Relationships Visualization:');
-                    }
-
-                    // Add a small delay before showing the second visualization
-                    setTimeout(() => {
-                        if (fs.existsSync(relationshipTypesPath)) {
-                            this._showVisualizationInChat(webview, relationshipTypesPath, 'Relationship Types Visualization:');
+                        // Show visualizations in the chat
+                        if (fs.existsSync(multiFilePath)) {
+                            this._showVisualizationInChat(webview, multiFilePath, 'Multi-File Relationships Visualization:');
                         }
-                    }, 500);
-                } else {
-                    console.log(`Visualizations not found at: ${multiFilePath} or ${relationshipTypesPath}`);
 
-                    // Visualizations were not created
+                        // Add a small delay before showing the second visualization
+                        setTimeout(() => {
+                            if (fs.existsSync(relationshipTypesPath)) {
+                                this._showVisualizationInChat(webview, relationshipTypesPath, 'Relationship Types Visualization:');
+                            }
+                        }, 500);
+                    } else {
+                        console.log(`Visualizations not found at: ${multiFilePath} or ${relationshipTypesPath}`);
+
+                        // Try to find visualizations in alternative locations
+                        const workspaceRoot = path.dirname(vscode.extensions.getExtension('extension-v1')?.extensionPath || '');
+                        const dataDir = path.join(workspaceRoot, 'data');
+                        const centralVisualizationsDir = path.join(dataDir, 'visualizations', projectId);
+
+                        const centralMultiFilePath = path.join(centralVisualizationsDir, `${projectId}_multi_file_relationships.png`);
+                        const centralRelationshipTypesPath = path.join(centralVisualizationsDir, `${projectId}_relationship_types.png`);
+
+                        if (fs.existsSync(centralMultiFilePath) || fs.existsSync(centralRelationshipTypesPath)) {
+                            console.log(`Visualizations found in central directory: ${centralVisualizationsDir}`);
+
+                            webview.postMessage({
+                                command: commands.ADD_MESSAGE,
+                                text: 'Code relationships visualized successfully! Here are the visualizations:',
+                                isUser: false
+                            });
+
+                            if (fs.existsSync(centralMultiFilePath)) {
+                                this._showVisualizationInChat(webview, centralMultiFilePath, 'Multi-File Relationships Visualization:');
+                            }
+
+                            setTimeout(() => {
+                                if (fs.existsSync(centralRelationshipTypesPath)) {
+                                    this._showVisualizationInChat(webview, centralRelationshipTypesPath, 'Relationship Types Visualization:');
+                                }
+                            }, 500);
+                        } else {
+                            // Visualizations were not created
+                            webview.postMessage({
+                                command: commands.ADD_MESSAGE,
+                                text: 'Visualizations were generated but could not be found. Please try again later.',
+                                isUser: false
+                            });
+
+                            // Suggest using the manual visualization command
+                            webview.postMessage({
+                                command: commands.ADD_MESSAGE,
+                                text: 'You can try using the manual visualization command by typing "visualize code" in the chat.',
+                                isUser: false
+                            });
+                        }
+                    }
+                } catch (checkError) {
+                    console.error(`Error checking for visualizations: ${checkError instanceof Error ? checkError.message : String(checkError)}`);
                     webview.postMessage({
                         command: commands.ADD_MESSAGE,
-                        text: 'Visualizations were generated but could not be found. Please try again later.',
+                        text: `Error checking for visualizations: ${checkError instanceof Error ? checkError.message : String(checkError)}`,
                         isUser: false
                     });
                 }
@@ -339,7 +413,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 imagePath: imagePath, // Pass the original path for external opening (hidden from UI)
                 isImage: true, // Flag to indicate this is an image message
                 imageUri: webviewUri.toString(), // Pass the webview URI directly
-                imageCaption: caption // Pass the caption for better display
+                imageCaption: caption, // Pass the caption for better display
+                timestamp: Date.now() // Add timestamp to prevent caching issues
             });
         } catch (error) {
             console.error(`Error sending image to chat: ${error instanceof Error ? error.message : String(error)}`);
@@ -368,25 +443,60 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
         const workspaceFolder = workspaceFolders[0].uri.fsPath;
 
+        // Generate a unique ID for the sync message
+        const syncMessageId = `sync-${Date.now()}`;
+
+        // Store the message ID in a global variable for later reference
+        (global as any).lastSyncMessageId = syncMessageId;
+        console.log(`Created sync message with ID: ${syncMessageId}`);
+
         // Show a message that we're syncing with a loading animation
         webview.postMessage({
             command: commands.ADD_MESSAGE,
             text: `Syncing codebase from "${workspaceFolder}"... This may take a moment.`,
             isUser: false,
             isLoading: true,
-            loadingType: 'sync'
+            loadingType: 'sync',
+            id: syncMessageId
         });
 
         // Execute the command to sync the codebase
         try {
             vscode.commands.executeCommand('extension-v1.syncCodebase');
-            // Success message will be shown by the command itself
+            // Success message will be shown by the command itself via updateSyncMessage
         } catch (error: unknown) {
+            // Update the sync message with the error
             webview.postMessage({
-                command: commands.ADD_MESSAGE,
-                text: `Error syncing codebase: ${error instanceof Error ? error.message : String(error)}`,
-                isUser: false
+                command: commands.UPDATE_MESSAGE,
+                id: syncMessageId,
+                text: `Error syncing codebase: ${error instanceof Error ? error.message : String(error)}`
             });
+        }
+    }
+
+    // Method to update the sync message with success
+    public updateSyncMessage(text: string) {
+        if (this._view && (global as any).lastSyncMessageId) {
+            const syncMessageId = (global as any).lastSyncMessageId;
+            console.log(`Updating sync message with ID: ${syncMessageId}`);
+
+            // Update the message with success text and remove loading indicator
+            this._view.webview.postMessage({
+                command: commands.UPDATE_MESSAGE,
+                id: syncMessageId,
+                text: text + ' <span style="color: #22c55e; font-weight: bold;">✓</span>'
+            });
+        } else {
+            console.log('No sync message ID found or view not available');
+
+            // Fallback: add a new message if we can't update
+            if (this._view) {
+                this._view.webview.postMessage({
+                    command: commands.ADD_MESSAGE,
+                    text: text,
+                    isUser: false
+                });
+            }
         }
     }
 
@@ -400,6 +510,21 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
         // Execute the command to attach a file
         vscode.commands.executeCommand('extension-v1.attachFile');
+    }
+
+    private _handleClearHistory(webview: vscode.Webview) {
+        // Import the clearConversationHistory function
+        const { clearConversationHistory } = require('../utils/chatAssistant');
+
+        // Clear the conversation history
+        clearConversationHistory();
+
+        // Show a message that the history has been cleared
+        webview.postMessage({
+            command: commands.ADD_MESSAGE,
+            text: 'Conversation history has been cleared. I\'ve forgotten our previous conversation.',
+            isUser: false
+        });
     }
 
     // Method to send a message to the webview
@@ -426,515 +551,18 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private _getHtmlForWebview(webview: vscode.Webview): string {
+        // Get the local path to the HTML file
+        const htmlPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'chatView.html');
+
+        // Read the HTML file
+        const htmlContent = fs.readFileSync(htmlPath.fsPath, 'utf8');
+
+        // Get the URI for the styles.css file
         const stylesUri = webview.asWebviewUri(
             vscode.Uri.joinPath(this._extensionUri, 'media', 'styles.css')
         );
 
-        return `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>RepoMind</title>
-            <link href="${stylesUri}" rel="stylesheet">
-            <style>
-                @keyframes fadeIn {
-                    from { opacity: 0; }
-                    to { opacity: 1; }
-                }
-
-                @keyframes slideIn {
-                    from { transform: translateY(10px); opacity: 0; }
-                    to { transform: translateY(0); opacity: 1; }
-                }
-
-                @keyframes blink {
-                    0% { opacity: 0.2; }
-                    20% { opacity: 1; }
-                    100% { opacity: 0.2; }
-                }
-
-                .loading-dots span {
-                    animation: blink 1.4s infinite both;
-                    display: inline-block;
-                    width: 4px;
-                    height: 4px;
-                    border-radius: 50%;
-                    margin-right: 3px;
-                    background-color: #0078d4;
-                }
-
-                .loading-dots span:nth-child(2) {
-                    animation-delay: 0.2s;
-                }
-
-                .loading-dots span:nth-child(3) {
-                    animation-delay: 0.4s;
-                }
-
-                .image-container {
-                    margin: 10px 0;
-                    text-align: center;
-                }
-
-                .chat-image {
-                    max-width: 100%;
-                    height: auto;
-                    border-radius: 4px;
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-                    cursor: pointer;
-                    transition: transform 0.2s ease-in-out;
-                }
-
-                .chat-image:hover {
-                    transform: scale(1.02);
-                }
-            </style>
-        </head>
-        <body>
-            <div id="chat-container">
-                <div class="welcome-message">
-                    <h2>Welcome to RepoMind</h2>
-                    <p>I can help you with coding tasks, answer questions, and generate code based on your requirements.</p>
-                    <p>Try asking about:</p>
-                    <ul>
-                        <li>Code implementation</li>
-                        <li>Debugging help</li>
-                        <li>Best practices</li>
-                    </ul>
-                </div>
-                <div id="message-history"></div>
-            </div>
-            <div class="action-buttons">
-                <button id="sync-button" class="action-button">Sync Codebase</button>
-                <button id="attach-button" class="action-button">Attach File</button>
-                <button id="visualize-button" class="action-button">Show Visualizations</button>
-            </div>
-            <div class="input-container">
-                <textarea id="message-input" placeholder="Type your message here..."></textarea>
-                <button id="send-button">Send</button>
-            </div>
-
-            <script>
-                const vscode = acquireVsCodeApi();
-                const messageHistory = document.getElementById('message-history');
-                const messageInput = document.getElementById('message-input');
-                const sendButton = document.getElementById('send-button');
-
-                // Add a global function to open files
-                window.vscode = {
-                    open: function(filePath) {
-                        vscode.postMessage({
-                            command: 'openFile',
-                            path: filePath
-                        });
-                    }
-                };
-
-                // Get references to the new buttons
-                const syncButton = document.getElementById('sync-button');
-                const attachButton = document.getElementById('attach-button');
-                const visualizeButton = document.getElementById('visualize-button');
-
-                // Send message when button is clicked
-                sendButton.addEventListener('click', sendMessage);
-
-                // Send message when Enter key is pressed (but allow Shift+Enter for new lines)
-                messageInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        sendMessage();
-                    }
-                });
-
-                // Add event listeners for the new buttons
-                syncButton.addEventListener('click', () => {
-                    vscode.postMessage({
-                        command: 'syncCodebase'
-                    });
-                });
-
-                attachButton.addEventListener('click', () => {
-                    vscode.postMessage({
-                        command: 'attachFile'
-                    });
-                });
-
-                visualizeButton.addEventListener('click', () => {
-                    vscode.postMessage({
-                        command: 'visualizeRelationships'
-                    });
-                });
-
-                // Handle messages from the extension
-                window.addEventListener('message', function(event) {
-                    const message = event.data;
-                    if (message.command === 'addMessage' || message.command === 'ADD_MESSAGE') {
-                        // Generate a unique ID for the message if not provided
-                        const messageId = message.id || 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
-
-                        addMessage(
-                            message.text,
-                            message.isUser === true,
-                            message.imagePath,
-                            message.isImage === true,
-                            message.imageUri,
-                            message.imageCaption,
-                            message.isLoading === true,
-                            message.loadingType,
-                            messageId
-                        );
-                    } else if (message.command === 'updateMessage' || message.command === 'UPDATE_MESSAGE') {
-                        // Find and update an existing message
-                        updateMessage(message.id, message.text);
-                    } else if (message.command === 'openImage') {
-                        vscode.postMessage({
-                            command: 'openImage',
-                            path: message.path
-                        });
-                    } else if (message.command === 'openFile') {
-                        vscode.postMessage({
-                            command: 'openFile',
-                            path: message.path
-                        });
-                    }
-                });
-
-                function sendMessage() {
-                    const text = messageInput.value.trim();
-                    if (text) {
-                        // Add message to UI
-                        addMessage(text, true);
-
-                        // Send message to extension
-                        vscode.postMessage({
-                            command: 'sendMessage',
-                            text: text
-                        });
-
-                        // Clear input
-                        messageInput.value = '';
-                    }
-                }
-
-                function addMessage(text, isUser, imagePath, isImage, imageUri, imageCaption, isLoading, loadingType, messageId) {
-                    const messageElement = document.createElement('div');
-                    messageElement.className = isUser ? 'user-message' : 'assistant-message';
-
-                    // Set the message ID as a data attribute for later reference
-                    if (messageId) {
-                        messageElement.setAttribute('data-message-id', messageId);
-                    }
-
-                    // Add a loading indicator if requested
-                    if (isLoading && !isUser) {
-                        // Add text with loading indicator
-                        const textNode = document.createElement('div');
-                        textNode.textContent = text + " (Analyzing...)";
-                        textNode.style.marginBottom = '8px';
-                        messageElement.appendChild(textNode);
-
-                        // Add a simple loading indicator
-                        const loadingDiv = document.createElement('div');
-                        loadingDiv.style.marginTop = '10px';
-                        loadingDiv.style.marginBottom = '10px';
-                        loadingDiv.style.fontStyle = 'italic';
-                        loadingDiv.style.color = '#666';
-                        loadingDiv.textContent = 'Please wait while the codebase is being analyzed...';
-                        messageElement.appendChild(loadingDiv);
-
-                        return; // Skip the rest of the function
-                    }
-
-                    // Check if this is an image message (either by flag or content)
-                    if (!isUser && (isImage || text.includes('![IMAGE]'))) {
-                        // Parse the image path from the message if not directly provided
-                        let imageSrc = imageUri;
-                        let processedText = text;
-
-                        if (!imageSrc) {
-                            const regex = /!\[IMAGE\]\((.*?)\)/g;
-                            let match;
-
-                            while ((match = regex.exec(text)) !== null) {
-                                imageSrc = match[1];
-                                const imageTag = match[0];
-                                // Remove the image tag from the text
-                                processedText = processedText.replace(imageTag, '');
-                            }
-                        }
-
-                        // If we have a caption but no processed text, use the caption
-                        if (!processedText.trim() && imageCaption) {
-                            processedText = imageCaption;
-                        }
-
-                        // Add the text part first if it exists
-                        if (processedText.trim()) {
-                            const textNode = document.createElement('div');
-                            textNode.textContent = processedText.trim();
-                            textNode.style.marginBottom = '8px';
-                            messageElement.appendChild(textNode);
-                        }
-
-                        // Create image container and image element
-                        const imageContainer = document.createElement('div');
-                        imageContainer.className = 'image-container';
-
-                        // Create a loading message
-                        const loadingText = document.createElement('div');
-                        loadingText.textContent = 'Loading visualization...';
-                        loadingText.style.padding = '10px';
-                        loadingText.style.textAlign = 'center';
-                        loadingText.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
-                        loadingText.style.borderRadius = '4px';
-                        imageContainer.appendChild(loadingText);
-
-                        const image = document.createElement('img');
-                        image.className = 'chat-image';
-                        image.src = imageSrc;
-                        image.alt = imageCaption || 'Code Visualization';
-                        image.title = 'Click to open in external viewer';
-                        image.style.maxWidth = '100%';
-                        image.style.height = 'auto';
-                        image.style.display = 'block';
-                        image.style.margin = '0 auto';
-                        image.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-                        image.style.borderRadius = '4px';
-
-                        // Add onload event to remove loading message and show success
-                        image.onload = () => {
-                            if (loadingText.parentNode === imageContainer) {
-                                imageContainer.removeChild(loadingText);
-                            }
-                            console.log('Image loaded successfully:', imageSrc);
-
-                            // Add a subtle animation to show the image has loaded
-                            image.style.animation = 'fadeIn 0.5s';
-                        };
-
-                        // Add onerror event to show error message
-                        image.onerror = () => {
-                            console.error('Error loading image:', imageSrc);
-                            loadingText.textContent = 'Error loading visualization. Click to try opening externally.';
-                            loadingText.style.color = '#ff6b6b';
-                            loadingText.style.border = '1px solid #ff6b6b';
-                            loadingText.style.padding = '12px';
-
-                            // Add a retry button
-                            const retryButton = document.createElement('button');
-                            retryButton.textContent = 'Retry';
-                            retryButton.style.marginTop = '8px';
-                            retryButton.style.padding = '4px 12px';
-                            retryButton.style.backgroundColor = '#0078d4';
-                            retryButton.style.color = 'white';
-                            retryButton.style.border = 'none';
-                            retryButton.style.borderRadius = '4px';
-                            retryButton.style.cursor = 'pointer';
-
-                            retryButton.addEventListener('click', () => {
-                                // Try loading the image again
-                                image.src = imageSrc + '?retry=' + new Date().getTime();
-                            });
-
-                            loadingText.appendChild(document.createElement('br'));
-                            loadingText.appendChild(retryButton);
-                        };
-
-                        // Use the original path for opening externally
-                        const pathToOpen = imagePath || imageSrc;
-
-                        // Add click event to open the image in external viewer
-                        image.addEventListener('click', () => {
-                            vscode.postMessage({
-                                command: 'openImage',
-                                path: pathToOpen
-                            });
-                        });
-
-                        // Also make the loading text clickable
-                        loadingText.style.cursor = 'pointer';
-                        loadingText.addEventListener('click', () => {
-                            vscode.postMessage({
-                                command: 'openImage',
-                                path: pathToOpen
-                            });
-                        });
-
-                        imageContainer.appendChild(image);
-                        messageElement.appendChild(imageContainer);
-
-                        // Add a caption below the image if not already included in the text
-                        if (imageCaption && !processedText.includes(imageCaption)) {
-                            const captionElement = document.createElement('div');
-                            captionElement.textContent = imageCaption;
-                            captionElement.style.textAlign = 'center';
-                            captionElement.style.fontStyle = 'italic';
-                            captionElement.style.marginTop = '4px';
-                            captionElement.style.color = '#666';
-                            messageElement.appendChild(captionElement);
-                        }
-
-                        // Add a link to open externally
-                        const openLink = document.createElement('div');
-                        openLink.className = 'image-link';
-                        openLink.textContent = 'Open visualization externally';
-                        openLink.style.color = '#0078d4';
-                        openLink.style.cursor = 'pointer';
-                        openLink.style.marginTop = '8px';
-                        openLink.style.textAlign = 'center';
-                        openLink.style.fontSize = '12px';
-
-                        openLink.addEventListener('click', () => {
-                            vscode.postMessage({
-                                command: 'openImage',
-                                path: pathToOpen
-                            });
-                        });
-
-                        messageElement.appendChild(openLink);
-                    } else {
-                        // Check if the text contains HTML
-                        const containsHTML = text.includes('<') && text.includes('>') &&
-                                           (text.includes('<button') || text.includes('<div') || text.includes('<a'));
-
-                        if (containsHTML) {
-                            // If the text contains HTML, use innerHTML
-                            messageElement.innerHTML = text;
-
-                            // Find all buttons and add click event listeners
-                            const buttons = messageElement.querySelectorAll('button');
-                            buttons.forEach(button => {
-                                // Check for data-path attribute (new approach)
-                                const filePath = button.getAttribute('data-path');
-                                if (filePath) {
-                                    button.addEventListener('click', () => {
-                                        vscode.postMessage({
-                                            command: 'openFile',
-                                            path: filePath
-                                        });
-                                    });
-                                }
-                                // Also check for onclick attribute (fallback for backward compatibility)
-                                else {
-                                    const onclickAttr = button.getAttribute('onclick');
-                                    if (onclickAttr && onclickAttr.includes('vscode.open')) {
-                                        // Extract the file path from the onclick attribute
-                                        const match = onclickAttr.match(/vscode\.open\(['"](.+?)['"]\)/);
-                                        if (match && match[1]) {
-                                            const extractedPath = match[1];
-
-                                            // Remove the onclick attribute and add a proper event listener
-                                            button.removeAttribute('onclick');
-                                            button.addEventListener('click', () => {
-                                                vscode.postMessage({
-                                                    command: 'openFile',
-                                                    path: extractedPath
-                                                });
-                                            });
-                                        }
-                                    }
-                                }
-                            });
-
-                            // Also find all links with data-path attributes and add click event listeners
-                            const links = messageElement.querySelectorAll('a[data-path]');
-                            links.forEach(link => {
-                                const filePath = link.getAttribute('data-path');
-                                if (filePath) {
-                                    link.addEventListener('click', (e) => {
-                                        e.preventDefault(); // Prevent default link behavior
-                                        vscode.postMessage({
-                                            command: 'openFile',
-                                            path: filePath
-                                        });
-                                    });
-                                }
-                            });
-                        } else {
-                            // Regular text message
-                            messageElement.textContent = text;
-                        }
-
-                        // If there's an original image path but no image tag, add a link to open the image
-                        if (!isUser && imagePath) {
-                            const openLink = document.createElement('div');
-                            openLink.className = 'image-link';
-                            openLink.textContent = 'Click to open visualization externally';
-                            openLink.style.color = '#0078d4';
-                            openLink.style.cursor = 'pointer';
-                            openLink.style.marginTop = '8px';
-                            openLink.style.textDecoration = 'underline';
-
-                            openLink.addEventListener('click', () => {
-                                vscode.postMessage({
-                                    command: 'openImage',
-                                    path: imagePath
-                                });
-                            });
-
-                            messageElement.appendChild(openLink);
-                        }
-                    }
-
-                    messageHistory.appendChild(messageElement);
-
-                    // Scroll to bottom
-                    messageHistory.scrollTop = messageHistory.scrollHeight;
-
-                    // Add a subtle animation to show the message has been added
-                    messageElement.style.animation = 'slideIn 0.3s';
-                }
-
-                // Function to update an existing message
-                function updateMessage(messageId, newText) {
-                    if (!messageId) return;
-
-                    // Find the message element by its ID
-                    const messageElement = document.querySelector("[data-message-id='" + messageId + "']");
-                    if (!messageElement) {
-                        console.error("Message with ID " + messageId + " not found");
-                        return;
-                    }
-
-                    // Update the text content
-                    // If the message has child elements, we need to be careful not to remove them
-                    const hasChildren = messageElement.children.length > 0;
-
-                    // Check if the new text contains HTML
-                    const containsHTML = newText.includes('<') && newText.includes('>');
-
-                    if (containsHTML) {
-                        // If the text contains HTML, use innerHTML
-                        messageElement.innerHTML = newText;
-                    } else if (hasChildren) {
-                        // If it has children (like images), find the text node or first div and update it
-                        const textNode = messageElement.childNodes[0];
-                        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-                            textNode.textContent = newText;
-                        } else {
-                            // Try to find the first div that might contain text
-                            const firstDiv = messageElement.querySelector('div:first-child');
-                            if (firstDiv) {
-                                firstDiv.textContent = newText;
-                            } else {
-                                // If we can't find a suitable element, just prepend the text
-                                messageElement.textContent = newText + messageElement.textContent;
-                            }
-                        }
-                    } else {
-                        // If it's just a text message, simply update the content
-                        messageElement.textContent = newText;
-                    }
-
-                    // Add a subtle animation to show the message has been updated
-                    messageElement.style.animation = 'none';
-                    setTimeout(function() {
-                        messageElement.style.animation = 'fadeIn 0.3s';
-                    }, 10);
-                }
-            </script>
-        </body>
-        </html>`;
+        // Replace the placeholder with the actual URI
+        return htmlContent.replace('styles.css', stylesUri.toString());
     }
 }

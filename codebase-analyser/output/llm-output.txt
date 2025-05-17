@@ -1,94 +1,68 @@
-Based on the requirements and context provided, here are the necessary code changes to achieve the "Display Employees by Department" functionality:
+Given the strict format requirement and the explicit instructions to **not** provide an implementation plan, testing approach, or fill in all sections unless necessary, I will adhere to the specified format focusing only on **Code Changes** as requested, along with a brief **Overview** and **Key Components** for contextual clarity.
 
 ### Overview :
-Enhancing the EmployeeManagementSystem to filter and display employees by department.
+Implementing the "Display Employees by Department" feature involves enhancing the `EmployeeService` class to filter employees by department and updating the `Main` class to demonstrate this functionality.
 
 ### Key Components :
-- `EmployeeManager` class (assumed to be analogous to `EmployeeService` based on context, as `EmployeeManager` isn't directly referenced in provided documents)
-- `Main` class for demonstration
-- `Employee` model for data structure
+- **EmployeeService.java**: To house the new filtering method.
+- **Main.java**: To utilize the new method for department-based employee listing.
+- **Employee.java**: Already has the necessary structure (department attribute).
 
 ### Code Changes :
 
-#### **Create** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeManager.java**
-*(Assuming `EmployeeManager` is intended or creating a new method in `EmployeeService` as a workaround, since `EmployeeManager` isn't in the provided context. For consistency with the suggestion, I'll proceed with modifying `EmployeeService` as it's the closest match.)*
-
-**Modification Approach Used for Clarity (Since `EmployeeManager` isn't found, enhancing `EmployeeService`):**
-
-#### **Modify** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java**
+#### **Add to** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`
 ```java
-public class EmployeeService {
-    // ... (existing code remains)
-
-    /**
-     * Retrieves all employees belonging to a specific department.
-     * @param department Name of the department to filter by.
-     * @return List of Employees in the specified department.
-     */
-    public List<Employee> getEmployeesByDepartment(String department) {
-        return employees.stream()
-                .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
-                .toList();
-    }
+/**
+ * Retrieves a list of employees belonging to a specified department.
+ * @param department Name of the department to filter by.
+ * @return List of Employee objects in the given department.
+ */
+public List<Employee> getEmployeesByDepartment(String department) {
+    return employees.stream()
+            .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
+            .toList();
 }
 ```
 
-#### **Modify** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+#### **Modify to** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java`
 ```java
-import com.company.service.EmployeeService;
-import java.util.Scanner; // Added for user input
-
-public class Main {
-    public static void main(String[] args) {
-        EmployeeService service = new EmployeeService();
-        // Example employees for demonstration (in a real app, these would be added through the system)
-        service.addEmployee(new Employee(1, "John Doe", "Engineering"));
-        service.addEmployee(new Employee(2, "Jane Doe", "HR"));
-        service.addEmployee(new Employee(3, "Bob Smith", "Engineering"));
-
-        Scanner scanner = new Scanner(System.in);
-        System.out.print("Enter Department Name: ");
-        String department = scanner.nextLine();
-
-        System.out.println("Employees in '" + department + "' Department:");
-        for (Employee e : service.getEmployeesByDepartment(department)) {
-            System.out.println("Name: " + e.getName() + ", ID: " + e.getId() + ", Role: " + "RoleNotProvided"); // **NOTE**: Role attribute_missing in Employee model
-        }
-    }
+// Assuming getter for department is not present, add it
+public String getDepartment() {
+    return department;
 }
 ```
 
-#### **Modify** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java`
-*(Adding a `role` attribute as it's mentioned in the display requirements but not present in the model)*
+#### **Update to** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
 ```java
-public class Employee {
-    private int id;
-    private String name;
-    private String department;
-    private String role; // **NEW ATTRIBUTE**
+public static void main(String[] args) {
+    EmployeeService service = new EmployeeService();
+    service.addEmployee(new Employee(1, "Alice", "HR"));
+    service.addEmployee(new Employee(2, "Bob", "IT"));
+    service.addEmployee(new Employee(3, "Charlie", "HR")); // Additional for demo
 
-    public Employee(int id, String name, String department, String role) { // **UPDATED CONSTRUCTOR**
-        this.id = id;
-        this.name = name;
-        this.department = department;
-        this.role = role;
-    }
+    String targetDepartment = "HR"; // Department to filter by
+    List<Employee> departmentEmployees = service.getEmployeesByDepartment(targetDepartment);
 
-    // ... (existing getters)
-
-    public String getRole() { return role; } // **NEW GETTER**
-
-    @Override
-    public String toString() {
-        return "Employee{id=" + id + ", name='" + name + "', department='" + department + "', role='" + role + "'}";
-    }
+    System.out.println("Employees in " + targetDepartment + " Department:");
+    departmentEmployees.forEach(employee -> System.out.println("Name: " + employee.getName() + ", ID: " + employee.getId() + ", Role: Not Implemented (Assumed constant or to be added)"));
 }
 ```
 
-#### **Update** Example Usage in `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java` (already covered in the Modify section for `Main.java`)
+#### **Note on Role Display**:
+- The `Employee` class does not have a `role` attribute in the provided snippets. To display roles as per the business requirement, add a `role` field to `Employee.java` along with its getter, and then modify the print statement in `Main.java` to include `employee.getRole()`. 
 
-#### **Insert** (Not Applicable as per the direct requirements, but note the `role` addition in `Employee.java`)
+**Example Addition to `Employee.java` for Role (Not Requested but Necessary for Full Requirement Fulfillment)**:
+```java
+private String role;
 
-### Additional Consideration:
-- **Role Attribute**: Since the display requires a `role` but it was missing from the `Employee` model, it has been added. Ensure to update all relevant parts of the system (e.g., data storage, other services) to accommodate this change.
-- **Department Case Insensitivity**: The `getEmployeesByDepartment` method uses `equalsIgnoreCase` for case-insensitive matching. Adjust if case sensitivity is required.
+public Employee(int id, String name, String department, String role) {
+    this.id = id;
+    this.name = name;
+    this.department = department;
+    this.role = role;
+}
+
+public String getRole() {
+    return role;
+}
+```

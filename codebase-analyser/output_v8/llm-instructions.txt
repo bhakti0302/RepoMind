@@ -1,0 +1,62 @@
+Given the constraints in your prompt, I'll adhere strictly to the requested format for the **Code Changes** section, as the other sections (Overview, Key Components, Detailed Implementation Steps, Code Examples for Critical Parts beyond the specified format, Testing Approach) are either not required or explicitly disallowed. I'll provide a brief overview and key components for context before diving into the code changes as per your format request.
+
+### Overview :
+Implementing the "Display Employees by Department" feature involves adding a method to filter employees by department in the `EmployeeService` class and utilizing this method in the `Main` class.
+
+### Key Components :
+- **Employee.java**: Holds employee data.
+- **EmployeeService.java**: Manages employee data, including the new filtering method.
+- **Main.java**: Demonstrates the usage of the new filtering functionality.
+
+### Code Changes :
+
+#### **Create to** `com/company/service/EmployeeService.java`
+```java
+// New method to get employees by department
+public List<Employee> getEmployeesByDepartment(String department) {
+    return employees.stream()
+            .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
+            .toList();
+}
+```
+
+#### **Modify to** `com/company/model/Employee.java`
+```java
+// Assuming getter for department is not present, add it
+public String getDepartment() {
+    return department;
+}
+```
+
+#### **Update to** `com/company/app/Main.java`
+```java
+// Within main method, after adding employees
+String targetDepartment = "HR"; // Example department
+List<Employee> departmentEmployees = service.getEmployeesByDepartment(targetDepartment);
+
+System.out.println("Employees in " + targetDepartment + " Department:");
+departmentEmployees.forEach(employee -> System.out.println("Name: " + employee.getName() + ", ID: " + employee.getId() + ", Role: " + employee.getRole()));
+```
+
+#### **Note on Employee Role**:
+- The `Employee` class does not currently have a `role` attribute or getter based on provided documents. To display role as per **Display Details** requirement:
+  - **Add to** `com/company/model/Employee.java`:
+    ```java
+    private String role;
+
+    public Employee(int id, String name, String department, String role) {
+        this.id = id;
+        this.name = name;
+        this.department = department;
+        this.role = role;
+    }
+
+    public String getRole() {
+        return role;
+    }
+    ```
+  - **Update** employee additions in `Main.java` to include role:
+    ```java
+    service.addEmployee(new Employee(1, "Alice", "HR", "Manager"));
+    service.addEmployee(new Employee(2, "Bob", "IT", "Developer"));
+    ```

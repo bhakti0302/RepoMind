@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RepoMind</title>
+    <link href="styles.css" rel="stylesheet">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes blink {
+            0% { opacity: 0.2; }
+            20% { opacity: 1; }
+            100% { opacity: 0.2; }
+        }
+
+        .loading-dots span {
+            animation: blink 1.4s infinite both;
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            margin-right: 3px;
+            background-color: #0078d4;
+        }
+
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .image-container {
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .chat-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .chat-image:hover {
+            transform: scale(1.02);
+        }
+
+        /* Enhanced styling for formatted messages */
+        .assistant-message h1 {
+            font-size: 1.5em;
+            margin: 0.8em 0 0.4em 0;
+            color: #0078d4;
+            border-bottom: 1px solid #eaeaea;
+            padding-bottom: 0.2em;
+        }
+
+        .assistant-message h2 {
+            font-size: 1.3em;
+            margin: 0.7em 0 0.3em 0;
+            color: #0078d4;
+        }
+
+        .assistant-message h3 {
+            font-size: 1.1em;
+            margin: 0.6em 0 0.3em 0;
+            color: #0078d4;
+        }
+
+        .assistant-message ul, .assistant-message ol {
+            padding-left: 1.5em;
+            margin: 0.5em 0;
+        }
+
+        .assistant-message li {
+            margin-bottom: 0.3em;
+        }
+
+        .assistant-message code {
+            background-color: #f3f3f3;
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .assistant-message pre {
+            background-color: #f3f3f3;
+            padding: 0.8em;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 0.7em 0;
+        }
+
+        .assistant-message pre code {
+            background-color: transparent;
+            padding: 0;
+            border-radius: 0;
+            display: block;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div class="welcome-message">
+            <h2>Welcome to RepoMind</h2>
+            <p>I can help you with coding tasks, answer questions, and generate code based on your requirements.</p>
+            <p>Try asking about:</p>
+            <ul>
+                <li>Code implementation</li>
+                <li>Debugging help</li>
+                <li>Best practices</li>
+            </ul>
+        </div>
+        <div id="message-history"></div>
+    </div>
+    <div class="action-buttons">
+        <button id="sync-button" class="action-button">Sync Codebase</button>
+        <button id="attach-button" class="action-button">Attach File</button>
+        <button id="visualize-button" class="action-button">Show Visualizations</button>
+        <button id="clear-history-button" class="action-button" title="Clear conversation history">Clear History</button>
+    </div>
+    <div class="input-container">
+        <textarea id="message-input" placeholder="Type your message here..."></textarea>
+        <button id="send-button">Send</button>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        const messageHistory = document.getElementById('message-history');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        // Add a global function to open files
+        window.vscode = {
+            open: function(filePath) {
+                vscode.postMessage({
+                    command: 'openFile',
+                    path: filePath
+                });
+            }
+        };
+
+        // Get references to the new buttons
+        const syncButton = document.getElementById('sync-button');
+        const attachButton = document.getElementById('attach-button');
+        const visualizeButton = document.getElementById('visualize-button');
+        const clearHistoryButton = document.getElementById('clear-history-button');
+
+        // Send message when button is clicked
+        sendButton.addEventListener('click', sendMessage);
+
+        // Send message when Enter key is pressed (but allow Shift+Enter for new lines)
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Add event listeners for the new buttons
+        syncButton.addEventListener('click', () => {
+            console.log('Sync button clicked');
+            vscode.postMessage({
+                command: 'syncCodebase'
+            });
+        });
+
+        attachButton.addEventListener('click', () => {
+            console.log('Attach button clicked');
+            vscode.postMessage({
+                command: 'attachFile'
+            });
+        });
+
+        visualizeButton.addEventListener('click', () => {
+            vscode.postMessage({
+                command: 'visualizeRelationships'
+            });
+        });
+
+        clearHistoryButton.addEventListener('click', () => {
+            // Ask for confirmation before clearing history
+            const confirmClear = confirm('Are you sure you want to clear the conversation history? This cannot be undone.');
+            if (confirmClear) {
+                vscode.postMessage({
+                    command: 'clearHistory'
+                });
+            }
+        });
+
+        // Handle messages from the extension
+        window.addEventListener('message', function(event) {
+            const message = event.data;
+            console.log('Received message from extension:', message);
+
+            if (message.command === 'addMessage' || message.command === 'ADD_MESSAGE') {
+                // Generate a unique ID for the message if not provided
+                const messageId = message.id || 'msg-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+
+                addMessage(
+                    message.text,
+                    message.isUser === true,
+                    message.imagePath,
+                    message.isImage === true,
+                    message.imageUri,
+                    message.imageCaption,
+                    message.isLoading === true,
+                    message.loadingType,
+                    messageId
+                );
+            } else if (message.command === 'updateMessage' || message.command === 'UPDATE_MESSAGE') {
+                // Find and update an existing message
+                updateMessage(message.id, message.text);
+            } else if (message.command === 'openImage') {
+                vscode.postMessage({
+                    command: 'openImage',
+                    path: message.path
+                });
+            } else if (message.command === 'openFile') {
+                vscode.postMessage({
+                    command: 'openFile',
+                    path: message.path
+                });
+            } else if (message.command === 'runMergeAgent') {
+                console.log('Received runMergeAgent command, forwarding to extension');
+                vscode.postMessage({
+                    command: 'runMergeAgent'
+                });
+            }
+        });
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (text) {
+                // Add message to UI
+                addMessage(text, true);
+
+                // Send message to extension
+                vscode.postMessage({
+                    command: 'sendMessage',
+                    text: text
+                });
+
+                // Clear input
+                messageInput.value = '';
+            }
+        }
+
+        function addMessage(text, isUser, imagePath, isImage, imageUri, imageCaption, isLoading, loadingType, messageId) {
+            const messageElement = document.createElement('div');
+            messageElement.className = isUser ? 'user-message' : 'assistant-message';
+
+            // Set the message ID as a data attribute for later reference
+            if (messageId) {
+                messageElement.setAttribute('data-message-id', messageId);
+            }
+
+            // Add a loading indicator if requested
+            if (isLoading && !isUser) {
+                // Add text with loading indicator
+                const textNode = document.createElement('div');
+                textNode.textContent = text;
+                textNode.style.marginBottom = '8px';
+                messageElement.appendChild(textNode);
+
+                // Add a simple loading indicator
+                const loadingDiv = document.createElement('div');
+                loadingDiv.style.marginTop = '10px';
+                loadingDiv.style.marginBottom = '10px';
+                loadingDiv.style.fontStyle = 'italic';
+                loadingDiv.style.color = '#666';
+
+                // Different loading messages based on the loading type
+                if (loadingType === 'sync') {
+                    loadingDiv.textContent = 'Please wait while the codebase is being analyzed...';
+                } else if (loadingType === 'llm') {
+                    loadingDiv.textContent = 'Searching the codebase for relevant information and generating a response...';
+                } else {
+                    loadingDiv.textContent = 'Processing your request...';
+                }
+
+                // Add animated dots
+                const dotsContainer = document.createElement('div');
+                dotsContainer.className = 'loading-dots';
+                dotsContainer.style.marginTop = '8px';
+                dotsContainer.style.textAlign = 'center';
+
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('span');
+                    dotsContainer.appendChild(dot);
+                }
+
+                loadingDiv.appendChild(dotsContainer);
+                messageElement.appendChild(loadingDiv);
+
+                // Add the message to the history
+                messageHistory.appendChild(messageElement);
+
+                // Scroll to bottom
+                messageHistory.scrollTop = messageHistory.scrollHeight;
+
+                // Add a subtle animation to show the message has been added
+                messageElement.style.animation = 'slideIn 0.3s';
+
+                return; // Skip the rest of the function
+            }
+
+            // Check if this is an image message (either by flag or content)
+            if (!isUser && (isImage || text.includes('![IMAGE]'))) {
+                // Parse the image path from the message if not directly provided
+                let imageSrc = imageUri;
+                let processedText = text;
+
+                if (!imageSrc) {
+                    const regex = /!\[IMAGE\]\((.*?)\)/g;
+                    let match;
+
+                    while ((match = regex.exec(text)) !== null) {
+                        imageSrc = match[1];
+                        const imageTag = match[0];
+                        // Remove the image tag from the text
+                        processedText = processedText.replace(imageTag, '');
+                    }
+                }
+
+                // If we have a caption but no processed text, use the caption
+                if (!processedText.trim() && imageCaption) {
+                    processedText = imageCaption;
+                }
+
+                // Add the text part first if it exists
+                if (processedText.trim()) {
+                    const textNode = document.createElement('div');
+                    textNode.textContent = processedText.trim();
+                    textNode.style.marginBottom = '8px';
+                    messageElement.appendChild(textNode);
+                }
+
+                // Create image container and image element
+                const imageContainer = document.createElement('div');
+                imageContainer.className = 'image-container';
+
+                // Create a loading message
+                const loadingText = document.createElement('div');
+                loadingText.textContent = 'Loading visualization...';
+                loadingText.style.padding = '10px';
+                loadingText.style.textAlign = 'center';
+                loadingText.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+                loadingText.style.borderRadius = '4px';
+                imageContainer.appendChild(loadingText);
+
+                const image = document.createElement('img');
+                image.className = 'chat-image';
+                image.src = imageSrc;
+                image.alt = imageCaption || 'Code Visualization';
+                image.title = 'Click to open in external viewer';
+                image.style.maxWidth = '100%';
+                image.style.height = 'auto';
+                image.style.display = 'block';
+                image.style.margin = '0 auto';
+                image.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+                image.style.borderRadius = '4px';
+
+                // Add onload event to remove loading message and show success
+                image.onload = () => {
+                    if (loadingText.parentNode === imageContainer) {
+                        imageContainer.removeChild(loadingText);
+                    }
+                    console.log('Image loaded successfully:', imageSrc);
+
+                    // Add a subtle animation to show the image has loaded
+                    image.style.animation = 'fadeIn 0.5s';
+                };
+
+                // Add onerror event to show error message
+                image.onerror = () => {
+                    console.error('Error loading image:', imageSrc);
+                    loadingText.textContent = 'Error loading visualization. Click to try opening externally.';
+                    loadingText.style.color = '#ff6b6b';
+                    loadingText.style.border = '1px solid #ff6b6b';
+                    loadingText.style.padding = '12px';
+
+                    // Add a retry button
+                    const retryButton = document.createElement('button');
+                    retryButton.textContent = 'Retry';
+                    retryButton.style.marginTop = '8px';
+                    retryButton.style.padding = '4px 12px';
+                    retryButton.style.backgroundColor = '#0078d4';
+                    retryButton.style.color = 'white';
+                    retryButton.style.border = 'none';
+                    retryButton.style.borderRadius = '4px';
+                    retryButton.style.cursor = 'pointer';
+
+                    retryButton.addEventListener('click', () => {
+                        // Try loading the image again with a cache-busting parameter
+                        image.src = imageSrc + '?retry=' + new Date().getTime();
+                    });
+
+                    // Add an open externally button
+                    const openExternalButton = document.createElement('button');
+                    openExternalButton.textContent = 'Open Externally';
+                    openExternalButton.style.marginTop = '8px';
+                    openExternalButton.style.marginLeft = '8px';
+                    openExternalButton.style.padding = '4px 12px';
+                    openExternalButton.style.backgroundColor = '#107C10';
+                    openExternalButton.style.color = 'white';
+                    openExternalButton.style.border = 'none';
+                    openExternalButton.style.borderRadius = '4px';
+                    openExternalButton.style.cursor = 'pointer';
+
+                    openExternalButton.addEventListener('click', () => {
+                        // Open the image externally
+                        vscode.postMessage({
+                            command: 'openImage',
+                            path: pathToOpen
+                        });
+                    });
+
+                    loadingText.appendChild(document.createElement('br'));
+                    loadingText.appendChild(retryButton);
+                    loadingText.appendChild(openExternalButton);
+
+                    // Also try an alternative approach - create an img element with a direct src
+                    setTimeout(() => {
+                        if (image.naturalWidth === 0) {
+                            console.log('Trying alternative image loading approach');
+                            const directImg = document.createElement('img');
+                            directImg.src = imageSrc + '?direct=' + Date.now();
+                            directImg.style.display = 'none';
+                            document.body.appendChild(directImg);
+
+                            directImg.onload = () => {
+                                console.log('Direct image loaded successfully');
+                                image.src = directImg.src;
+                                document.body.removeChild(directImg);
+                            };
+                        }
+                    }, 2000);
+                };
+
+                // Use the original path for opening externally
+                const pathToOpen = imagePath || imageSrc;
+
+                // Add click event to open the image in external viewer
+                image.addEventListener('click', () => {
+                    vscode.postMessage({
+                        command: 'openImage',
+                        path: pathToOpen
+                    });
+                });
+
+                // Also make the loading text clickable
+                loadingText.style.cursor = 'pointer';
+                loadingText.addEventListener('click', () => {
+                    vscode.postMessage({
+                        command: 'openImage',
+                        path: pathToOpen
+                    });
+                });
+
+                imageContainer.appendChild(image);
+                messageElement.appendChild(imageContainer);
+
+                // Add a caption below the image if not already included in the text
+                if (imageCaption && !processedText.includes(imageCaption)) {
+                    const captionElement = document.createElement('div');
+                    captionElement.textContent = imageCaption;
+                    captionElement.style.textAlign = 'center';
+                    captionElement.style.fontStyle = 'italic';
+                    captionElement.style.marginTop = '4px';
+                    captionElement.style.color = '#666';
+                    messageElement.appendChild(captionElement);
+                }
+
+                // Add a link to open externally
+                const openLink = document.createElement('div');
+                openLink.className = 'image-link';
+                openLink.textContent = 'Open visualization externally';
+                openLink.style.color = '#0078d4';
+                openLink.style.cursor = 'pointer';
+                openLink.style.marginTop = '8px';
+                openLink.style.textAlign = 'center';
+                openLink.style.fontSize = '12px';
+
+                openLink.addEventListener('click', () => {
+                    vscode.postMessage({
+                        command: 'openImage',
+                        path: pathToOpen
+                    });
+                });
+
+                messageElement.appendChild(openLink);
+            } else {
+                // Check if this is an assistant message (for Markdown rendering)
+                if (!isUser) {
+                    // Enhanced Markdown rendering with support for headings, lists, and code blocks
+                    let formattedText = text
+                        // Handle headings (# Heading 1, ## Heading 2, etc.)
+                        .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                        .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                        .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+
+                        // Handle unordered lists
+                        .replace(/^\s*[-*+]\s+(.*$)/gm, '<li>$1</li>')
+
+                        // Handle ordered lists
+                        .replace(/^\s*(\d+)\.\s+(.*$)/gm, '<li>$2</li>')
+
+                        // Handle code blocks
+                        .replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>')
+
+                        // Handle inline formatting
+                        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+                        .replace(/`([^`]+)`/g, '<code>$1</code>')
+
+                        // Handle line breaks
+                        .replace(/\n/g, '<br>');
+
+                    // Wrap lists in <ul> or <ol> tags
+                    formattedText = formattedText
+                        .replace(/<li>.*?<\/li>/gs, match => {
+                            return '<ul>' + match + '</ul>';
+                        });
+
+                    // Apply some basic styling
+                    const styledText = `
+                        <div style="line-height: 1.5; margin-bottom: 10px;">
+                            ${formattedText}
+                        </div>
+                    `;
+
+                    messageElement.innerHTML = styledText;
+                } else {
+                    // Regular text message
+                    messageElement.textContent = text;
+                }
+            }
+
+            messageHistory.appendChild(messageElement);
+
+            // Scroll to bottom
+            messageHistory.scrollTop = messageHistory.scrollHeight;
+
+            // Add a subtle animation to show the message has been added
+            messageElement.style.animation = 'slideIn 0.3s';
+        }
+
+        function updateMessage(messageId, newText) {
+            if (!messageId) return;
+
+            // Find the message element by its ID
+            const messageElement = document.querySelector("[data-message-id='" + messageId + "']");
+            if (!messageElement) {
+                console.error("Message with ID " + messageId + " not found");
+                return;
+            }
+
+            // Update the text content
+            // If the message has child elements, we need to be careful not to remove them
+            const hasChildren = messageElement.children.length > 0;
+
+            // Check if the new text contains HTML
+            const containsHTML = newText.includes('<') && newText.includes('>');
+
+            if (containsHTML) {
+                // If the text contains HTML, use innerHTML
+                messageElement.innerHTML = newText;
+            } else if (hasChildren) {
+                // If it has children (like images), find the text node or first div and update it
+                const textNode = messageElement.childNodes[0];
+                if (textNode && textNode.nodeType === 3) { // 3 is the value of Node.TEXT_NODE
+                    textNode.textContent = newText;
+                } else {
+                    // Try to find the first div that might contain text
+                    const firstDiv = messageElement.querySelector('div:first-child');
+                    if (firstDiv) {
+                        firstDiv.textContent = newText;
+                    } else {
+                        // If we can't find a suitable element, just prepend the text
+                        messageElement.textContent = newText + messageElement.textContent;
+                    }
+                }
+            } else {
+                // If it's just a text message, simply update the content
+                messageElement.textContent = newText;
+            }
+
+            // Add a subtle animation to show the message has been updated
+            messageElement.style.animation = 'none';
+            setTimeout(function() {
+                messageElement.style.animation = 'fadeIn 0.3s';
+            }, 10);
+        }
+    </script>
+</body>
+</html>
