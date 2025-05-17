@@ -19,15 +19,26 @@ if [ "$#" -gt 1 ] && [ "$2" == "--history-file" ] && [ "$#" -gt 2 ]; then
     echo "Using conversation history from: $HISTORY_FILE"
 fi
 
+# Get the script directory and calculate relative paths
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+CODEBASE_ANALYSER_DIR="$( dirname "$SCRIPT_DIR" )"
+
 # Set the Python path to include the current directory
-export PYTHONPATH=$PYTHONPATH:/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis
+# Original hardcoded path:
+# export PYTHONPATH=$PYTHONPATH:/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis
+export PYTHONPATH=$PYTHONPATH:$SCRIPT_DIR
 
 # Define parameters
-DB_PATH="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/.lancedb"
-OUTPUT_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output"
+# Original hardcoded paths:
+# DB_PATH="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/.lancedb"
+# OUTPUT_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output"
+DB_PATH="$CODEBASE_ANALYSER_DIR/.lancedb"
+OUTPUT_DIR="$CODEBASE_ANALYSER_DIR/output"
 
 # Create logs directory if it doesn't exist
-LOGS_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/logs"
+# Original hardcoded path:
+# LOGS_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/logs"
+LOGS_DIR="$CODEBASE_ANALYSER_DIR/logs"
 mkdir -p "$LOGS_DIR"
 
 # Create output directory if it doesn't exist
@@ -49,7 +60,9 @@ fi
 # Run the code chat script
 echo "Running code chat with question: $QUESTION" | tee -a "$LOG_FILE"
 echo "Command: $COMMAND" | tee -a "$LOG_FILE"
-cd /Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis
+# Original hardcoded path:
+# cd /Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis
+cd "$SCRIPT_DIR"
 eval "$COMMAND" 2>&1 | tee -a "$LOG_FILE"
 
 # Check if the Python script ran successfully

@@ -20,8 +20,7 @@ DB_PATH="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/.lanced
 OUTPUT_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output"
 
 # Create logs directory if it doesn't exist
-LOGS_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/logs"
-mkdir -p "$LOGS_DIR"
+ mkdir -p "$LOGS_DIR"
 
 # Create a log file with timestamp
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")

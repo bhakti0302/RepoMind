@@ -20,9 +20,20 @@ logger = logging.getLogger(__name__)
 def generate_instructions():
     """Generate instructions based on the multi-hop RAG output."""
     # Define file paths
-    multi_hop_output_file = "/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output/output-multi-hop.txt"
-    requirement_file = "/Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/EmployeeByDepartmentRequirement.txt"
-    instructions_file = "/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output/LLM-instructions.txt"
+    # Get the current directory and calculate relative paths
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    codebase_analyser_dir = os.path.dirname(current_dir)
+    project_root = os.path.dirname(codebase_analyser_dir)
+
+    # Original hardcoded paths:
+    # multi_hop_output_file = "/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output/output-multi-hop.txt"
+    # requirement_file = "/Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/EmployeeByDepartmentRequirement.txt"
+    # instructions_file = "/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output/LLM-instructions.txt"
+
+    # Relative paths:
+    multi_hop_output_file = os.path.join(codebase_analyser_dir, "output", "output-multi-hop.txt")
+    requirement_file = os.path.join(project_root, "test-project-employee", "EmployeeByDepartmentRequirement.txt")
+    instructions_file = os.path.join(codebase_analyser_dir, "output", "LLM-instructions.txt")
 
     # Read the multi-hop RAG output
     with open(multi_hop_output_file, 'r') as f:

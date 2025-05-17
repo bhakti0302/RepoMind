@@ -217,9 +217,16 @@ def main():
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Process a question about code")
     parser.add_argument("--question", required=True, help="The question about code")
-    parser.add_argument("--db-path", default="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/.lancedb",
+    # Get the current directory and calculate relative paths
+    #parser.add_argument("--db-path", default="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/.lancedb",
+    #parser.add_argument("--output-dir", default="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output",
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    codebase_analyser_dir = os.path.dirname(current_dir)
+
+    parser.add_argument("--db-path", default=os.path.join(codebase_analyser_dir, ".lancedb"),
                         help="Path to the LanceDB database")
-    parser.add_argument("--output-dir", default="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output",
+    parser.add_argument("--output-dir", default=os.path.join(codebase_analyser_dir, "output"),
                         help="Path to the output directory")
     parser.add_argument("--llm-model", default="nvidia/llama-3.3-nemotron-super-49b-v1:free",
                         help="Name of the LLM model to use")
