@@ -1,0 +1,118 @@
+# TestShreya Project Instructions
+
+## Step 1: Create a New File
+Create a new file at the following path:
+`/Users/shreyah/Documents/Projects/SAP/testshreya/src/Restaurant.java`
+
+## Generated Code
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Restaurant class representing a restaurant that can fulfill food orders
+ */
+public class Restaurant {
+    private int id;
+    private String name;
+    private String cuisine;
+    private Address location;
+    private List<String> menuItems;
+    private double rating;
+    private boolean offersDelivery;
+    private int deliveryTimeMinutes;
+    
+    public Restaurant(int id, String name, String cuisine, Address location) {
+        this.id = id;
+        this.name = name;
+        this.cuisine = cuisine;
+        this.location = location;
+        this.menuItems = new ArrayList<>();
+        this.rating = 0.0;
+        this.offersDelivery = false;
+        this.deliveryTimeMinutes = 0;
+    }
+    
+    public int getId() {
+        return id;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public String getCuisine() {
+        return cuisine;
+    }
+    
+    public Address getLocation() {
+        return location;
+    }
+    
+    public List<String> getMenuItems() {
+        return menuItems;
+    }
+    
+    public void addMenuItem(String item) {
+        menuItems.add(item);
+    }
+    
+    public double getRating() {
+        return rating;
+    }
+    
+    public void setRating(double rating) {
+        if (rating >= 0 && rating <= 5) {
+            this.rating = rating;
+        } else {
+            throw new IllegalArgumentException("Rating must be between 0 and 5");
+        }
+    }
+    
+    public boolean offersDelivery() {
+        return offersDelivery;
+    }
+    
+    public void setOffersDelivery(boolean offersDelivery) {
+        this.offersDelivery = offersDelivery;
+    }
+    
+    public int getDeliveryTimeMinutes() {
+        return deliveryTimeMinutes;
+    }
+    
+    public void setDeliveryTimeMinutes(int deliveryTimeMinutes) {
+        if (deliveryTimeMinutes >= 0) {
+            this.deliveryTimeMinutes = deliveryTimeMinutes;
+        } else {
+            throw new IllegalArgumentException("Delivery time cannot be negative");
+        }
+    }
+    
+    public boolean canFulfillOrder(Order order) {
+        // In a real application, this would check if all products in the order
+        // are available in the restaurant's menu
+        return offersDelivery;
+    }
+    
+    public void processOrder(Order order) {
+        if (canFulfillOrder(order)) {
+            System.out.println("Order #" + order.getId() + " is being processed by " + name);
+            System.out.println("Estimated delivery time: " + deliveryTimeMinutes + " minutes");
+            order.setStatus("PROCESSING");
+        } else {
+            System.out.println("Order #" + order.getId() + " cannot be fulfilled by " + name);
+        }
+    }
+    
+    @Override
+    public String toString() {
+        return "Restaurant{id=" + id + 
+               ", name='" + name + "'" + 
+               ", cuisine='" + cuisine + "'" + 
+               ", rating=" + rating + 
+               ", offersDelivery=" + offersDelivery + 
+               ", deliveryTime=" + deliveryTimeMinutes + " minutes}";
+    }
+}
+```

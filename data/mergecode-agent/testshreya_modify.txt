@@ -1,0 +1,61 @@
+Modify the Order.java file in /Users/shreyah/Documents/Projects/SAP/testshreya/src/ to add shipping functionality.
+
+Add these new fields to the Order class:
+private String status = "NEW";
+private String deliveryMethod = "STANDARD";
+private boolean expressShipping = false;
+private Date shippingDate;
+
+Add these new getter and setter methods:
+public String getStatus() {
+    return status;
+}
+
+public void setStatus(String status) {
+    this.status = status;
+}
+
+public String getDeliveryMethod() {
+    return deliveryMethod;
+}
+
+public void setDeliveryMethod(String deliveryMethod) {
+    this.deliveryMethod = deliveryMethod;
+}
+
+public boolean isExpressShipping() {
+    return expressShipping;
+}
+
+public void setExpressShipping(boolean expressShipping) {
+    this.expressShipping = expressShipping;
+}
+
+public Date getShippingDate() {
+    return shippingDate;
+}
+
+public void setShippingDate(Date shippingDate) {
+    this.shippingDate = shippingDate;
+}
+
+public List<Product> getItems() {
+    return products;
+}
+
+public void setTotalPrice(double price) {
+    this.totalAmount = price;
+}
+
+Update the toString method to include the new fields:
+@Override
+public String toString() {
+    return "Order{id=" + id + 
+           ", customer=" + customer.getName() + 
+           ", products=" + products.size() + 
+           ", orderDate=" + orderDate + 
+           ", totalAmount=" + totalAmount +
+           ", status=" + status +
+           ", deliveryMethod=" + deliveryMethod +
+           ", expressShipping=" + expressShipping + "}";
+}

@@ -1,0 +1,85 @@
+# TestShreya Project Instructions
+
+## Step 1: Create a New File
+Create a new file at the following path:
+`/Users/shreyah/Documents/Projects/SAP/testshreya/src/ShippingManager.java`
+
+## Generated Code
+```java
+import java.util.Date;
+
+/**
+ * ShippingManager class for handling shipping operations for orders
+ */
+public class ShippingManager {
+    private static final double BASE_SHIPPING_COST = 5.99;
+    private static final double EXPRESS_SHIPPING_SURCHARGE = 10.00;
+    
+    /**
+     * Calculate shipping cost for an order
+     * @param order The order to calculate shipping for
+     * @return The calculated shipping cost
+     */
+    public double calculateShippingCost(Order order) {
+        double shippingCost = BASE_SHIPPING_COST;
+        
+        // Add weight-based cost (assuming each product adds 0.5 to shipping)
+        shippingCost += order.getProducts().size() * 0.5;
+        
+        // Add express shipping surcharge if applicable
+        if (order.isExpressShipping()) {
+            shippingCost += EXPRESS_SHIPPING_SURCHARGE;
+        }
+        
+        return shippingCost;
+    }
+    
+    /**
+     * Process shipping for an order
+     * @param order The order to process shipping for
+     */
+    public void processShipping(Order order) {
+        // Set shipping date (today for standard, tomorrow for express)
+        Date shippingDate = new Date();
+        if (order.isExpressShipping()) {
+            // Add 1 day for express shipping
+            shippingDate.setTime(shippingDate.getTime() + 24 * 60 * 60 * 1000);
+        } else {
+            // Add 3 days for standard shipping
+            shippingDate.setTime(shippingDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+        }
+        
+        order.setShippingDate(shippingDate);
+        order.setStatus("SHIPPED");
+        
+        System.out.println("Order #" + order.getId() + " has been shipped via " + 
+                          order.getDeliveryMethod() + " delivery.");
+        System.out.println("Expected delivery date: " + order.getShippingDate());
+    }
+    
+    /**
+     * Update delivery method for an order
+     * @param order The order to update
+     * @param deliveryMethod The new delivery method
+     * @param expressShipping Whether to use express shipping
+     */
+    public void updateDeliveryMethod(Order order, String deliveryMethod, boolean expressShipping) {
+        order.setDeliveryMethod(deliveryMethod);
+        order.setExpressShipping(expressShipping);
+        
+        System.out.println("Delivery method updated to: " + deliveryMethod);
+        System.out.println("Express shipping: " + (expressShipping ? "Yes" : "No"));
+    }
+    
+    /**
+     * Track shipping status for an order
+     * @param order The order to track
+     * @return The current shipping status
+     */
+    public String trackShipping(Order order) {
+        // In a real application, this would connect to a shipping provider's API
+        return "Order #" + order.getId() + " is currently " + order.getStatus() + 
+               ". Expected delivery by " + order.getShippingDate();
+    }
+}
+```

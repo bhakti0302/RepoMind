@@ -1,0 +1,87 @@
+# TestShreya Project Instructions
+
+## Step 1: Modify Existing File
+Modify the existing Order.java file at the following path:
+`/Users/shreyah/Documents/Projects/SAP/testshreya/src/Order.java`
+
+## Modifications to Make:
+
+1. Add these new fields to the Order class:
+```java
+private String status;
+private String deliveryMethod;
+private boolean expressShipping;
+private Date shippingDate;
+```
+
+2. Update the constructor to initialize the new fields:
+```java
+public Order(int id, Customer customer) {
+    this.id = id;
+    this.customer = customer;
+    this.products = new ArrayList<>();
+    this.orderDate = new Date();
+    this.totalAmount = 0.0;
+    this.status = "NEW";
+    this.deliveryMethod = "STANDARD";
+    this.expressShipping = false;
+}
+```
+
+3. Add these new getter and setter methods:
+```java
+public String getStatus() {
+    return status;
+}
+
+public void setStatus(String status) {
+    this.status = status;
+}
+
+public String getDeliveryMethod() {
+    return deliveryMethod;
+}
+
+public void setDeliveryMethod(String deliveryMethod) {
+    this.deliveryMethod = deliveryMethod;
+}
+
+public boolean isExpressShipping() {
+    return expressShipping;
+}
+
+public void setExpressShipping(boolean expressShipping) {
+    this.expressShipping = expressShipping;
+}
+
+public Date getShippingDate() {
+    return shippingDate;
+}
+
+public void setShippingDate(Date shippingDate) {
+    this.shippingDate = shippingDate;
+}
+
+public void setTotalPrice(double price) {
+    this.totalAmount = price;
+}
+
+public List<Product> getItems() {
+    return products;
+}
+```
+
+4. Update the toString method to include the new fields:
+```java
+@Override
+public String toString() {
+    return "Order{id=" + id +
+           ", customer=" + customer.getName() +
+           ", products=" + products.size() +
+           ", orderDate=" + orderDate +
+           ", totalAmount=" + totalAmount +
+           ", status=" + status +
+           ", deliveryMethod=" + deliveryMethod +
+           ", expressShipping=" + expressShipping + "}";
+}
+```
