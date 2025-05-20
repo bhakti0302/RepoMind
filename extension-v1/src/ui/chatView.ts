@@ -38,16 +38,33 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
         // Handle messages from the webview
         webviewView.webview.onDidReceiveMessage(message => {
+            console.log(`Received message from webview: ${JSON.stringify(message)}`);
+
+            // Import logger
+            const { logger } = require('../utils/logger');
+            logger.info('ChatView', `Received UI action: ${message.command}`, message);
+
             if (message.command === commands.SEND_MESSAGE) {
+                logger.info('ChatView', 'User sent a message', { text: message.text });
                 this._handleUserMessage(webviewView.webview, message.text);
             } else if (message.command === commands.SYNC_CODEBASE) {
+                logger.info('ChatView', 'User clicked Sync Codebase button');
                 this._handleSyncCodebase(webviewView.webview);
             } else if (message.command === commands.ATTACH_FILE) {
+                logger.info('ChatView', 'User clicked Attach File button');
                 this._handleAttachFile(webviewView.webview);
             } else if (message.command === commands.OPEN_IMAGE) {
+                logger.info('ChatView', 'User clicked to open image', { path: message.path });
                 this._handleOpenImage(message.path);
             } else if (message.command === commands.VISUALIZE_RELATIONSHIPS) {
+                logger.info('ChatView', 'User clicked Visualize Relationships button');
                 this._handleVisualizeRelationships(webviewView.webview);
+            } else if (message.command === 'showVisualizations') {
+                logger.info('ChatView', 'User clicked Show Visualizations button');
+                // Call the command to show all visualizations
+                vscode.commands.executeCommand('extension-v1.showAllVisualizations');
+            } else {
+                logger.warn('ChatView', `Unknown command received: ${message.command}`, message);
             }
         });
     }
@@ -117,46 +134,145 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         const workspaceFolder = workspaceFolders[0].uri.fsPath;
         const projectId = path.basename(workspaceFolder);
 
-        // Path to the visualizations directory
-        const visualizationsDir = path.join(workspaceFolder, 'visualizations');
+        // Path to the central visualizations directory
+        const workspaceRoot = path.dirname(this._extensionUri.fsPath);
+        const centralVisualizationsDir = path.join(workspaceRoot, 'data', 'visualizations', projectId);
 
-        // Make sure the visualizations directory exists
-        if (!fs.existsSync(visualizationsDir)) {
+        // Log the paths for debugging
+        console.log(`DEBUG: workspaceFolder = ${workspaceFolder}`);
+        console.log(`DEBUG: projectId = ${projectId}`);
+        console.log(`DEBUG: workspaceRoot = ${workspaceRoot}`);
+        console.log(`DEBUG: centralVisualizationsDir = ${centralVisualizationsDir}`);
+
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(centralVisualizationsDir)) {
             try {
-                fs.mkdirSync(visualizationsDir, { recursive: true });
+                fs.mkdirSync(centralVisualizationsDir, { recursive: true });
+                console.log(`DEBUG: Created central visualizations directory: ${centralVisualizationsDir}`);
             } catch (error) {
-                console.error(`Error creating visualizations directory: ${error}`);
+                console.error(`Error creating central visualizations directory: ${error}`);
             }
         }
 
-        // Check if visualizations already exist
-        const multiFilePath = path.join(visualizationsDir, `${projectId}_multi_file_relationships.png`);
-        const relationshipTypesPath = path.join(visualizationsDir, `${projectId}_relationship_types.png`);
-        const visualizationsExist = fs.existsSync(multiFilePath) || fs.existsSync(relationshipTypesPath);
+        // Check if visualizations already exist in the central directory
+        // Look for any PNG files in the directory
+        let visualizationFiles: string[] = [];
+        if (fs.existsSync(centralVisualizationsDir)) {
+            try {
+                visualizationFiles = fs.readdirSync(centralVisualizationsDir)
+                    .filter(file => file.endsWith('.png'))
+                    .map(file => path.join(centralVisualizationsDir, file));
 
-        // Show a message that we're visualizing
-        webview.postMessage({
-            command: commands.ADD_MESSAGE,
-            text: visualizationsExist
-                ? `Showing code relationships for "${projectId}"...`
-                : `Visualizing code relationships for "${projectId}"... This may take a moment.`,
-            isUser: false
-        });
+                console.log(`DEBUG: Found ${visualizationFiles.length} visualization files in central directory`);
+                visualizationFiles.forEach(file => console.log(`DEBUG: Found visualization file: ${file}`));
+            } catch (error) {
+                console.error(`DEBUG: Error reading central visualizations directory: ${error}`);
+            }
+        }
+
+        const visualizationsExist = visualizationFiles.length > 0;
+
+        // Only show a loading message if we need to generate visualizations
+        if (!visualizationsExist) {
+            webview.postMessage({
+                command: commands.ADD_MESSAGE,
+                text: `Generating visualizations... This may take a moment.`,
+                isUser: false,
+                isLoading: true,
+                loadingType: 'visualize'
+            });
+        }
 
         // If visualizations already exist, show them directly
         if (visualizationsExist) {
-            console.log(`Visualizations exist at: ${multiFilePath} and/or ${relationshipTypesPath}`);
+            console.log(`Visualizations exist in directory: ${centralVisualizationsDir}`);
 
-            // Show visualizations in the chat
-            if (fs.existsSync(multiFilePath)) {
-                this._showVisualizationInChat(webview, multiFilePath, 'Multi-File Relationships Visualization:');
-            }
+            // Find the latest visualizations of each type
+            const findLatestVisualization = (pattern: string): string | null => {
+                try {
+                    const matchingFiles = fs.readdirSync(centralVisualizationsDir)
+                        .filter(file => file.includes(pattern) && file.endsWith('.png'))
+                        .map(file => path.join(centralVisualizationsDir, file));
 
-            // Add a small delay before showing the second visualization
-            if (fs.existsSync(relationshipTypesPath)) {
-                setTimeout(() => {
-                    this._showVisualizationInChat(webview, relationshipTypesPath, 'Relationship Types Visualization:');
-                }, 500);
+                    if (matchingFiles.length === 0) {
+                        return null;
+                    }
+
+                    // Sort by timestamp (newest first)
+                    matchingFiles.sort((a, b) => {
+                        const statA = fs.statSync(a);
+                        const statB = fs.statSync(b);
+                        return statB.mtime.getTime() - statA.mtime.getTime();
+                    });
+
+                    return matchingFiles[0];
+                } catch (error) {
+                    console.error(`Error finding latest ${pattern} visualization: ${error}`);
+                    return null;
+                }
+            };
+
+            // Find the latest visualizations
+            const multiFilePath = findLatestVisualization('multi_file_relationships');
+            const relationshipTypesPath = findLatestVisualization('relationship_types');
+            const classDiagramPath = findLatestVisualization('class_diagram');
+            const packageDiagramPath = findLatestVisualization('package_diagram');
+            const dependencyGraphPath = findLatestVisualization('dependency_graph');
+            const inheritanceHierarchyPath = findLatestVisualization('inheritance_hierarchy');
+
+            // Log what we found
+            console.log(`Found visualizations:
+                Multi-File: ${multiFilePath || 'Not found'}
+                Relationship Types: ${relationshipTypesPath || 'Not found'}
+                Class Diagram: ${classDiagramPath || 'Not found'}
+                Package Diagram: ${packageDiagramPath || 'Not found'}
+                Dependency Graph: ${dependencyGraphPath || 'Not found'}
+                Inheritance Hierarchy: ${inheritanceHierarchyPath || 'Not found'}
+            `);
+
+            // Show all visualizations with a small delay between each
+            let delay = 0;
+            const delayIncrement = 500;
+
+            // Helper function to show a visualization with a delay
+            const showWithDelay = (path: string | null, title: string, delay: number) => {
+                if (path) {
+                    setTimeout(() => {
+                        this._showVisualizationInChat(webview, path, title);
+                    }, delay);
+                    return true;
+                }
+                return false;
+            };
+
+            // Show all visualizations with delays
+            let visualizationsShown = 0;
+
+            visualizationsShown += showWithDelay(multiFilePath, 'Multi-File Relationships', delay) ? 1 : 0;
+            delay += delayIncrement;
+
+            visualizationsShown += showWithDelay(relationshipTypesPath, 'Relationship Types', delay) ? 1 : 0;
+            delay += delayIncrement;
+
+            visualizationsShown += showWithDelay(classDiagramPath, 'Class Diagram', delay) ? 1 : 0;
+            delay += delayIncrement;
+
+            visualizationsShown += showWithDelay(packageDiagramPath, 'Package Diagram', delay) ? 1 : 0;
+            delay += delayIncrement;
+
+            visualizationsShown += showWithDelay(dependencyGraphPath, 'Dependency Graph', delay) ? 1 : 0;
+            delay += delayIncrement;
+
+            visualizationsShown += showWithDelay(inheritanceHierarchyPath, 'Inheritance Hierarchy', delay) ? 1 : 0;
+
+            console.log(`Showing ${visualizationsShown} visualizations`);
+
+            if (visualizationsShown === 0) {
+                webview.postMessage({
+                    command: commands.ADD_MESSAGE,
+                    text: 'No visualizations found. Please try syncing the codebase first.',
+                    isUser: false
+                });
             }
 
             return;
@@ -166,44 +282,87 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         try {
             console.log(`Generating visualizations for project: ${projectId}`);
 
-            // Execute the command to generate visualizations
-            vscode.commands.executeCommand('extension-v1.visualizeRelationships');
+            // Execute the command to generate visualizations using the manual_visualize.py script
+            const extensionPath = this._extensionUri.fsPath;
+            const workspaceRoot = path.dirname(extensionPath);
+            const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
+            const manualVisualizePath = path.join(codebaseAnalyserPath, 'scripts', 'manual_visualize.py');
 
-            // Add a message after a delay to simulate completion
-            setTimeout(() => {
-                // Check if visualizations were created
-                if (fs.existsSync(multiFilePath) || fs.existsSync(relationshipTypesPath)) {
-                    console.log(`Visualizations created at: ${multiFilePath} and/or ${relationshipTypesPath}`);
+            if (!fs.existsSync(manualVisualizePath)) {
+                console.error(`Manual visualization script not found at: ${manualVisualizePath}`);
+                webview.postMessage({
+                    command: commands.ADD_MESSAGE,
+                    text: 'Visualization script not found. Please check your installation.',
+                    isUser: false
+                });
+                return;
+            }
 
-                    // Visualization completed successfully
+            // Run the manual visualization script
+            const command = `cd "${codebaseAnalyserPath}" && python3 "${manualVisualizePath}" --output-dir "${centralVisualizationsDir}" --project-id "${projectId}" --debug`;
+            console.log(`Running command: ${command}`);
+
+            // Send a message to the user that we're generating visualizations
+            webview.postMessage({
+                command: commands.ADD_MESSAGE,
+                text: `Generating visualizations for ${projectId}...`,
+                isUser: false
+            });
+
+            // Execute the command
+            const childProcess = require('child_process');
+            console.log(`DEBUG: About to execute command: ${command}`);
+            childProcess.exec(command, (error: any, stdout: string, stderr: string) => {
+                console.log(`DEBUG: Command execution completed`);
+                console.log(`DEBUG: stdout: ${stdout}`);
+                if (stderr) {
+                    console.log(`DEBUG: stderr: ${stderr}`);
+                }
+                if (error) {
+                    console.error(`Error generating visualizations: ${error.message}`);
+                    console.error(`Stderr: ${stderr}`);
+
                     webview.postMessage({
                         command: commands.ADD_MESSAGE,
-                        text: 'Code relationships visualized successfully! Here are the visualizations:',
+                        text: `Error generating visualizations: ${error.message}`,
                         isUser: false
                     });
+                    return;
+                }
 
-                    // Show visualizations in the chat
-                    if (fs.existsSync(multiFilePath)) {
-                        this._showVisualizationInChat(webview, multiFilePath, 'Multi-File Relationships Visualization:');
+                console.log(`Visualization generation succeeded`);
+                console.log(`Stdout: ${stdout}`);
+
+                // Check if visualizations were created
+                if (fs.existsSync(centralVisualizationsDir)) {
+                    const visualizationFiles = fs.readdirSync(centralVisualizationsDir)
+                        .filter(file => file.endsWith('.png'));
+
+                    if (visualizationFiles.length > 0) {
+                        console.log(`Visualizations created in: ${centralVisualizationsDir}`);
+                        console.log(`Found ${visualizationFiles.length} visualization files`);
+
+                        // Show the visualizations
+                        vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
+                    } else {
+                        console.log(`No visualization files found in: ${centralVisualizationsDir}`);
+
+                        webview.postMessage({
+                            command: commands.ADD_MESSAGE,
+                            text: 'Visualizations were generated but could not be found. Please try again later.',
+                            isUser: false
+                        });
                     }
-
-                    // Add a small delay before showing the second visualization
-                    setTimeout(() => {
-                        if (fs.existsSync(relationshipTypesPath)) {
-                            this._showVisualizationInChat(webview, relationshipTypesPath, 'Relationship Types Visualization:');
-                        }
-                    }, 500);
                 } else {
-                    console.log(`Visualizations not found at: ${multiFilePath} or ${relationshipTypesPath}`);
+                    console.log(`Visualizations directory not found: ${centralVisualizationsDir}`);
 
-                    // Visualizations were not created
                     webview.postMessage({
                         command: commands.ADD_MESSAGE,
-                        text: 'Visualizations were generated but could not be found. Please try again later.',
+                        text: 'Visualizations directory not found. Please try again later.',
                         isUser: false
                     });
                 }
-            }, 8000); // Increased timeout to give more time for visualization generation
+            });
         } catch (error: unknown) {
             console.error(`Error visualizing code relationships: ${error instanceof Error ? error.message : String(error)}`);
 
@@ -270,6 +429,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             }
 
             console.log(`Visualization file verified and ready to display: ${imagePath}`);
+
+            // Get file size for debugging
+            const fileSize = stats.size;
+            console.log(`Visualization file size: ${fileSize} bytes`);
+
         } catch (error) {
             console.error(`Error checking image file: ${error instanceof Error ? error.message : String(error)}`);
             webview.postMessage({
@@ -282,12 +446,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
         console.log(`Sending visualization to chat: ${imagePath}`);
 
-        // Send a message first with the caption
-        webview.postMessage({
-            command: commands.ADD_MESSAGE,
-            text: caption,
-            isUser: false
-        });
+        // Don't send a separate message with the caption - we'll include it with the image
 
         try {
             // Create a URI for the image file
@@ -296,11 +455,29 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
             // Convert the URI to a webview URI
             const webviewUri = webview.asWebviewUri(imageUri);
-            console.log(`DEBUG: Converted image path: ${imagePath} to webview URI: ${webviewUri}`);
+            console.log(`DEBUG: Converted image path: ${imagePath} to webview URI: ${webviewUri.toString()}`);
 
             // Check if the webview URI is valid
             if (!webviewUri) {
                 console.error(`DEBUG: Failed to create webview URI for ${imagePath}`);
+            }
+
+            // Create a data URI from the image file for direct embedding
+            // This is a fallback method that should work even if the webview URI doesn't
+            let dataUri = '';
+            try {
+                const imageBuffer = fs.readFileSync(imagePath);
+                const base64Image = imageBuffer.toString('base64');
+                const fileExtension = path.extname(imagePath).toLowerCase();
+                const mimeType = fileExtension === '.png' ? 'image/png' :
+                                fileExtension === '.jpg' || fileExtension === '.jpeg' ? 'image/jpeg' :
+                                fileExtension === '.gif' ? 'image/gif' :
+                                fileExtension === '.svg' ? 'image/svg+xml' :
+                                'application/octet-stream';
+                dataUri = `data:${mimeType};base64,${base64Image}`;
+                console.log(`DEBUG: Created data URI for image (length: ${dataUri.length})`);
+            } catch (dataUriError) {
+                console.error(`DEBUG: Failed to create data URI: ${dataUriError}`);
             }
 
             // Send the image with additional metadata to help the frontend
@@ -311,6 +488,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 imagePath: imagePath, // Pass the original path for external opening (hidden from UI)
                 isImage: true, // Flag to indicate this is an image message
                 imageUri: webviewUri.toString(), // Pass the webview URI directly
+                dataUri: dataUri, // Pass the data URI as a fallback
                 imageCaption: caption // Pass the caption for better display
             });
         } catch (error) {
@@ -340,14 +518,31 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
         const workspaceFolder = workspaceFolders[0].uri.fsPath;
 
-        // Show a message that we're syncing with a loading animation
+        // Show a message that we're syncing with a loading animation and more interactive text
         webview.postMessage({
             command: commands.ADD_MESSAGE,
-            text: `Syncing codebase from "${workspaceFolder}"... This may take a moment.`,
+            text: `Syncing codebase from "${workspaceFolder}"...`,
             isUser: false,
             isLoading: true,
             loadingType: 'sync'
         });
+
+        // Send a more detailed message about what's happening
+        setTimeout(() => {
+            webview.postMessage({
+                command: commands.ADD_MESSAGE,
+                text: `Analyzing code structure and relationships...`,
+                isUser: false
+            });
+        }, 1000);
+
+        setTimeout(() => {
+            webview.postMessage({
+                command: commands.ADD_MESSAGE,
+                text: `Extracting code chunks and building dependency graph...`,
+                isUser: false
+            });
+        }, 3000);
 
         // Execute the command to sync the codebase
         try {
@@ -440,6 +635,56 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         }
     }
 
+    /**
+     * Send a text message to the chat UI
+     * @param text The text message to send
+     * @param isUser Whether the message is from the user (default: false)
+     */
+    public sendTextToChat(text: string, isUser: boolean = false, isLoading: boolean = false, loadingType: string = '') {
+        console.log(`DEBUG: sendTextToChat called with text: ${text}, isLoading: ${isLoading}`);
+
+        if (this._view) {
+            this._view.webview.postMessage({
+                command: commands.ADD_MESSAGE,
+                text: text,
+                isUser: isUser,
+                isLoading: isLoading,
+                loadingType: loadingType
+            });
+        } else {
+            console.error(`DEBUG: View does not exist, cannot send text message`);
+        }
+    }
+
+    /**
+     * Check if the view is available
+     * @returns true if the view is available, false otherwise
+     */
+    public isViewAvailable(): boolean {
+        return this._view !== undefined;
+    }
+
+    /**
+     * Refresh the chat view to ensure it picks up new files
+     */
+    public refreshView(): void {
+        if (this._view) {
+            console.log('Refreshing chat view');
+
+            // Add a small delay before refreshing to ensure files are fully written
+            setTimeout(() => {
+                // Post a message to the webview to refresh its content
+                this._view?.webview.postMessage({
+                    command: 'refresh'
+                });
+
+                console.log('Refresh message sent to webview');
+            }, 1000);
+        } else {
+            console.error('Cannot refresh view: view is not available');
+        }
+    }
+
     private _getHtmlForWebview(webview: vscode.Webview): string {
         const stylesUri = webview.asWebviewUri(
             vscode.Uri.joinPath(this._extensionUri, 'media', 'styles.css')
@@ -466,6 +711,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 .image-container {
                     margin: 10px 0;
                     text-align: center;
+                    background-color: #2d2d2d;
+                    border-radius: 4px;
+                    padding: 10px;
+                    border: 1px solid #444;
                 }
 
                 .chat-image {
@@ -479,6 +728,31 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
                 .chat-image:hover {
                     transform: scale(1.02);
+                }
+
+                .image-placeholder {
+                    width: 100%;
+                    height: 200px;
+                    background-color: #3d3d3d;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 4px;
+                    color: #aaa;
+                    font-style: italic;
+                    cursor: pointer;
+                }
+
+                .image-link {
+                    display: inline-block;
+                    margin-top: 8px;
+                    color: #0078d4;
+                    text-decoration: underline;
+                    cursor: pointer;
+                }
+
+                .image-link:hover {
+                    color: #2b95d6;
                 }
             </style>
         </head>
@@ -542,8 +816,22 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 });
 
                 visualizeButton.addEventListener('click', () => {
+                    // First, add a loading message to indicate processing has started
+                    addMessage(
+                        'Processing visualizations... Please wait while I prepare the visualizations for you.',
+                        false,
+                        null,
+                        false,
+                        null,
+                        null,
+                        true,
+                        'visualize',
+                        null
+                    );
+
+                    // Then send a message to the extension to show visualizations
                     vscode.postMessage({
-                        command: 'visualizeRelationships'
+                        command: 'showVisualizations'
                     });
                 });
 
@@ -551,6 +839,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 window.addEventListener('message', event => {
                     const message = event.data;
                     if (message.command === 'addMessage' || message.command === '${commands.ADD_MESSAGE}') {
+                        // Debug log the message object
+                        console.log('Received message:', message);
+
                         addMessage(
                             message.text,
                             message.isUser === true,
@@ -559,13 +850,19 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                             message.imageUri,
                             message.imageCaption,
                             message.isLoading === true,
-                            message.loadingType
+                            message.loadingType,
+                            message.dataUri
                         );
                     } else if (message.command === 'openImage') {
                         vscode.postMessage({
                             command: 'openImage',
                             path: message.path
                         });
+                    } else if (message.command === 'refresh') {
+                        console.log('Received refresh command');
+                        // Don't automatically show visualizations on refresh
+                        // Just log that we received the refresh command
+                        console.log('Chat view refreshed');
                     }
                 });
 
@@ -586,7 +883,18 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                     }
                 }
 
-                function addMessage(text, isUser, imagePath, isImage, imageUri, imageCaption, isLoading, loadingType) {
+                function addMessage(text, isUser, imagePath, isImage, imageUri, imageCaption, isLoading, loadingType, dataUri) {
+                    // Debug log all parameters
+                    console.log('addMessage called with:');
+                    console.log('- text:', text);
+                    console.log('- isUser:', isUser);
+                    console.log('- imagePath:', imagePath);
+                    console.log('- isImage:', isImage);
+                    console.log('- imageUri:', imageUri);
+                    console.log('- imageCaption:', imageCaption);
+                    console.log('- isLoading:', isLoading);
+                    console.log('- loadingType:', loadingType);
+                    console.log('- dataUri:', dataUri ? 'present (length: ' + dataUri.length + ')' : 'not present');
                     const messageElement = document.createElement('div');
                     messageElement.className = isUser ? 'user-message' : 'assistant-message';
 
@@ -594,18 +902,64 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                     if (isLoading && !isUser) {
                         // Add text with loading indicator
                         const textNode = document.createElement('div');
-                        textNode.textContent = text + " (Analyzing...)";
+                        textNode.textContent = text;
                         textNode.style.marginBottom = '8px';
                         messageElement.appendChild(textNode);
 
-                        // Add a simple loading indicator
+                        // Add a more visible loading indicator with animation
                         const loadingDiv = document.createElement('div');
                         loadingDiv.style.marginTop = '10px';
                         loadingDiv.style.marginBottom = '10px';
-                        loadingDiv.style.fontStyle = 'italic';
-                        loadingDiv.style.color = '#666';
-                        loadingDiv.textContent = 'Please wait while the codebase is being analyzed...';
+                        loadingDiv.style.padding = '10px';
+                        loadingDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.05)';
+                        loadingDiv.style.borderRadius = '4px';
+                        loadingDiv.style.border = '1px solid rgba(0, 0, 0, 0.1)';
+
+                        // Create loading dots animation
+                        const loadingDotsContainer = document.createElement('div');
+                        loadingDotsContainer.style.display = 'flex';
+                        loadingDotsContainer.style.justifyContent = 'center';
+                        loadingDotsContainer.style.marginTop = '8px';
+
+                        // Add loading message based on type
+                        const loadingMessage = document.createElement('div');
+                        loadingMessage.style.fontStyle = 'italic';
+                        loadingMessage.style.color = '#666';
+
+                        if (loadingType === 'visualize') {
+                            loadingMessage.textContent = 'Please wait while the visualizations are being prepared...';
+                        } else if (loadingType === 'sync') {
+                            loadingMessage.textContent = 'Please wait while the codebase is being analyzed...';
+                        } else {
+                            loadingMessage.textContent = 'Processing your request...';
+                        }
+
+                        loadingDiv.appendChild(loadingMessage);
+                        loadingDiv.appendChild(loadingDotsContainer);
+
+                        // Add animated dots
+                        for (let i = 0; i < 3; i++) {
+                            const dot = document.createElement('div');
+                            dot.textContent = '•';
+                            dot.style.fontSize = '24px';
+                            dot.style.margin = '0 4px';
+                            dot.style.color = '#0078d4';
+                            dot.style.animation = 'dotAnimation 1.4s infinite ' + (i * 0.2) + 's';
+                            loadingDotsContainer.appendChild(dot);
+                        }
+
+                        // Add animation style
+                        const style = document.createElement('style');
+                        style.textContent =
+                            '@keyframes dotAnimation {' +
+                            '0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }' +
+                            '40% { transform: scale(1.2); opacity: 1; }' +
+                            '}';
+                        messageElement.appendChild(style);
+
                         messageElement.appendChild(loadingDiv);
+                        messageHistory.appendChild(messageElement);
+                        messageHistory.scrollTop = messageHistory.scrollHeight;
 
                         return; // Skip the rest of the function
                     }
@@ -641,11 +995,31 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                             messageElement.appendChild(textNode);
                         }
 
-                        // Create image container and image element
+                        // Create image container
                         const imageContainer = document.createElement('div');
                         imageContainer.className = 'image-container';
 
-                        // Create a loading message
+                        // Use the original path for opening externally
+                        const pathToOpen = imagePath || imageSrc;
+
+                        // Create an image element
+                        const image = document.createElement('img');
+                        image.className = 'chat-image';
+                        image.alt = imageCaption || 'Code Visualization';
+                        image.title = 'Click to open in external viewer';
+
+                        // Try to use the data URI first if available
+                        if (typeof dataUri === 'string' && dataUri) {
+                            console.log('Using data URI for image');
+                            image.src = dataUri;
+                        } else if (imageSrc) {
+                            console.log('Using image URI for image: ' + imageSrc);
+                            image.src = imageSrc;
+                        } else {
+                            console.log('No image source available');
+                        }
+
+                        // Add loading indicator
                         const loadingText = document.createElement('div');
                         loadingText.textContent = 'Loading visualization...';
                         loadingText.style.padding = '10px';
@@ -654,73 +1028,35 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                         loadingText.style.borderRadius = '4px';
                         imageContainer.appendChild(loadingText);
 
-                        const image = document.createElement('img');
-                        image.className = 'chat-image';
-                        image.src = imageSrc;
-                        image.alt = imageCaption || 'Code Visualization';
-                        image.title = 'Click to open in external viewer';
-                        image.style.maxWidth = '100%';
-                        image.style.height = 'auto';
-                        image.style.display = 'block';
-                        image.style.margin = '0 auto';
-                        image.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
-                        image.style.borderRadius = '4px';
-
-                        // Add onload event to remove loading message and show success
+                        // Add onload event to remove loading message
                         image.onload = () => {
                             if (loadingText.parentNode === imageContainer) {
                                 imageContainer.removeChild(loadingText);
                             }
-                            console.log('DEBUG: Image loaded successfully in webview:', imageSrc);
-
-                            // Add a subtle animation to show the image has loaded
-                            image.style.animation = 'fadeIn 0.5s';
-
-                            // Log additional details about the loaded image
-                            console.log('DEBUG: Image dimensions:', image.naturalWidth, 'x', image.naturalHeight);
-                            console.log('DEBUG: Image complete:', image.complete);
+                            console.log('Image loaded successfully');
                         };
 
-                        // Add onerror event to show error message
-                        image.onerror = (error) => {
-                            console.error('DEBUG: Error loading image in webview:', imageSrc);
-                            console.error('DEBUG: Error details:', error);
+                        // Add onerror event to show placeholder instead
+                        image.onerror = () => {
+                            console.error('Error loading image');
 
-                            // Try to get more information about the image
-                            const img = new Image();
-                            img.onload = () => console.log('DEBUG: Image loads in separate Image object:', imageSrc);
-                            img.onerror = () => console.error('DEBUG: Image also fails in separate Image object:', imageSrc);
-                            img.src = imageSrc;
+                            // Remove the image if it was added
+                            if (image.parentNode === imageContainer) {
+                                imageContainer.removeChild(image);
+                            }
 
-                            loadingText.textContent = 'Error loading visualization. Click to try opening externally.';
-                            loadingText.style.color = '#ff6b6b';
-                            loadingText.style.border = '1px solid #ff6b6b';
-                            loadingText.style.padding = '12px';
-
-                            // Add a retry button
-                            const retryButton = document.createElement('button');
-                            retryButton.textContent = 'Retry';
-                            retryButton.style.marginTop = '8px';
-                            retryButton.style.padding = '4px 12px';
-                            retryButton.style.backgroundColor = '#0078d4';
-                            retryButton.style.color = 'white';
-                            retryButton.style.border = 'none';
-                            retryButton.style.borderRadius = '4px';
-                            retryButton.style.cursor = 'pointer';
-
-                            retryButton.addEventListener('click', () => {
-                                // Try loading the image again
-                                image.src = imageSrc + '?retry=' + new Date().getTime();
+                            // Update loading text to be a placeholder
+                            loadingText.textContent = 'Click to view visualization';
+                            loadingText.style.cursor = 'pointer';
+                            loadingText.addEventListener('click', () => {
+                                vscode.postMessage({
+                                    command: 'openImage',
+                                    path: pathToOpen
+                                });
                             });
-
-                            loadingText.appendChild(document.createElement('br'));
-                            loadingText.appendChild(retryButton);
                         };
 
-                        // Use the original path for opening externally
-                        const pathToOpen = imagePath || imageSrc;
-
-                        // Add click event to open the image in external viewer
+                        // Add click event to open externally
                         image.addEventListener('click', () => {
                             vscode.postMessage({
                                 command: 'openImage',
@@ -728,16 +1064,38 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                             });
                         });
 
-                        // Also make the loading text clickable
-                        loadingText.style.cursor = 'pointer';
-                        loadingText.addEventListener('click', () => {
+                        // Add the image to the container
+                        imageContainer.appendChild(image);
+
+                        // Force the image to load
+                        setTimeout(() => {
+                            if (image.complete) {
+                                console.log('Image already loaded');
+                                if (loadingText.parentNode === imageContainer) {
+                                    imageContainer.removeChild(loadingText);
+                                }
+                            } else {
+                                console.log('Image still loading, setting src again');
+                                const originalSrc = image.src;
+                                image.src = '';
+                                setTimeout(() => {
+                                    image.src = originalSrc;
+                                }, 10);
+                            }
+                        }, 100);
+
+                        // Add a link to open externally
+                        const openLink = document.createElement('div');
+                        openLink.className = 'image-link';
+                        openLink.textContent = 'Open visualization externally';
+                        openLink.addEventListener('click', () => {
                             vscode.postMessage({
                                 command: 'openImage',
                                 path: pathToOpen
                             });
                         });
+                        imageContainer.appendChild(openLink);
 
-                        imageContainer.appendChild(image);
                         messageElement.appendChild(imageContainer);
 
                         // Add a caption below the image if not already included in the text
@@ -750,25 +1108,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                             captionElement.style.color = '#666';
                             messageElement.appendChild(captionElement);
                         }
-
-                        // Add a link to open externally
-                        const openLink = document.createElement('div');
-                        openLink.className = 'image-link';
-                        openLink.textContent = 'Open visualization externally';
-                        openLink.style.color = '#0078d4';
-                        openLink.style.cursor = 'pointer';
-                        openLink.style.marginTop = '8px';
-                        openLink.style.textAlign = 'center';
-                        openLink.style.fontSize = '12px';
-
-                        openLink.addEventListener('click', () => {
-                            vscode.postMessage({
-                                command: 'openImage',
-                                path: pathToOpen
-                            });
-                        });
-
-                        messageElement.appendChild(openLink);
                     } else {
                         // Regular text message
                         messageElement.textContent = text;

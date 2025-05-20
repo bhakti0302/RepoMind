@@ -85,6 +85,169 @@ class UnifiedStorage:
         """
         return self.db_manager.search_code_chunks(query, limit, filters)
 
+    def search_with_combined_scoring(
+        self,
+        query_embedding: List[float],
+        query_node_id: str,
+        alpha: float = 0.7,
+        beta: float = 0.3,
+        limit: int = 10,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        """Search for code chunks using combined semantic and graph-based scoring.
+
+        This method combines vector similarity with graph proximity to provide more
+        contextually relevant results. It takes into account:
+
+        1. Semantic similarity (vector distance)
+        2. Graph proximity (shortest path distance)
+        3. Relationship attributes (strength, frequency, bidirectionality, etc.)
+
+        Args:
+            query_embedding: Query embedding vector
+            query_node_id: Node ID to use as the starting point for graph proximity
+            alpha: Weight for semantic similarity (0.0 to 1.0)
+            beta: Weight for graph proximity (0.0 to 1.0)
+            limit: Maximum number of results to return
+            filters: Filters to apply to the search
+
+        Returns:
+            List of code chunks as dictionaries, sorted by combined score
+        """
+        import numpy as np
+        import networkx as nx
+
+        # Normalize weights
+        total = alpha + beta
+        alpha = alpha / total
+        beta = beta / total
+
+        # Get the code chunks table
+        table = self.db_manager.get_code_chunks_table()
+
+        # Create the search query
+        search_query = table.search(query_embedding)
+
+        # Apply filters if provided
+        if filters:
+            for key, value in filters.items():
+                search_query = search_query.where(f"{key} = '{value}'")
+
+        # Get more results than needed for reranking
+        search_limit = min(limit * 3, 100)  # Get 3x results or max 100
+        results = search_query.limit(search_limit).to_pandas()
+
+        # Convert to list of dictionaries
+        chunks = results.to_dict('records')
+
+        # If no results or query_node_id is not provided, return semantic results only
+        if not chunks or not query_node_id:
+            return chunks[:limit]
+
+        # Build the graph
+        graph = self._build_graph_from_dependencies()
+
+        # Calculate combined scores
+        for chunk in chunks:
+            # Get node ID
+            node_id = chunk['node_id']
+
+            # Calculate semantic score (already normalized by LanceDB)
+            semantic_score = chunk.get('_distance', 0.0)
+            # Convert distance to similarity (1.0 - distance)
+            semantic_score = 1.0 - semantic_score
+
+            # Calculate graph proximity
+            graph_distance = float('inf')
+            try:
+                # Check if both nodes exist in the graph
+                if query_node_id in graph and node_id in graph:
+                    # Calculate shortest path length
+                    try:
+                        # Get all paths between the nodes
+                        paths = list(nx.all_simple_paths(graph, query_node_id, node_id, cutoff=5))
+
+                        if paths:
+                            # Calculate path scores considering relationship attributes
+                            path_scores = []
+                            for path in paths:
+                                path_score = 0.0
+
+                                # Calculate score for each edge in the path
+                                for i in range(len(path) - 1):
+                                    source = path[i]
+                                    target = path[i + 1]
+
+                                    # Get edge attributes
+                                    edge_attrs = graph.get_edge_data(source, target)
+
+                                    # Base edge score is the strength
+                                    edge_score = edge_attrs.get('strength', 0.5)
+
+                                    # Adjust score based on relationship attributes
+
+                                    # Frequency: More frequent relationships are more important
+                                    frequency = edge_attrs.get('frequency', 1)
+                                    frequency_factor = min(1.0, 0.5 + (0.1 * frequency))
+
+                                    # Bidirectionality: Bidirectional relationships are stronger
+                                    is_bidirectional = edge_attrs.get('is_bidirectional', False)
+                                    bidirectional_factor = 1.2 if is_bidirectional else 1.0
+
+                                    # Transitivity: Direct relationships are stronger than transitive ones
+                                    is_transitive = edge_attrs.get('is_transitive', False)
+                                    transitive_factor = 0.8 if is_transitive else 1.0
+
+                                    # Inference confidence: Inferred relationships have lower confidence
+                                    is_inferred = edge_attrs.get('is_inferred', False)
+                                    inference_confidence = edge_attrs.get('inference_confidence', 1.0)
+                                    inference_factor = inference_confidence if is_inferred else 1.0
+
+                                    # Combine all factors
+                                    edge_score *= frequency_factor * bidirectional_factor * transitive_factor * inference_factor
+
+                                    # Add to path score
+                                    path_score += edge_score
+
+                                # Normalize by path length
+                                if len(path) > 1:
+                                    path_score /= (len(path) - 1)
+
+                                path_scores.append(path_score)
+
+                            # Use the highest path score
+                            best_path_score = max(path_scores)
+
+                            # Convert to distance (lower is better)
+                            graph_distance = 1.0 / (1.0 + best_path_score)
+                        else:
+                            # No path found, use default distance
+                            graph_distance = float('inf')
+                    except nx.NetworkXNoPath:
+                        # No path found, use default distance
+                        graph_distance = float('inf')
+            except Exception as e:
+                # Error calculating graph distance
+                print(f"Error calculating graph distance: {e}")
+                graph_distance = float('inf')
+
+            # Convert graph distance to proximity score (1.0 / (1.0 + distance))
+            graph_proximity = 1.0 / (1.0 + graph_distance) if graph_distance != float('inf') else 0.0
+
+            # Calculate combined score
+            combined_score = (alpha * semantic_score) + (beta * graph_proximity)
+
+            # Store scores in the chunk
+            chunk['semantic_score'] = semantic_score
+            chunk['graph_proximity'] = graph_proximity
+            chunk['combined_score'] = combined_score
+
+        # Sort by combined score (descending)
+        chunks.sort(key=lambda x: x.get('combined_score', 0.0), reverse=True)
+
+        # Return top results
+        return chunks[:limit]
+
     def _build_graph_from_dependencies(self) -> nx.DiGraph:
         """Build a NetworkX graph from the dependencies in the database.
 
@@ -156,7 +319,15 @@ class UnifiedStorage:
                         strength=rel_strength,
                         is_direct=True,
                         is_required=(rel_type in ['EXTENDS', 'IMPLEMENTS']),
-                        description=description
+                        description=description,
+                        # Add new relationship attributes
+                        frequency=dep.get('frequency', 1),
+                        is_bidirectional=dep.get('is_bidirectional', False),
+                        group_id=dep.get('group_id', None),
+                        is_transitive=dep.get('is_transitive', False),
+                        transitive_path_length=dep.get('transitive_path_length', 0),
+                        is_inferred=dep.get('is_inferred', False),
+                        inference_confidence=dep.get('inference_confidence', 1.0)
                     )
 
                 print(f"Added {len(dependencies)} edges from dependencies table")

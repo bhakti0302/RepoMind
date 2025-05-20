@@ -461,6 +461,19 @@ close_unified_storage(storage_manager)
 }
 ```
 
+## Enhanced Relationship Attributes
+
+The system captures rich relationship attributes to improve RAG capabilities:
+
+1. **Relationship Strength/Weight**: How strong the relationship is (e.g., inheritance is stronger than imports)
+2. **Relationship Frequency**: How many times the relationship occurs in the codebase
+3. **Bidirectionality**: Whether the relationship is bidirectional (exists in both directions)
+4. **Transitive Relationships**: Relationships that exist through intermediate nodes
+5. **Group Membership**: Package/module groupings that relationships belong to
+6. **Inferred Relationships**: Relationships that are inferred rather than explicit in the code
+
+These enhanced attributes are used in the relevance scoring algorithm to provide more accurate and contextually relevant results.
+
 ## Custom Relevance Scoring
 
 ```bash
@@ -476,6 +489,8 @@ Formula: `final_score = α * semantic_similarity + β * (1 / (1 + graph_distance
 - Combines vector similarity with graph proximity
 - Adjustable weights to prioritize semantic or structural relevance
 - Uses NetworkX for graph distance calculations
+- Incorporates enhanced relationship attributes (frequency, bidirectionality, etc.)
+- Considers transitive paths and their quality when calculating graph proximity
 
 ## End-to-End Integration Testing
 

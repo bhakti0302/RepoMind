@@ -100,13 +100,15 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "start": "npm run compile && code --extensionDevelopmentPath=${PWD}"
+    "start": "npm run compile && code --new-window --extensionDevelopmentPath=/Users/shreyah/Documents/Projects/SAP/RepoMind/extension-v1 /Users/shreyah/Documents/Projects/SAP/testshreya",
+    "testshreya": "npm run compile && code --new-window --extensionDevelopmentPath=/Users/shreyah/Documents/Projects/SAP/RepoMind/extension-v1 /Users/shreyah/Documents/Projects/SAP/testshreya"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "^20.17.32",
     "@types/vscode": "^1.99.1",
     "@vscode/codicons": "^0.0.35",
+    "copy-webpack-plugin": "^13.0.0",
     "mocha": "^11.2.2",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.3",

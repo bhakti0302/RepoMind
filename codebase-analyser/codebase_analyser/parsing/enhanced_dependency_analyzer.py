@@ -64,6 +64,13 @@ class EnhancedDependencyAnalyzer(DependencyAnalyzer):
         self._enhance_import_dependencies(chunks)
         self._enhance_inheritance_dependencies(chunks)
 
+        # Add new enhanced relationship analysis
+        self._detect_bidirectional_relationships()
+        self._detect_transitive_relationships()
+        self._calculate_relationship_frequencies()
+        self._assign_group_ids(chunks)
+        self._infer_relationships(chunks)
+
         # Calculate graph-level metrics
         self.dependency_graph.calculate_metrics()
 
@@ -208,3 +215,186 @@ class EnhancedDependencyAnalyzer(DependencyAnalyzer):
                     )
 
                     self.dependency_graph.add_edge(dependency)
+
+    def _detect_bidirectional_relationships(self) -> None:
+        """Detect bidirectional relationships between nodes.
+
+        A bidirectional relationship exists when there are edges in both directions
+        between two nodes.
+        """
+        # Get all edges from the graph
+        edges = self.dependency_graph.edges
+
+        # Create a dictionary to track bidirectional relationships
+        bidirectional_pairs = {}
+
+        # Find all pairs of nodes with edges in both directions
+        for edge in edges:
+            source_id = edge.source_id
+            target_id = edge.target_id
+
+            # Check if the reverse edge exists
+            reverse_key = (target_id, source_id)
+            if reverse_key in bidirectional_pairs:
+                # We found a bidirectional relationship
+                # Mark both edges as bidirectional
+                edge.is_bidirectional = True
+                bidirectional_pairs[reverse_key].is_bidirectional = True
+            else:
+                # Store this edge for potential future matching
+                bidirectional_pairs[(source_id, target_id)] = edge
+
+    def _detect_transitive_relationships(self) -> None:
+        """Detect transitive relationships in the dependency graph.
+
+        A transitive relationship exists when there is a path from A to C through B,
+        but also a direct edge from A to C.
+        """
+        # Build a NetworkX graph for path analysis
+        import networkx as nx
+        G = nx.DiGraph()
+
+        # Add all edges to the NetworkX graph
+        for edge in self.dependency_graph.edges:
+            G.add_edge(edge.source_id, edge.target_id)
+
+        # Check each edge to see if it's part of a transitive relationship
+        for edge in self.dependency_graph.edges:
+            source_id = edge.source_id
+            target_id = edge.target_id
+
+            # Remove the direct edge temporarily
+            if G.has_edge(source_id, target_id):
+                G.remove_edge(source_id, target_id)
+
+                # Check if there's still a path from source to target
+                try:
+                    path = nx.shortest_path(G, source=source_id, target=target_id)
+                    if len(path) > 2:  # Path exists with intermediate nodes
+                        # This is a transitive relationship
+                        edge.is_transitive = True
+                        edge.transitive_path_length = len(path) - 1  # Number of edges in the path
+                except nx.NetworkXNoPath:
+                    # No path exists, so this is not a transitive relationship
+                    pass
+
+                # Restore the edge
+                G.add_edge(source_id, target_id)
+
+    def _calculate_relationship_frequencies(self) -> None:
+        """Calculate the frequency of each relationship type between nodes.
+
+        This method counts how many times the same relationship occurs between
+        the same pair of nodes.
+        """
+        # Create a dictionary to track frequencies
+        relationship_counts = {}
+
+        # Count occurrences of each relationship
+        for edge in self.dependency_graph.edges:
+            key = (edge.source_id, edge.target_id, edge.type.name)
+            if key in relationship_counts:
+                relationship_counts[key] += 1
+            else:
+                relationship_counts[key] = 1
+
+        # Update frequency for each edge
+        for edge in self.dependency_graph.edges:
+            key = (edge.source_id, edge.target_id, edge.type.name)
+            edge.frequency = relationship_counts[key]
+
+    def _assign_group_ids(self, chunks: List['CodeChunk']) -> None:
+        """Assign group IDs to relationships based on package/module membership.
+
+        Args:
+            chunks: List of code chunks to analyze
+        """
+        # Create a map of node IDs to package/module names
+        node_to_package = {}
+
+        # Extract package information from chunks
+        for chunk in chunks:
+            if chunk.qualified_name:
+                # Extract package from qualified name (everything before the last dot)
+                parts = chunk.qualified_name.split('.')
+                if len(parts) > 1:
+                    package = '.'.join(parts[:-1])
+                    node_to_package[chunk.node_id] = package
+
+        # Assign group IDs to edges based on package membership
+        for edge in self.dependency_graph.edges:
+            source_package = node_to_package.get(edge.source_id)
+            target_package = node_to_package.get(edge.target_id)
+
+            if source_package and target_package:
+                if source_package == target_package:
+                    # Intra-package relationship
+                    edge.group_id = source_package
+                else:
+                    # Inter-package relationship
+                    edge.group_id = f"{source_package}→{target_package}"
+
+    def _infer_relationships(self, chunks: List['CodeChunk']) -> None:
+        """Infer additional relationships based on patterns in the code.
+
+        This method looks for patterns that suggest relationships that aren't
+        explicitly stated in the code.
+
+        Args:
+            chunks: List of code chunks to analyze
+        """
+        # Create a map of class names to chunks for quick lookup
+        class_map = {}
+        for chunk in chunks:
+            if chunk.chunk_type in ['class_declaration', 'interface_declaration', 'enum_declaration']:
+                class_map[chunk.name] = chunk
+                # Also map by qualified name if available
+                if chunk.qualified_name:
+                    class_map[chunk.qualified_name] = chunk
+
+        # Look for naming patterns that suggest relationships
+        for chunk in chunks:
+            if chunk.chunk_type == 'class_declaration':
+                # Look for classes with similar names (e.g., UserService and UserRepository)
+                base_name = self._extract_base_name(chunk.name)
+                if base_name:
+                    for other_name, other_chunk in class_map.items():
+                        if chunk.node_id != other_chunk.node_id:
+                            other_base = self._extract_base_name(other_name)
+                            if base_name == other_base:
+                                # These classes likely have a relationship
+                                dependency = Dependency(
+                                    source_id=chunk.node_id,
+                                    target_id=other_chunk.node_id,
+                                    dep_type=DependencyType.USES,
+                                    strength=0.5,  # Moderate strength for inferred relationships
+                                    is_direct=False,
+                                    is_required=False,
+                                    description=f"Inferred relationship between {chunk.name} and {other_chunk.name} based on naming pattern",
+                                    is_inferred=True,
+                                    inference_confidence=0.7  # Moderate confidence
+                                )
+                                self.dependency_graph.add_edge(dependency)
+
+    def _extract_base_name(self, class_name: str) -> Optional[str]:
+        """Extract the base name from a class name.
+
+        For example, UserService, UserRepository, UserController all have the base name "User".
+
+        Args:
+            class_name: Name of the class
+
+        Returns:
+            Base name or None if no pattern is found
+        """
+        # Common suffixes that indicate a pattern
+        common_suffixes = [
+            'Service', 'Repository', 'Controller', 'Manager', 'Handler', 'Provider',
+            'Factory', 'Builder', 'Adapter', 'Impl', 'Interface', 'Abstract', 'Base'
+        ]
+
+        for suffix in common_suffixes:
+            if class_name.endswith(suffix) and len(class_name) > len(suffix):
+                return class_name[:-len(suffix)]
+
+        return None

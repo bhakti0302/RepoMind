@@ -53,7 +53,14 @@ RepoMind is an AI-powered coding assistant that provides intelligent code unders
 ```bash
 cd codebase-analyser
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate the virtual environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -77,7 +84,10 @@ cd extension-v1
 npm run compile
 
 # Open VS Code with your project and the extension
+# On macOS/Linux:
 code --extensionDevelopmentPath=$(pwd) /path/to/your/project
+# On Windows:
+code --extensionDevelopmentPath=%cd% C:\path\to\your\project
 ```
 
 2. **Use the extension**:
@@ -146,14 +156,21 @@ if nx.has_path(graph, source_node, target_node):
 # Navigate to the codebase-analyser directory
 cd codebase-analyser
 
+# Activate the virtual environment if not already activated
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
 # List all projects in the database
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); print(table.to_arrow().to_pandas()['project_id'].unique())"
+# Use python on Windows, python3 on macOS/Linux
+python -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); print(table.to_arrow().to_pandas()['project_id'].unique())"
 
 # Count chunks for a specific project
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); print(len(table.to_arrow().to_pandas()[table.to_arrow().to_pandas()['project_id'] == 'demo']))"
+python -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); print(len(table.to_arrow().to_pandas()[table.to_arrow().to_pandas()['project_id'] == 'demo']))"
 
 # Search for chunks containing a specific term
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); results = table.search('class').limit(5).to_pandas(); print(results[['node_id', 'name', 'project_id']])"
+python -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); results = table.search('class').limit(5).to_pandas(); print(results[['node_id', 'name', 'project_id']])"
 ```
 
 #### Vector Search Examples
@@ -195,7 +212,10 @@ cd extension-v1
 npm run compile
 
 # Run the extension in development mode with your project
+# On macOS/Linux:
 code --extensionDevelopmentPath=$(pwd) /path/to/your/project
+# On Windows:
+code --extensionDevelopmentPath=%cd% C:\path\to\your\project
 ```
 
 Once VS Code opens with your project:
@@ -226,6 +246,17 @@ You can use natural language queries in the chat to display code visualizations.
 
 Alternatively, you can click the "Show Visualizations" button to display the visualizations directly.
 
+#### Available Visualizations
+
+RepoMind generates several types of visualizations:
+
+1. **Class Diagram** - Shows all classes and interfaces with their relationships
+2. **Dependency Graph** - Displays import relationships between files
+3. **Inheritance Hierarchy** - Shows class inheritance and interface implementation
+4. **Multi-File Relationships** - Visualizes relationships between different files
+5. **Package Diagram** - Shows relationships between packages
+6. **Relationship Types** - Highlights different types of relationships (extends, implements, uses)
+
 This is the recommended workflow for most users, as it provides a simple and intuitive interface for analyzing and querying your codebase.
 
 ## Testing the VS Code Extension
@@ -238,7 +269,11 @@ To quickly test that the VS Code extension is working correctly:
    ```bash
    cd extension-v1
    npm run compile
+
+   # On macOS/Linux:
    code --extensionDevelopmentPath=$(pwd) /path/to/your/java/project
+   # On Windows:
+   code --extensionDevelopmentPath=%cd% C:\path\to\your\java\project
    ```
 
 2. **Synchronize the codebase**:
@@ -251,6 +286,14 @@ To quickly test that the VS Code extension is working correctly:
    - You can verify this by checking the LanceDB database:
    ```bash
    cd codebase-analyser
+
+   # Activate the virtual environment if not already activated
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+
+   # Check database contents
    python -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); import pandas as pd; df = table.to_arrow().to_pandas(); print('Project IDs:', df['project_id'].unique()); print('Number of chunks:', len(df))"
    ```
 
@@ -266,23 +309,48 @@ This simple flow allows you to verify that the extension is correctly analyzing 
 RepoMind/
 ├── codebase-analyser/           # Codebase analysis system
 │   ├── codebase_analyser/       # Main package
-│   │   ├── parsing/             # Code parsing and chunking
+│   │   ├── chunking/            # Code chunking algorithms
+│   │   │   ├── chunker.py       # Main chunking logic
+│   │   │   └── code_chunk.py    # CodeChunk class definition
 │   │   ├── database/            # Database integration with LanceDB
+│   │   │   ├── lancedb_manager.py # LanceDB connection management
+│   │   │   ├── schema.py        # Database schema definitions
+│   │   │   └── unified_storage.py # Unified storage for vectors and graph metadata
 │   │   ├── embeddings/          # Code embedding generation
+│   │   │   └── embedding_generator.py # Embedding generation logic
+│   │   ├── graph/               # Graph-related functionality
+│   │   │   ├── dependency_graph_builder.py # Build dependency graphs
+│   │   │   └── visualizer.py    # Graph visualization utilities
+│   │   ├── nlp/                 # NLP-related functionality
+│   │   │   ├── requirements_parser.py # Parse requirements from text
+│   │   │   └── text_utils.py    # Text processing utilities
+│   │   ├── parsing/             # Code parsing
+│   │   │   ├── ast_utils.py     # AST utility functions
+│   │   │   ├── dependency_analyzer.py # Analyze dependencies between code elements
+│   │   │   ├── enhanced_java_parser.py # Enhanced Java parser
+│   │   │   └── java_parser.py   # Basic Java parser
+│   │   ├── tracking/            # Track file changes
+│   │   │   ├── file_change_tracker.py # Track file changes
+│   │   │   └── incremental_update_manager.py # Manage incremental updates
 │   │   └── visualization/       # Visualization utilities
+│   │       ├── simple_visualizer.py # Simple visualization utilities
+│   │       └── visualizer.py    # Advanced visualization utilities
 │   ├── scripts/                 # Utility scripts
-│   │   ├── analyze_java.py      # Main script for analyzing Java projects
-│   │   ├── visualize_code_relationships.py  # Visualization script
+│   │   ├── analyze_java.py      # Analyze Java projects
+│   │   ├── run_codebase_analysis.py # Main script for running the complete analysis pipeline
 │   │   ├── update_codebase.py   # Incremental update script
-│   │   └── ...
+│   │   ├── visualize_all_relationships.py # Generate all visualizations
+│   │   ├── visualize_code_relationships.py # Visualize code relationships
+│   │   ├── visualize_complex_relationships.py # Visualize complex relationships
+│   │   └── visualization_utils.py # Utility functions for visualizations
 │   ├── tests/                   # Test directory
 │   │   ├── parsing/             # Tests for parsing components
 │   │   ├── database/            # Tests for database components
-│   │   └── ...
+│   │   └── ...                  # Other test directories
 │   └── samples/                 # Sample files and outputs
 │       ├── java_test_project/   # Simple Java project
 │       ├── complex_java/        # Complex Java project
-│       └── ...
+│       └── ...                  # Other sample projects
 │
 ├── data/                        # Data storage
 │   └── projects/                # Project-specific data
