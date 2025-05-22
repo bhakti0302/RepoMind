@@ -1,0 +1,47 @@
+{
+  "classes": [
+    "AbstractEntity",
+    "representing",
+    "that",
+    "Product",
+    "BaseEntity"
+  ],
+  "methods": [
+    "invalidate",
+    "getPrice",
+    "toString",
+    "isValid",
+    "setShippingAddress",
+    "getAddress",
+    "BaseEntity",
+    "getId",
+    "setPrice",
+    "getName",
+    "setAddress",
+    "Product",
+    "getCategory",
+    "validate",
+    "AbstractEntity"
+  ],
+  "variables": [
+    "category",
+    "id",
+    "name",
+    "valid",
+    "address",
+    "price"
+  ],
+  "imports": [
+    "java.util.UUID"
+  ],
+  "interfaces": [
+    "that",
+    "Entity"
+  ],
+  "annotations": [
+    "Override"
+  ],
+  "packages": [
+    "com.example.testshreya"
+  ]
+}

@@ -1,0 +1,49 @@
+Vector Search Results
+====================
+
+Query: Business Requirement Display Employees Department Business Requirement Display Employees Department
+
+Objective Filter by Department
+   - Users should be able to  Display Details
+   - For each matching employee, d
+
+Result 1:
+  Score: 0.4691
+  File: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/app/Main.java
+  Content: import com.company.service.EmployeeService;
+
+Result 2:
+  Score: 0.4360
+  File: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/model/Employee.java
+  Content: public String getDepartment() { return department; }
+
+Result 3:
+  Score: 0.2681
+  File: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java
+  Content: public List<Employee> getAllEmployees() {
+        return employees;
+    }
+
+Result 4:
+  Score: 0.2543
+  File: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/model/Employee.java
+  Content: 
+
+    public Employee(int id, String name, String department) {
+        this.id = id;
+        this.name = name;
+        this.department = department;
+    }
+
+Result 5:
+  Score: 0.1877
+  File: /Users/bhaktichindhe/Desktop/Project/RepoMind/test-project-employee/src/com/company/service/EmployeeService.java
+  Content: public class EmployeeService {
+    private List<Employee> employees = new ArrayList<>();
+
+    public void addEmployee(Employee employee) {
+        employees.add(employee);
+    }
+
+    public List<Emplo...
+

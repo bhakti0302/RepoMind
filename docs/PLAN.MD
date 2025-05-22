@@ -220,10 +220,10 @@ RepoMind/
 
 ##### Tasks:
 - [x] 3.1.1: Install and configure spaCy
-- [ ] 3.1.2: Set up Named Entity Recognition for requirements
-- [ ] 3.1.3: Implement key component extraction
+- [x] 3.1.2: Set up Named Entity Recognition for requirements
+- [x] 3.1.3: Implement key component extraction
 - [x] 3.1.4: Create utility functions for text processing
-- [ ] 3.1.5: Add error handling for NLP operations
+- [x] 3.1.5: Add error handling for NLP operations
 
 ###### Completed in 3.1.1:
 - Added spaCy and related dependencies to requirements.txt
@@ -232,11 +232,29 @@ RepoMind/
 - Created setup script for downloading and configuring spaCy models
 - Added test script to verify spaCy installation and functionality
 
+###### Completed in 3.1.2:
+- Implemented EntityExtractor class for extracting entities from text
+- Added support for extracting nouns, technical terms, and actions
+- Integrated with spaCy's NER capabilities
+- Created entity categorization by type
+
+###### Completed in 3.1.3:
+- Implemented ComponentAnalyzer for extracting functional and non-functional requirements
+- Added support for extracting constraints and actions
+- Created section-based extraction for structured requirements documents
+- Implemented pattern matching for requirements identification
+
 ###### Completed in 3.1.4:
 - Implemented text preprocessing functions
 - Created sentence extraction utilities
 - Added keyword extraction based on part-of-speech tags
 - Implemented code reference cleaning functionality
+
+###### Completed in 3.1.5:
+- Added comprehensive error handling in all NLP components
+- Implemented graceful fallbacks when processing fails
+- Added logging for NLP operations
+- Created centralized error handling mechanisms
 
 ###### NLP Module Structure:
 - `requirements_parser.py`: Main parser for requirements documents
@@ -259,34 +277,60 @@ RepoMind/
 **Dependencies**: Story 2.3, Story 3.1
 
 ##### Tasks:
-- [ ] 3.2.1: Implement Phase 1 - Basic Vector-Based RAG
-- [ ] 3.2.2: Implement Phase 2 - Graph-Enhanced Single-Hop RAG
-- [ ] 3.2.3: Implement Phase 3 - Full Multi-Hop Graph RAG
-- [ ] 3.2.4: Set up context combination mechanism
-- [ ] 3.2.5: Add combined relevance scoring (semantic + graph proximity)
+- [x] 3.2.1: Implement Phase 1 - Basic Vector-Based RAG
+- [x] 3.2.2: Implement Phase 2 - Graph-Enhanced Single-Hop RAG
+- [x] 3.2.3: Implement Phase 3 - Full Multi-Hop Graph RAG
+- [x] 3.2.4: Set up context combination mechanism
+- [x] 3.2.5: Add combined relevance scoring (semantic + graph proximity)
+- [ ] 3.2.6: Integrate Microsoft's GraphRAG library for advanced graph traversal
 
-###### Phase 1 - Basic Vector-Based RAG:
-- Implement simple vector search using existing LanceDB infrastructure
-- Create basic query builder to convert requirements to search queries
-- Implement context window creation from top K results
-- Add basic prompt engineering for code generation
-- This phase provides a minimal viable product with semantic search only
+###### Completed in 3.2.1:
+- Implemented VectorSearch class for searching code chunks
+- Created basic query builder to convert requirements to search queries
+- Implemented context window creation from top K results
+- Added basic prompt engineering for code generation
+- Implemented TF-IDF scoring for improved relevance
 
-###### Phase 2 - Graph-Enhanced Single-Hop RAG:
-- Extend Phase 1 with graph relationship awareness
-- Implement import relationship edges in the dependency graph
-- Add inheritance relationship edges (extends/implements)
-- Create graph expansion to include direct neighbors of search results
-- Implement weighted scoring combining semantic similarity and graph proximity
-- This phase enhances results by including structurally related code
+###### Completed in 3.2.2:
+- Implemented GraphEnhancer class for graph-enhanced RAG
+- Added support for import relationship edges in the dependency graph
+- Implemented inheritance relationship edges (extends/implements)
+- Created graph expansion to include direct neighbors of search results
+- Added weighted scoring combining semantic similarity and graph proximity
 
-###### Phase 3 - Full Multi-Hop Graph RAG:
-- Implement architectural pattern retrieval as first hop
-- Create implementation details retrieval as second hop
-- Add graph traversal to find related components
-- Implement context hierarchy preservation
-- Create advanced context combination for multi-hop results
-- This phase provides comprehensive code understanding
+###### Completed in 3.2.3:
+- Implemented MultiHopRAG class for multi-hop traversal
+- Added architectural pattern retrieval as first hop
+- Created implementation details retrieval as second hop
+- Implemented graph traversal to find related components
+- Added context hierarchy preservation
+- Created advanced context combination for multi-hop results
+
+###### Completed in 3.2.4:
+- Implemented ContextCombiner class for combining context from different sources
+- Added support for prioritizing context based on relevance
+- Created context window management to handle token limits
+- Implemented hierarchical context organization
+
+###### Completed in 3.2.5:
+- Implemented RelevanceScorer class for combined scoring
+- Added semantic similarity scoring using vector embeddings
+- Implemented graph proximity scoring using NetworkX
+- Created weighted scoring formula combining both approaches
+- Added configurable weights for balancing semantic vs. structural relevance
+
+###### Planned for 3.2.6:
+- Integrate Microsoft's GraphRAG library (https://github.com/microsoft/graphrag)
+- Implement knowledge graph construction from code chunks using GraphRAG's KnowledgeGraph class
+- Use GraphRAG's specialized query understanding components (QueryAnalyzer, QueryPlanner)
+- Implement advanced graph traversal algorithms (PageRank, bidirectional search, path-based relevance)
+- Use GraphRAG's GraphRetriever for improved context retrieval
+- Implement GraphRAG's ReasoningEngine for multi-hop reasoning
+- Store generated code in the data folder with project-specific organization
+- Integrate with the existing multi-hop RAG system
+- Benchmark performance against the current implementation
+- Optimize for code-specific retrieval tasks
+- Add support for visualizing the knowledge graph
 
 #### Story 3.3: Code Synthesis System
 **Description**: Implement system to generate code based on requirements
@@ -294,11 +338,41 @@ RepoMind/
 **Dependencies**: Story 3.2
 
 ##### Tasks:
-- [ ] 3.3.1: Design code synthesis workflow aligned with RAG phases
-- [ ] 3.3.2: Implement prompt engineering for code generation
-- [ ] 3.3.3: Create code validation and refinement mechanism
-- [ ] 3.3.4: Implement output formatting for llm-instructions.txt
-- [ ] 3.3.5: Add feedback loop for iterative improvement
+- [x] 3.3.1: Design code synthesis workflow aligned with RAG phases
+- [x] 3.3.2: Implement prompt engineering for code generation
+- [x] 3.3.3: Create code validation and refinement mechanism
+- [x] 3.3.4: Implement output formatting for llm-instructions.txt
+- [x] 3.3.5: Add feedback loop for iterative improvement
+
+###### Completed in 3.3.1:
+- Implemented CodeSynthesisWorkflow class for end-to-end workflow
+- Created modular design with separate components for each phase
+- Added support for different RAG types (basic, graph, multi-hop)
+- Implemented project-specific context filtering
+
+###### Completed in 3.3.2:
+- Created structured prompt templates for code generation
+- Added context formatting for optimal LLM understanding
+- Implemented requirements formatting for clear instruction
+- Added code formatting guidelines in prompts
+
+###### Completed in 3.3.3:
+- Implemented code validation mechanisms
+- Added syntax checking for generated code
+- Created refinement process for improving generated code
+- Implemented error handling for validation failures
+
+###### Completed in 3.3.4:
+- Created standardized output format for llm-instructions.txt
+- Implemented structured sections for requirements, context, and instructions
+- Added file path and language specification in output
+- Created consistent formatting for code blocks
+
+###### Completed in 3.3.5:
+- Implemented feedback loop for iterative improvement
+- Added support for refining code based on validation results
+- Created mechanism for incorporating user feedback
+- Implemented iterative generation process for complex requirements
 
 ###### Code Synthesis Workflow:
 - Requirements parsing using NLP to extract key components
@@ -307,6 +381,53 @@ RepoMind/
 - Validation of generated code against project standards
 - Refinement based on validation feedback
 - Output formatting for integration with the codebase
+
+#### Story 3.4: SAP Documentation MCP Server
+**Description**: Implement MCP server for retrieving SAP documentation on-demand
+**Complexity**: Medium
+**Dependencies**: Story 3.3, Story 4.1
+
+##### Tasks:
+- [ ] 3.4.1: Create SAP documentation indexing system
+- [ ] 3.4.2: Implement MCP server for documentation retrieval
+- [ ] 3.4.3: Create tool definitions for querying documentation
+- [ ] 3.4.4: Integrate with code generation system
+- [ ] 3.4.5: Implement caching and optimization
+
+###### Planned for 3.4.1:
+- Collect SAP CAP framework documentation from official sources
+- Index OData service documentation and best practices
+- Create vector embeddings for documentation sections
+- Implement metadata extraction for documentation (version, topic, etc.)
+- Create a structured database for documentation storage
+
+###### Planned for 3.4.2:
+- Implement MCP server with documentation retrieval endpoints
+- Create query understanding for documentation requests
+- Implement relevance scoring for documentation results
+- Add filtering by documentation type and version
+- Create API for retrieving documentation snippets
+
+###### Planned for 3.4.3:
+- Define tool schema for querying SAP documentation
+- Implement tool calling logic in the LLM
+- Create structured output format for documentation queries
+- Add context-aware tool selection
+- Implement error handling for documentation retrieval
+
+###### Planned for 3.4.4:
+- Integrate documentation context with code context
+- Implement combined relevance scoring
+- Create unified context for the LLM
+- Add documentation references in generated code
+- Implement documentation-aware code generation
+
+###### Planned for 3.4.5:
+- Implement caching for frequently accessed documentation
+- Create background indexing for new documentation
+- Add version control for documentation
+- Implement incremental updates for documentation
+- Create monitoring for documentation usage
 
 ### Epic 4: MCP Implementation
 **Goal**: Implement Model Context Protocol for file system operations
@@ -519,9 +640,9 @@ RepoMind/
 - [ ] 8.4.3: Add project-specific configuration options
 - [ ] 8.4.4: Create project initialization workflow
 - [ ] 8.4.5: Implement project status indicators
-- [ ] 8.4.6: Check for non java files 
+- [ ] 8.4.6: Check for non java files
 - [ ] 8.4.7: Expand to other visualisations such as UML
-- [ ] 8.4.8: Implement a checkpoint system 
+- [ ] 8.4.8: Implement a checkpoint system
 
 ### Epic 9: SAP CAP Java Framework Support
 **Goal**: Add support for parsing and analyzing SAP Cloud Application Programming (CAP) Java projects
@@ -562,9 +683,107 @@ RepoMind/
 - [ ] 9.3.4: Add CAP framework context to embeddings
 - [ ] 9.3.5: Implement CAP-specific search optimizations
 
+### Epic 10: Code Change Highlighting and Diff View
+**Goal**: Implement a git diff-like visualization for code changes made by the agent
 
+#### Story 10.1: Diff Generation System
+**Description**: Create a system to generate diffs between original and modified code
+**Complexity**: Medium
+**Dependencies**: Story 6.3
 
+##### Tasks:
+- [ ] 10.1.1: Implement file content comparison algorithm
+- [ ] 10.1.2: Create line-by-line diff generation
+- [ ] 10.1.3: Add syntax highlighting for diff output
+- [ ] 10.1.4: Implement metadata tracking for change origins
+- [ ] 10.1.5: Create unified diff format compatible with VS Code
 
+#### Story 10.2: VS Code Diff View Integration
+**Description**: Integrate diff view with VS Code's native diff viewer
+**Complexity**: Medium
+**Dependencies**: Story 10.1
+
+##### Tasks:
+- [ ] 10.2.1: Research VS Code diff view API
+- [ ] 10.2.2: Implement diff view provider
+- [ ] 10.2.3: Create custom editor for viewing diffs
+- [ ] 10.2.4: Add navigation controls for multi-file changes
+- [ ] 10.2.5: Implement change acceptance/rejection functionality
+
+#### Story 10.3: Change History and Audit Trail
+**Description**: Implement history tracking for changes made by the agent
+**Complexity**: Medium
+**Dependencies**: Story 10.2
+
+##### Tasks:
+- [ ] 10.3.1: Design change history data structure
+- [ ] 10.3.2: Implement change logging mechanism
+- [ ] 10.3.3: Create UI for browsing change history
+- [ ] 10.3.4: Add filtering and search for change history
+- [ ] 10.3.5: Implement export functionality for change reports
+
+#### Story 10.4: Real-time Change Preview
+**Description**: Create real-time preview of changes before they're applied
+**Complexity**: High
+**Dependencies**: Story 10.1, Story 7.3
+
+##### Tasks:
+- [ ] 10.4.1: Implement in-memory diff generation
+- [ ] 10.4.2: Create side-by-side preview component
+- [ ] 10.4.3: Add syntax highlighting for preview
+- [ ] 10.4.4: Implement interactive edit capability in preview
+- [ ] 10.4.5: Create approval workflow with preview integration
+
+### Epic 11: Advanced AI Assistant Capabilities
+**Goal**: Enhance the VS Code extension with advanced code understanding and generation capabilities
+
+#### Story 11.1: Knowledge Graph Code Understanding
+**Description**: Implement knowledge graph for improved code context
+**Complexity**: High
+**Dependencies**: Story 2.3, Story 2.4
+
+##### Tasks:
+- [ ] 11.1.1: Convert dependency graphs to semantic knowledge graphs
+- [ ] 11.1.2: Implement relationship classification beyond syntax
+- [ ] 11.1.3: Add inference rules for discovering implicit relationships
+- [ ] 11.1.4: Create visualization of code relationships in VS Code
+- [ ] 11.1.5: Implement context-aware code navigation using the graph
+
+#### Story 11.2: Enhanced Requirements Processing
+**Description**: Improve business requirements understanding
+**Complexity**: Medium
+**Dependencies**: Story 3.1, Story 3.2
+
+##### Tasks:
+- [ ] 11.2.1: Implement custom NER for software requirements
+- [ ] 11.2.2: Create requirements-to-code mapping visualization
+- [ ] 11.2.3: Add automatic test suggestion from requirements
+- [ ] 11.2.4: Implement requirements validation against existing code
+- [ ] 11.2.5: Create natural language query interface for requirements
+
+#### Story 11.3: Advanced Code Generation
+**Description**: Enhance code generation capabilities
+**Complexity**: High
+**Dependencies**: Story 3.3, Story 6.2
+
+##### Tasks:
+- [ ] 11.3.1: Implement pattern-based code generation
+- [ ] 11.3.2: Add style matching for consistent code generation
+- [ ] 11.3.3: Create interactive code refinement interface
+- [ ] 11.3.4: Implement context-aware code completion
+- [ ] 11.3.5: Add explanation generation for complex code
+
+#### Story 11.4: VS Code Extension Enhancements
+**Description**: Add advanced features to the VS Code extension
+**Complexity**: Medium
+**Dependencies**: Story 7.1, Story 7.2
+
+##### Tasks:
+- [ ] 11.4.1: Implement real-time code analysis feedback
+- [ ] 11.4.2: Add inline code suggestions based on context
+- [ ] 11.4.3: Create interactive visualization panel
+- [ ] 11.4.4: Implement code review assistant functionality
+- [ ] 11.4.5: Add project-specific configuration and customization
 
 ## Key Components Reference
 

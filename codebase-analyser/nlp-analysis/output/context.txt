@@ -1,0 +1,149 @@
+--- Document 1: /Users/shreyah/Documents/Projects/SAP/testshreya/User.java ---
+
+public void setAddress(Address address) {
+        this.address = address;
+    }
+
+--- Document 2: /Users/shreyah/Documents/Projects/SAP/testshreya/src/Customer.java ---
+
+public void setAddress(String address) {
+        this.address = address;
+    }
+
+--- Document 3: /Users/shreyah/Documents/Projects/SAP/testshreya/Order.java ---
+
+public void setShippingAddress(String shippingAddress) {
+        this.shippingAddress = shippingAddress;
+    }
+
+--- Document 4: /Users/shreyah/Documents/Projects/SAP/testshreya/User.java ---
+
+public Address getAddress() {
+        return address;
+    }
+
+--- Document 5: /Users/shreyah/Documents/Projects/SAP/testshreya/AbstractEntity.java ---
+
+package com.example.testshreya;
+
+import java.util.UUID;
+
+/**
+ * Abstract base class that implements the Entity interface
+ */
+public abstract class AbstractEntity implements Entity {
+    private final String id;
+    private boolean valid;
+    
+    public AbstractEntity() {
+        this.id = UUID.randomUUID().toString();
+        this.valid = true;
+    }
+    
+    @Override
+    public String getId() {
+        return id;
+    }
+    
+    @Override
+    public boolean isValid() {
+        return valid;
+    }
+    
+    protected void invalidate() {
+        this.valid = false;
+    }
+    
+    protected void validate() {
+        this.valid = true;
+    }
+}
+
+
+--- Document 6: /Users/shreyah/Documents/Projects/SAP/testshreya/Entity.java ---
+
+package com.example.testshreya;
+
+/**
+ * Base entity interface that defines common operations
+ */
+public interface Entity {
+    /**
+     * Get the unique identifier
+     */
+    String getId();
+    
+    /**
+     * Check if the entity is valid
+     */
+    boolean isValid();
+}
+
+
+--- Document 7: /Users/shreyah/Documents/Projects/SAP/testshreya/src/main/java/com/example/testshreya/BaseEntity.java ---
+
+package com.example.testshreya;
+
+import java.util.UUID;
+
+/**
+ * Base entity class that all domain entities will extend
+ */
+public abstract class BaseEntity {
+    private UUID id;
+    
+    public BaseEntity() {
+        this.id = UUID.randomUUID();
+    }
+    
+    public UUID getId() {
+        return id;
+    }
+}
+
+
+--- Document 8: /Users/shreyah/Documents/Projects/SAP/testshreya/src/Product.java ---
+
+/**
+ * Product class representing items for sale
+ */
+public class Product {
+    private int id;
+    private String name;
+    private double price;
+    private String category;
+    
+    public Product(int id, String name, double price, String category) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.category = category;
+    }
+    
+    public int getId() {
+        return id;
+    }
+    
+    public String getName() {
+        return name;
+    }
+    
+    public double getPrice() {
+        return price;
+    }
+    
+    public String getCategory() {
+        return category;
+    }
+    
+    public void setPrice(double price) {
+        this.price = price;
+    }
+    
+    @Override
+    public String toString() {
+        return "Product{id=" + id + ", name='" + name + "', price=" + price + ", category='" + category + "'}";
+    }
+}
+
+

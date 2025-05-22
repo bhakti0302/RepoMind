@@ -1,0 +1,27 @@
+{
+  "classes": [
+    "Employee"
+  ],
+  "methods": [
+    "addEmployee",
+    "getId",
+    "getName",
+    "Employee",
+    "getDepartment",
+    "toString"
+  ],
+  "variables": [
+    "department",
+    "name",
+    "id"
+  ],
+  "imports": [
+    "com.company.service.EmployeeService",
+    "com.company.model.Employee"
+  ],
+  "interfaces": [],
+  "annotations": [
+    "Override"
+  ],
+  "packages": []
+}

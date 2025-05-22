@@ -71,6 +71,23 @@ npm install
 npm run compile
 ```
 
+### Running with TestShreya Project
+
+The extension is configured to work with the TestShreya project for testing purposes:
+
+```bash
+cd extension-v1
+npm run compile
+code --extensionDevelopmentPath="$(pwd)" "/Users/shreyah/Documents/Projects/SAP/testshreya"
+```
+
+Or use the provided script:
+
+```bash
+cd extension-v1
+./launch-testshreya.sh
+```
+
 ### Primary User Flow: Using the VS Code Extension
 
 The recommended way to use RepoMind is through the VS Code extension:
@@ -307,6 +324,8 @@ This simple flow allows you to verify that the extension is correctly analyzing 
 
 ```
 RepoMind/
+├── README.md                    # Main project documentation
+├── .gitignore                   # Git ignore file
 ├── codebase-analyser/           # Codebase analysis system
 │   ├── codebase_analyser/       # Main package
 │   │   ├── chunking/            # Code chunking algorithms
@@ -339,6 +358,11 @@ RepoMind/
 │   │   ├── analyze_java.py      # Analyze Java projects
 │   │   ├── run_codebase_analysis.py # Main script for running the complete analysis pipeline
 │   │   ├── update_codebase.py   # Incremental update script
+│   │   ├── visualization/       # Visualization scripts
+│   │   │   ├── check-visualizations.sh # Check visualization files
+│   │   │   ├── clean-visualizations.sh # Clean visualization files
+│   │   │   ├── copy-visualizations.sh # Copy visualization files
+│   │   │   └── fix-visualizations.sh # Fix visualization files
 │   │   ├── visualize_all_relationships.py # Generate all visualizations
 │   │   ├── visualize_code_relationships.py # Visualize code relationships
 │   │   ├── visualize_complex_relationships.py # Visualize complex relationships
@@ -357,16 +381,26 @@ RepoMind/
 │       └── <project_id>/        # Data for each project
 │           ├── chunks/          # Chunked code
 │           ├── embeddings/      # Code embeddings
+│           ├── requirements/    # Business requirements
 │           └── visualizations/  # Code visualizations
+│
+├── docs/                        # Documentation
+│   ├── PLAN.MD                  # Project plan and roadmap
+│   └── instructions/            # Instruction files
+│       └── add_file_instructions.txt # Instructions for adding files
 │
 ├── extension-v1/                # VS Code extension
 │   ├── src/                     # TypeScript source code
 │   │   ├── ui/                  # UI components
 │   │   └── utils/               # Utility functions
-│   └── media/                   # CSS and other assets
+│   ├── media/                   # CSS and other assets
+│   └── tests/                   # Extension tests
+│       ├── test-extension/      # Test extension directory
+│       ├── test-extension.js    # Test extension script
+│       └── test-package.json    # Test package configuration
 │
-└── docs/                        # Documentation
-    └── PLAN.MD                  # Project plan and roadmap
+└── logs/                        # Log files
+    └── terminal                 # Terminal log
 ```
 
 ## Completed Components

@@ -1,0 +1,70 @@
+Extracted Entities
+=================
+
+Nouns:
+  - Business
+  - Requirement
+  - Display
+  - Employees
+  - Department
+  - Objective
+  - system
+  - Functional
+  - Requirements
+  - Filter
+  - Users
+  - name
+  - Engineering
+  - HR
+  - Details
+  - matching
+  - employee
+  - ID
+  - role
+  - Code
+  - Enhancements
+  - method
+  - getEmployeesByDepartment(String
+  - EmployeeManager
+  - class
+  - functionality
+
+Technical_terms:
+  - Business Requirement
+  - Display Employees
+  - Department
+
+Objective
+  - the system
+  - all employees
+  - a specific department
+  - Functional Requirements
+  - Department
+   - Users
+  - a department name
+  - "Engineering", "HR
+  - that department
+  - Display Details
+  - each matching employee
+  - their name
+  - Code Enhancements
+  - a method
+  - `getEmployeesByDepartment(String department
+  - the `EmployeeManager` class
+  - this method
+  - the main class
+  - filtering functionality
+
+Actions:
+  - allow
+  - list
+  - belong
+  - enter
+  - display
+  - work
+  - suggest
+  - add
+  - use
+  - demonstrate
+  - filter
+

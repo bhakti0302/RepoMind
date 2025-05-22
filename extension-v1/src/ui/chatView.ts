@@ -134,9 +134,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         const workspaceFolder = workspaceFolders[0].uri.fsPath;
         const projectId = path.basename(workspaceFolder);
 
-        // Path to the central visualizations directory
+        // Path to the project-specific visualizations directory
         const workspaceRoot = path.dirname(this._extensionUri.fsPath);
-        const centralVisualizationsDir = path.join(workspaceRoot, 'data', 'visualizations', projectId);
+        const centralVisualizationsDir = path.join(workspaceRoot, 'data', 'projects', projectId, 'visualizations');
 
         // Log the paths for debugging
         console.log(`DEBUG: workspaceFolder = ${workspaceFolder}`);
@@ -187,9 +187,18 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         if (visualizationsExist) {
             console.log(`Visualizations exist in directory: ${centralVisualizationsDir}`);
 
-            // Find the latest visualizations of each type
-            const findLatestVisualization = (pattern: string): string | null => {
+            // Find the visualization file for each type
+            const findVisualization = (pattern: string): string | null => {
                 try {
+                    // Look for a standardized filename first (e.g., multi_file_relationships.png)
+                    const standardFileName = `${pattern}.png`;
+                    const standardFilePath = path.join(centralVisualizationsDir, standardFileName);
+
+                    if (fs.existsSync(standardFilePath)) {
+                        return standardFilePath;
+                    }
+
+                    // Fall back to finding any file that includes the pattern
                     const matchingFiles = fs.readdirSync(centralVisualizationsDir)
                         .filter(file => file.includes(pattern) && file.endsWith('.png'))
                         .map(file => path.join(centralVisualizationsDir, file));
@@ -207,18 +216,18 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
                     return matchingFiles[0];
                 } catch (error) {
-                    console.error(`Error finding latest ${pattern} visualization: ${error}`);
+                    console.error(`Error finding visualization for ${pattern}: ${error}`);
                     return null;
                 }
             };
 
-            // Find the latest visualizations
-            const multiFilePath = findLatestVisualization('multi_file_relationships');
-            const relationshipTypesPath = findLatestVisualization('relationship_types');
-            const classDiagramPath = findLatestVisualization('class_diagram');
-            const packageDiagramPath = findLatestVisualization('package_diagram');
-            const dependencyGraphPath = findLatestVisualization('dependency_graph');
-            const inheritanceHierarchyPath = findLatestVisualization('inheritance_hierarchy');
+            // Find the visualizations
+            const multiFilePath = findVisualization('multi_file_relationships');
+            const relationshipTypesPath = findVisualization('relationship_types');
+            const classDiagramPath = findVisualization('class_diagram');
+            const packageDiagramPath = findVisualization('package_diagram');
+            const dependencyGraphPath = findVisualization('dependency_graph');
+            const inheritanceHierarchyPath = findVisualization('inheritance_hierarchy');
 
             // Log what we found
             console.log(`Found visualizations:
@@ -298,8 +307,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 return;
             }
 
-            // Run the manual visualization script
-            const command = `cd "${codebaseAnalyserPath}" && python3 "${manualVisualizePath}" --output-dir "${centralVisualizationsDir}" --project-id "${projectId}" --debug`;
+            // Run the manual visualization script with standardized filenames
+            const command = `cd "${codebaseAnalyserPath}" && python3 "${manualVisualizePath}" --output-dir "${centralVisualizationsDir}" --project-id "${projectId}" --standardized-names --replace-existing --debug`;
             console.log(`Running command: ${command}`);
 
             // Send a message to the user that we're generating visualizations
@@ -544,6 +553,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             });
         }, 3000);
 
+        // Add a completion message after a longer delay
+        setTimeout(() => {
+            webview.postMessage({
+                command: commands.ADD_MESSAGE,
+                text: `Great! Codebase analysis completed successfully. You can now use the "Show Visualizations" button to see code relationships.`,
+                isUser: false
+            });
+        }, 6000);
+
         // Execute the command to sync the codebase
         try {
             vscode.commands.executeCommand('extension-v1.syncCodebase');
@@ -558,12 +576,26 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
 
     private _handleAttachFile(webview: vscode.Webview) {
+        // Get the current workspace folder
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            webview.postMessage({
+                command: commands.ADD_MESSAGE,
+                text: 'Error: No workspace folder is open. Please open a folder first.',
+                isUser: false
+            });
+            return;
+        }
+
+        const workspaceFolder = workspaceFolders[0].uri.fsPath;
+        const projectId = path.basename(workspaceFolder);
+
         // Execute the command to attach a file
         vscode.window.showOpenDialog({
             canSelectMany: false,
             openLabel: 'Attach',
             filters: {
-                'Text Files': ['txt', 'md', 'json', 'js', 'ts', 'py', 'java', 'c', 'cpp', 'h', 'hpp', 'cs', 'go', 'rs', 'rb']
+                'Text Files': ['txt'] // Only allow .txt files
             }
         }).then(files => {
             if (files && files.length > 0) {
@@ -573,11 +605,32 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 try {
                     const fileContent = fs.readFileSync(filePath, 'utf8');
 
+                    // Get the path to the business requirements directory
+                    const extensionPath = this._extensionUri.fsPath;
+                    const workspaceRoot = path.dirname(extensionPath);
+                    const businessReqDir = path.join(workspaceRoot, 'data', 'projects', projectId, 'requirements');
+
+                    // Create the directory if it doesn't exist
+                    if (!fs.existsSync(businessReqDir)) {
+                        fs.mkdirSync(businessReqDir, { recursive: true });
+                    }
+
+                    // Save the file to the business requirements directory
+                    const destPath = path.join(businessReqDir, fileName);
+                    fs.writeFileSync(destPath, fileContent, 'utf8');
+
                     // Add a message showing the attached file
                     webview.postMessage({
                         command: commands.ADD_MESSAGE,
                         text: `Attached file: ${fileName}`,
                         isUser: true
+                    });
+
+                    // Add a message showing where the file was saved
+                    webview.postMessage({
+                        command: commands.ADD_MESSAGE,
+                        text: `File saved to: ${destPath}`,
+                        isUser: false
                     });
 
                     // Add the file content as a message
@@ -586,10 +639,13 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                         text: `File content:\n\`\`\`\n${fileContent}\n\`\`\``,
                         isUser: false
                     });
+
+                    // Process the business requirements
+                    vscode.commands.executeCommand('extension-v1.processBusinessRequirements', destPath);
                 } catch (error: unknown) {
                     webview.postMessage({
                         command: commands.ADD_MESSAGE,
-                        text: `Error reading file: ${error instanceof Error ? error.message : String(error)}`,
+                        text: `Error processing file: ${error instanceof Error ? error.message : String(error)}`,
                         isUser: false
                     });
                 }

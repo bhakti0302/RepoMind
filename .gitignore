@@ -94,6 +94,10 @@ codebase-analyser/.cache/
 # Project specific
 .langchain.db/
 .langchain/
+data/projects/*/
+data/visualizations/
+*testshreya*
+*Testshreya*
 
 # VS Code Extension specific
 *.vsix

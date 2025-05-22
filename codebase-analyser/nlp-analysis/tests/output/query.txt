@@ -1,0 +1,11 @@
+Generated Query
+===============
+
+Business Requirement Display Employees Department Business Requirement Display Employees Department
+
+Objective Filter by Department
+   - Users should be able to enter a department name (e.g., "Engineering", "HR").
+   - The system should display all employees working in that department. Display Details
+   - For each matching employee, display their name, ID, and role.
+
+Suggested Code

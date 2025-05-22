@@ -11,6 +11,7 @@ import { DirectImageDisplay } from './utils/directImageDisplay';
 import { logger, LogLevel } from './utils/logger';
 import { CodebaseAnalyzerLogger } from './utils/codebaseAnalyzerLogger';
 import { TestVisualizations } from './test/testVisualizations';
+import { BusinessRequirementsProcessor } from './utils/businessRequirementsProcessor';
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
@@ -83,6 +84,102 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.commands.executeCommand('workbench.view.repomind-container');
         }, 100);
         statusBar.setReady('RepoMind is ready');
+    });
+
+    // Process business requirements command
+    let processBusinessRequirementsCommand = vscode.commands.registerCommand('extension-v1.processBusinessRequirements', (filePath: string) => {
+        statusBar.setWorking('Processing business requirements...');
+
+        // Focus our chat view without affecting other extensions
+        setTimeout(() => {
+            vscode.commands.executeCommand('workbench.view.repomind-container');
+        }, 100);
+
+        // Show a message in the chat view
+        if (chatViewProvider) {
+            chatViewProvider.sendMessageToWebviews({
+                command: 'addMessage',
+                text: `Processing business requirements from ${path.basename(filePath)}...`,
+                isUser: false,
+                isLoading: true,
+                loadingType: 'processing'
+            });
+
+            // Add a more detailed message about what's happening
+            setTimeout(() => {
+                chatViewProvider.sendMessageToWebviews({
+                    command: 'addMessage',
+                    text: `Analyzing requirements using NLP techniques...`,
+                    isUser: false
+                });
+            }, 1000);
+
+            setTimeout(() => {
+                chatViewProvider.sendMessageToWebviews({
+                    command: 'addMessage',
+                    text: `Retrieving relevant code context...`,
+                    isUser: false
+                });
+            }, 3000);
+        }
+
+        // Create a BusinessRequirementsProcessor instance
+        const businessRequirementsProcessor = new BusinessRequirementsProcessor(context.extensionPath);
+
+        // Process the business requirements file
+        businessRequirementsProcessor.processRequirementsFile(filePath, (result) => {
+            if (result.status === 'error') {
+                statusBar.setError('Error processing requirements');
+                vscode.window.showErrorMessage(`Error processing business requirements: ${result.message}`);
+
+                if (chatViewProvider) {
+                    chatViewProvider.sendMessageToWebviews({
+                        command: 'addMessage',
+                        text: `Error processing business requirements: ${result.message}`,
+                        isUser: false
+                    });
+                }
+
+                // If there's a log file, show a button to view it
+                if (result.logFile) {
+                    vscode.window.showErrorMessage(
+                        'Error processing business requirements. See error log for details.',
+                        'View Error Log'
+                    ).then(selection => {
+                        if (selection === 'View Error Log') {
+                            ErrorLogger.showErrorLog(result.logFile);
+                        }
+                    });
+                }
+            } else {
+                statusBar.setReady('Requirements processed');
+                vscode.window.showInformationMessage('Business requirements processed successfully!');
+
+                if (chatViewProvider) {
+                    // Show the generated code in the chat view
+                    chatViewProvider.sendMessageToWebviews({
+                        command: 'addMessage',
+                        text: `Business requirements processed successfully!`,
+                        isUser: false
+                    });
+
+                    // Show the generated code
+                    if (result.generatedCode) {
+                        chatViewProvider.sendMessageToWebviews({
+                            command: 'addMessage',
+                            text: `Generated code:\n\`\`\`\n${result.generatedCode}\n\`\`\``,
+                            isUser: false
+                        });
+                    } else {
+                        chatViewProvider.sendMessageToWebviews({
+                            command: 'addMessage',
+                            text: `No code was generated. Please check the requirements file and try again.`,
+                            isUser: false
+                        });
+                    }
+                }
+            }
+        });
     });
 
     let analyzeRequirementsCommand = vscode.commands.registerCommand('extension-v1.analyzeRequirements', async () => {
@@ -429,7 +526,32 @@ Error running codebase analysis:
                     vscode.commands.executeCommand('workbench.view.repomind-container');
                 }, 100);
 
-                // TODO: Add the file content to the chat
+                // Check if this is a business requirements file
+                const isRequirementsFile = fileName.toLowerCase().includes('requirement') ||
+                                          fileContent.toLowerCase().includes('requirement') ||
+                                          fileContent.toLowerCase().includes('user story') ||
+                                          fileContent.toLowerCase().includes('feature request');
+
+                if (isRequirementsFile) {
+                    // Process the business requirements file
+                    vscode.commands.executeCommand('extension-v1.processBusinessRequirements', filePath);
+                } else {
+                    // Add the file content to the chat
+                    if (chatViewProvider) {
+                        chatViewProvider.sendMessageToWebviews({
+                            command: 'addMessage',
+                            text: `Attached file: ${fileName}`,
+                            isUser: true
+                        });
+
+                        chatViewProvider.sendMessageToWebviews({
+                            command: 'addMessage',
+                            text: `File content:\n\`\`\`\n${fileContent}\n\`\`\``,
+                            isUser: false
+                        });
+                    }
+                }
+
                 console.log(`Attached file: ${fileName}`);
                 console.log(`Content: ${fileContent.substring(0, 100)}...`);
             } catch (error) {
@@ -1602,6 +1724,7 @@ Error running codebase analysis:
 
     // Add commands to subscriptions
     context.subscriptions.push(startAssistantCommand);
+    context.subscriptions.push(processBusinessRequirementsCommand);
     context.subscriptions.push(analyzeRequirementsCommand);
     context.subscriptions.push(generateCodeCommand);
     context.subscriptions.push(openChatViewCommand);

@@ -1,0 +1,52 @@
+Vector Search Results
+====================
+
+Query: employee management system
+Number of results: 5
+
+Result 1:
+  Score: 0.1305308920401824
+  File: /Users/shreyah/Documents/Projects/SAP/testshreya/src/Order.java
+  Type: method_declaration
+  Content: public void processShipping() {
+        // TO DO: Implement shipping processing logic (e.g., integra...
+
+Result 2:
+  Score: 0.1148671849953605
+  File: /Users/shreyah/Documents/Projects/SAP/testshreya/src/Order.java
+  Type: method_declaration
+  Content: public void calculateShippingCost() {
+        // TO DO: Implement shipping cost calculation logic ba...
+
+Result 3:
+  Score: 0.03418666220100015
+  File: /Users/shreyah/Documents/Projects/SAP/testshreya/src/Order.java
+  Type: class_declaration
+  Content: public class Order {
+    private int id;
+    private Customer customer;
+    private List<Product> pr...
+
+Result 4:
+  Score: 0.031045185133881218
+  File: /Users/shreyah/Documents/Projects/SAP/testshreya/src/Order.java
+  Type: file
+  Content: import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * Order class repres...
+
+Result 5:
+  Score: 0.02991332942587513
+  File: /Users/shreyah/Documents/Projects/SAP/testshreya/User.java
+  Type: file
+  Content: package com.example.testshreya;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * User ent...
+
