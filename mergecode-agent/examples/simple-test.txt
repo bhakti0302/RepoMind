@@ -1,1 +1,0 @@
-Add a method to Example.java that counts the occurrences of a character in a string.
