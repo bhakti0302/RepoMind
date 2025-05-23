@@ -144,6 +144,85 @@ class LLMNode:
             print("ERROR: LLM API call failed")
             raise
 
+    def interpret_full_instructions(self, instruction_text: str) -> List[str]:
+        """
+        Send the entire instructions file to the LLM for initial interpretation.
+        The LLM will analyze the file and divide it into logical blocks.
+
+        Args:
+            instruction_text: The full instructions as a string
+
+        Returns:
+            A list of instruction blocks
+        """
+        # Create a prompt for the LLM to interpret the full instructions
+        prompt = f"""
+        You are an expert code modification assistant. Your task is to analyze a set of instructions for modifying code and divide them into logical blocks.
+
+        Here are the instructions:
+
+        ```
+        {instruction_text}
+        ```
+
+        Please analyze these instructions carefully using natural language processing techniques to understand:
+        1. The overall intent and purpose of the instructions
+        2. The relationships between different parts of the instructions
+        3. Which instructions are related and should be grouped together
+        4. The specific code modifications being requested
+        5. Any dependencies between different modifications
+
+        IMPORTANT GUIDELINES:
+        1. Use natural language understanding to identify logical groupings
+        2. Consider the context and relationships between instructions
+        3. Group related modifications together, even if they're not explicitly connected
+        4. Keep instructions that depend on each other in the same block
+        5. Include all necessary context in each block
+        6. Preserve exact file paths and code snippets
+        7. Maintain the original formatting of code
+        8. Do not summarize or abbreviate code
+        9. Make each block self-contained and independently executable
+
+        Return a JSON array of instruction blocks. Each block should be a string containing the complete instructions for that task.
+
+        Example response:
+        [
+          "Create a new file called config.json with the following content: {{...}}",
+          "Update the README.md file to include installation instructions"
+        ]
+
+        Only include the JSON array in your response, nothing else.
+        """
+
+        # Call the LLM API
+        print("Analyzing full instructions and dividing into logical blocks...")
+        response = self._call_llm_api(prompt)
+
+        try:
+            # Parse the JSON response
+            blocks = json.loads(response)
+            if not isinstance(blocks, list):
+                raise ValueError("Expected a list of instruction blocks")
+
+            print(f"Divided instructions into {len(blocks)} logical blocks")
+            return blocks
+        except Exception as e:
+            print(f"Error parsing LLM response: {str(e)}")
+            # Try to extract a JSON array from the response
+            json_match = re.search(r'\[(.*)\]', response, re.DOTALL)
+            if json_match:
+                try:
+                    blocks_str = f"[{json_match.group(1)}]"
+                    blocks = json.loads(blocks_str)
+                    print(f"Divided instructions into {len(blocks)} logical blocks")
+                    return blocks
+                except:
+                    pass
+
+            # If all else fails, treat the entire instructions as a single block
+            print("Could not parse LLM response, treating instructions as a single block")
+            return [instruction_text]
+
     def parse_instructions(self, instructions: str) -> List[Dict[str, Any]]:
         """
         Parse the instructions and convert them to structured actions.
@@ -155,6 +234,9 @@ class LLMNode:
             A list of structured actions
         """
         try:
+            # First, send the entire instructions file to the LLM for interpretation
+            instruction_blocks = self.interpret_full_instructions(instructions)
+
             # Import the workflow
             from instruction_workflow import create_instruction_workflow, InstructionState
 
@@ -164,7 +246,7 @@ class LLMNode:
             # Initialize the state
             initial_state = {
                 "instruction_text": instructions,
-                "instruction_blocks": [],
+                "instruction_blocks": instruction_blocks,
                 "current_block_index": 0,
                 "actions": [],
                 "context": {}
@@ -286,20 +368,23 @@ class LLMNode:
         for modifying a codebase and convert them into structured actions.
 
         CRITICAL INSTRUCTIONS - YOU MUST FOLLOW THESE EXACTLY:
-        1. ONLY ADD THE EXACT CODE MENTIONED IN THE INSTRUCTION. DO NOT ADD ANY OTHER CODE.
-        2. DO NOT CREATE ANY NEW METHODS, FIELDS, OR FUNCTIONALITY THAT IS NOT EXPLICITLY MENTIONED IN THE INSTRUCTION.
-        3. DO NOT BE CREATIVE OR HELPFUL BY ADDING EXTRA FUNCTIONALITY. ONLY ADD WHAT IS EXPLICITLY REQUESTED.
-        4. IF THE INSTRUCTION SAYS TO ADD SPECIFIC FIELDS OR METHODS, ADD ONLY THOSE SPECIFIC FIELDS OR METHODS.
-        5. DO NOT INFER OR ASSUME ADDITIONAL FUNCTIONALITY THAT MIGHT BE USEFUL.
+        1. Use natural language understanding to determine the intent of the instruction
+        2. Consider all possible ways the instruction might be phrased
+        3. Look for code snippets or complete file content in the instruction
+        4. Determine if the instruction is asking for a complete file replacement or specific modifications
+        5. For partial modifications, identify the exact location and type of change needed
+        6. Ensure the changes maintain code structure and formatting
+        7. Only include code that is explicitly mentioned or clearly implied by the instruction
+        8. Do not add any additional functionality or code that wasn't requested
 
         IMPORTANT GUIDELINES:
-        1. Read and understand multi-step instructions as a complete sequence.
-        2. When an instruction mentions creating a file at a specific path, use EXACTLY that path.
-        3. If subsequent steps refer to adding code to "the file" or "above file", connect this to the previously mentioned file path.
-        4. Code blocks following instructions are meant to be added to the most recently mentioned file, not created as separate files.
-        5. Instructions that span multiple lines or paragraphs should be treated as a single continuous instruction.
-        6. Pay special attention to file paths mentioned in the instructions.
-        7. If a file path is enclosed in backticks like `path/to/file.java`, use that exact path.
+        1. Read and understand multi-step instructions as a complete sequence
+        2. When an instruction mentions a file path, use exactly that path
+        3. If subsequent steps refer to "the file" or similar, connect this to the previously mentioned file path
+        4. Code blocks following instructions are meant to be added to the most recently mentioned file
+        5. Instructions that span multiple lines or paragraphs should be treated as a single continuous instruction
+        6. Pay special attention to file paths mentioned in the instructions
+        7. If a file path is enclosed in backticks like `path/to/file.java`, use that exact path
 
         The instruction is:
 
@@ -518,236 +603,102 @@ class LLMNode:
 
     def analyze_file_for_modification(self, instruction: str, file_path: str, file_content: str) -> Dict[str, Any]:
         """
-        Analyze a file to determine how to modify it based on an instruction.
+        Analyze a file to determine how to modify it based on the instruction.
 
         Args:
-            instruction: The instruction describing the modification
-            file_path: Path to the file being modified
+            instruction: The instruction for modifying the file
+            file_path: Path to the file
             file_content: Current content of the file
 
         Returns:
-            A dictionary with modification details including line numbers
+            A dictionary containing the modification details
         """
-        # Check if the instruction contains code snippets
-        code_snippets = re.findall(r'```(?:\w+)?\n(.*?)```', instruction, re.DOTALL)
-        if code_snippets:
-            return self._analyze_file_with_code_snippets(instruction, file_path, file_content, code_snippets)
-
-        # Count the number of lines in the file
-        line_count = file_content.count("\n") + 1
-
-        # Find the last closing brace for Java files
-        last_brace_line = 0
-        if file_path.endswith(".java"):
-            lines = file_content.splitlines()
-            for i, line in enumerate(lines):
-                if "}" in line:
-                    last_brace_line = i + 1
-
-        # Create the prompt
+        # Analyze the file to determine how to modify it
         prompt = f"""
-        You are a code modification assistant. Your task is to analyze a file and determine how to modify it based on an instruction.
+        You are an expert code modification assistant. Your task is to analyze a file and determine how to modify it based on the given instruction.
 
-        The instruction is:
-
-        {instruction}
-
-        The current content of the file '{file_path}' is:
-
+        File Path: {file_path}
+        Current Content:
         ```
         {file_content}
         ```
 
-        Analyze the file carefully to understand its structure. Then determine:
-        1. Exactly what lines need to be modified
-        2. How they should be modified (add, replace, delete)
-        3. The new content that should be added or used for replacement
+        Instruction:
+        ```
+        {instruction}
+        ```
 
-        CRITICAL INSTRUCTIONS - YOU MUST FOLLOW THESE EXACTLY:
-        1. ONLY ADD THE EXACT CODE MENTIONED IN THE INSTRUCTION. DO NOT ADD ANY OTHER CODE.
-        2. DO NOT CREATE ANY NEW METHODS, FIELDS, OR FUNCTIONALITY THAT IS NOT EXPLICITLY MENTIONED IN THE INSTRUCTION.
-        3. DO NOT BE CREATIVE OR HELPFUL BY ADDING EXTRA FUNCTIONALITY. ONLY ADD WHAT IS EXPLICITLY REQUESTED.
-        4. IF THE INSTRUCTION SAYS TO ADD SPECIFIC FIELDS OR METHODS, ADD ONLY THOSE SPECIFIC FIELDS OR METHODS.
-        5. DO NOT INFER OR ASSUME ADDITIONAL FUNCTIONALITY THAT MIGHT BE USEFUL.
-        6. IF THE INSTRUCTION SAYS TO UPDATE THE toString METHOD, FIND THE EXISTING toString METHOD AND REPLACE IT COMPLETELY.
-           DO NOT ADD A NEW toString METHOD. LOOK FOR LINES CONTAINING "@Override" AND "toString".
+        Please analyze the file and determine the appropriate modifications. If the instruction involves adding a method, ensure it is placed at the appropriate location (e.g., imports at the top, declarations at the top, methods in the appropriate class).
 
-        IMPORTANT GUIDELINES:
-        - When adding a new method to a Java file, add it INSIDE the class, before the last closing brace
-        - Count the lines carefully and make sure your line numbers are valid
-        - The file has exactly {line_count} lines
-        - Line numbers must be between 1 and {line_count} inclusive
-        - For Java files, the last line with the closing brace of the class is line {last_brace_line}
-        - Maintain proper indentation and code structure
-        - Ensure the modification integrates well with the existing code
-
-        Return a JSON object with the following fields:
-        - modification_type: One of "add_after_line", "add_before_line", "replace_lines", "delete_lines"
-        - start_line: The line number where the modification should start (1-based)
-        - end_line: The line number where the modification should end (1-based)
-        - new_content: The new content to add or replace with
+        Return a JSON object with the following structure:
+        {{
+            "modification_type": "replace_file",
+            "new_content": "The complete new content of the file after modifications"
+        }}
 
         Only include the JSON object in your response, nothing else.
         """
 
-        print("\n" + "="*80)
-        print("ANALYZING FILE FOR MODIFICATION:")
-        print("="*80)
-        print(f"Instruction: {instruction}")
-        print(f"File: {file_path}")
-        print("="*80 + "\n")
-
         # Call the LLM API
-        content = self._call_llm_api(prompt)
+        response = self._call_llm_api(prompt)
 
-        # Print the raw LLM response
-        print("\n" + "="*80)
-        print("RAW LLM RESPONSE:")
-        print("="*80)
-        print(content)
-        print("="*80 + "\n")
-
-        # Parse the JSON response
+        # Parse the response
         try:
-            # Try to extract JSON from the response
-            json_match = re.search(r'({.*})', content, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
-            else:
-                json_str = content
-
-            # Parse the JSON
-            modification = json.loads(json_str)
-
-            # Print the parsed modification
-            print("\n" + "="*80)
-            print("PARSED MODIFICATION:")
-            print("="*80)
-            print(json.dumps(modification, indent=2))
-            print("="*80 + "\n")
-
+            modification = json.loads(response)
             return modification
+        except json.JSONDecodeError:
+            raise ValueError(f"Could not parse LLM response as JSON: {response}")
 
-        except Exception as e:
-            print(f"Error analyzing file for modification: {str(e)}")
-            raise
-
-    def _analyze_file_with_code_snippets(self, instruction: str, file_path: str, file_content: str, code_snippets: List[str]) -> Dict[str, Any]:
+    def _show_git_diff(self, file_path: str, old_content: str, new_content: str) -> str:
         """
-        Analyze a file for modification with code snippets.
+        Show a git-style diff of the changes in the actual repository with colored output.
 
         Args:
-            instruction: The instruction describing the modification
-            file_path: Path to the file being modified
-            file_content: Current content of the file
-            code_snippets: Code snippets extracted from the instruction
+            file_path: Path to the file
+            old_content: Old content of the file
+            new_content: New content of the file
 
         Returns:
-            A dictionary with modification details including line numbers
+            The diff output as a string, or empty string if no changes
         """
-        # Count the number of lines in the file
-        line_count = file_content.count("\n") + 1
+        import tempfile
+        import subprocess
+        import os
+        import re
 
-        # Find the last closing brace for Java files
-        last_brace_line = 0
-        if file_path.endswith(".java"):
-            lines = file_content.splitlines()
-            for i, line in enumerate(lines):
-                if "}" in line:
-                    last_brace_line = i + 1
+        # Get the repository root directory
+        repo_root = self.codebase_path
 
-        # Create the prompt
-        prompt = f"""
-        You are a code modification assistant. Your task is to analyze a file and determine how to modify it based on an instruction that includes specific code snippets.
+        # Create a temporary file for the new content
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            temp_file.write(new_content)
+            temp_file_path = temp_file.name
 
-        The instruction is:
+        # Stage the changes in git
+        subprocess.run(["git", "add", file_path], cwd=repo_root, check=True)
 
-        {instruction}
+        # Run git diff to show the staged changes
+        diff_output = subprocess.run(["git", "diff", "--cached"], cwd=repo_root, capture_output=True, text=True).stdout
 
-        The code snippets to add are:
+        # Restore the original file content
+        with open(file_path, 'w') as f:
+            f.write(old_content)
 
-        {json.dumps(code_snippets, indent=2)}
+        # Clean up the temporary file
+        os.unlink(temp_file_path)
 
-        The current content of the file '{file_path}' is:
-
-        ```
-        {file_content}
-        ```
-
-        Analyze the file carefully to understand its structure. Then determine:
-        1. Exactly where each code snippet should be added
-        2. How they should be added (add, replace, delete)
-
-        CRITICAL INSTRUCTIONS - YOU MUST FOLLOW THESE EXACTLY:
-        1. ONLY ADD THE EXACT CODE SNIPPETS PROVIDED IN THE INSTRUCTION. DO NOT ADD ANY OTHER CODE.
-        2. DO NOT CREATE ANY NEW METHODS, FIELDS, OR FUNCTIONALITY THAT IS NOT EXPLICITLY MENTIONED IN THE INSTRUCTION.
-        3. DO NOT BE CREATIVE OR HELPFUL BY ADDING EXTRA FUNCTIONALITY. ONLY ADD WHAT IS EXPLICITLY REQUESTED.
-        4. IF THE INSTRUCTION SAYS TO ADD SPECIFIC FIELDS OR METHODS, ADD ONLY THOSE SPECIFIC FIELDS OR METHODS.
-        5. DO NOT INFER OR ASSUME ADDITIONAL FUNCTIONALITY THAT MIGHT BE USEFUL.
-        6. IF THE INSTRUCTION SAYS TO UPDATE THE toString METHOD, FIND THE EXISTING toString METHOD AND REPLACE IT COMPLETELY.
-           DO NOT ADD A NEW toString METHOD. LOOK FOR LINES CONTAINING "@Override" AND "toString".
-
-        IMPORTANT GUIDELINES:
-        - When adding new fields to a Java class, add them after the existing fields and before the constructor
-        - When adding new methods to a Java class, add them inside the class, before the last closing brace
-        - If asked to replace an existing method (like toString), find the method and replace it completely
-        - Count the lines carefully and make sure your line numbers are valid
-        - The file has exactly {line_count} lines
-        - Line numbers must be between 1 and {line_count} inclusive
-        - For Java files, the last line with the closing brace of the class is line {last_brace_line}
-        - Maintain proper indentation and code structure
-
-        Return a JSON object with the following fields:
-        - modification_type: One of "add_after_line", "add_before_line", "replace_lines", "delete_lines"
-        - start_line: The line number where the modification should start (1-based)
-        - end_line: The line number where the modification should end (1-based)
-        - new_content: The new content to add or replace with (use the exact code snippets provided)
-
-        Only include the JSON object in your response, nothing else.
-        """
-
-        print("\n" + "="*80)
-        print("ANALYZING FILE FOR MODIFICATION WITH CODE SNIPPETS:")
-        print("="*80)
-        print(f"Instruction: {instruction}")
-        print(f"File: {file_path}")
-        print(f"Code Snippets: {len(code_snippets)}")
-        print("="*80 + "\n")
-
-        # Call the LLM API
-        content = self._call_llm_api(prompt)
-
-        # Print the raw LLM response
-        print("\n" + "="*80)
-        print("RAW LLM RESPONSE:")
-        print("="*80)
-        print(content)
-        print("="*80 + "\n")
-
-        # Parse the JSON response
-        try:
-            # Try to extract JSON from the response
-            json_match = re.search(r'({.*})', content, re.DOTALL)
-            if json_match:
-                json_str = json_match.group(1)
+        # Highlight added lines in green
+        diff_lines = diff_output.splitlines()
+        highlighted_diff = []
+        for line in diff_lines:
+            if line.startswith('+'):
+                highlighted_diff.append(f"\033[92m{line}\033[0m")  # Green for added lines
+            elif line.startswith('-'):
+                highlighted_diff.append(f"\033[91m{line}\033[0m")  # Red for removed lines
             else:
-                json_str = content
+                highlighted_diff.append(line)
 
-            # Parse the JSON
-            modification = json.loads(json_str)
-
-            # Print the parsed modification
-            print("\n" + "="*80)
-            print("PARSED MODIFICATION:")
-            print("="*80)
-            print(json.dumps(modification, indent=2))
-            print("="*80 + "\n")
-
-            return modification
-
-        except Exception as e:
-            print(f"Error analyzing file for modification with code snippets: {str(e)}")
-            raise
+        return '\n'.join(highlighted_diff)
 
     def process_instructions(self, instructions_path: str) -> List[Dict[str, Any]]:
         """
@@ -761,3 +712,10 @@ class LLMNode:
         """
         instructions = self.read_instructions(instructions_path)
         return self.parse_instructions(instructions)
+
+    def analyze_instruction_block(self, instruction_block: str) -> dict:
+        """
+        Analyze a single instruction block and return a structured action.
+        """
+        # Let the LLM handle the parsing logic entirely
+        return self._llm_parse_instruction_block(instruction_block)[0]

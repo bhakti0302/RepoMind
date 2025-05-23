@@ -30,9 +30,15 @@ def create_instruction_workflow(llm_node):
     # Create the graph
     workflow = StateGraph(InstructionState)
 
-    # Node 1: Analyze the entire instruction file and divide into blocks
+    # Node 1: Use the instruction blocks provided by the LLM
     def analyze_instructions(state: InstructionState) -> InstructionState:
-        """Analyze the entire instruction file and divide it into logical blocks."""
+        """Use the instruction blocks provided by the LLM."""
+        # Check if we already have instruction blocks from the LLM
+        if state["instruction_blocks"] and len(state["instruction_blocks"]) > 0:
+            # We already have blocks, so just return the state
+            return state
+
+        # If we don't have blocks, use the original method to create them
         instruction_text = state["instruction_text"]
 
         # Prompt for the LLM to analyze the instructions
@@ -63,6 +69,8 @@ def create_instruction_workflow(llm_node):
         3. If multiple steps are part of the same logical task, keep them in the same block
         4. Make sure each block is complete and can be understood on its own
         5. Do not split code blocks across different instruction blocks
+        6. INCLUDE THE COMPLETE CODE SNIPPETS in each block, not just references to them
+        7. DO NOT use placeholders like "Ellipsis" or "..." - include the full code
 
         Return a JSON array of instruction blocks. Each block should be a string containing the complete instructions for that block.
 
@@ -142,6 +150,13 @@ def create_instruction_workflow(llm_node):
         4. IF THE INSTRUCTION SAYS TO ADD SPECIFIC FIELDS OR METHODS, ADD ONLY THOSE SPECIFIC FIELDS OR METHODS.
         5. DO NOT INFER OR ASSUME ADDITIONAL FUNCTIONALITY THAT MIGHT BE USEFUL.
 
+        IMPORTANT:
+        1. EXTRACT THE COMPLETE CODE SNIPPETS from the instruction block
+        2. DO NOT use placeholders like "Ellipsis" or "..." - include the full code
+        3. Make sure to include the EXACT code from the instruction, not a summary or interpretation
+        4. If the instruction includes Java code, make sure to include all method signatures, annotations, and braces
+        5. For modify_file actions, include the FULL code to be added or modified in the instruction field
+
         Based on this instruction and the context, determine what file operation is being requested.
         The instruction might contain code snippets that need to be added to a file.
 
@@ -154,7 +169,7 @@ def create_instruction_workflow(llm_node):
         - action: Required. The type of action (create_file, modify_file, delete_file)
         - file_path: Required. The path to the file
         - content: The content to write (for create_file)
-        - instruction: For modify_file actions, include the original instruction for file analysis
+        - instruction: For modify_file actions, include the COMPLETE code to be added or modified
 
         Only include the JSON object in your response, nothing else.
         """
