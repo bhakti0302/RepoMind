@@ -1,0 +1,28 @@
+{
+  "classes": [
+    "Main",
+    "EmployeeService"
+  ],
+  "methods": [
+    "getAllEmployees",
+    "Employee",
+    "EmployeeService",
+    "getDepartment",
+    "main",
+    "addEmployee"
+  ],
+  "variables": [
+    "service",
+    "employees",
+    "department"
+  ],
+  "imports": [
+    "com.company.model.Employee",
+    "com.company.service.EmployeeService"
+  ],
+  "interfaces": [],
+  "annotations": [],
+  "packages": [
+    "com.company.app"
+  ]
+}

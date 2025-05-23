@@ -1,0 +1,121 @@
+{
+  "name": "extension-v1",
+  "displayName": "RepoMind",
+  "description": "RepoMind - An AI-powered coding assistant that analyzes business requirements, understands your codebase, and generates code using LLMs",
+  "version": "0.0.1",
+  "publisher": "repomind",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Machine Learning",
+    "Snippets"
+  ],
+  "keywords": [
+    "ai",
+    "coding assistant",
+    "code generation",
+    "llm",
+    "agentic ai"
+  ],
+  "activationEvents": [
+    "onCommand:extension-v1.startAssistant",
+    "onCommand:extension-v1.analyzeRequirements",
+    "onCommand:extension-v1.generateCode",
+    "onCommand:extension-v1.openChatView",
+    "onView:extension-v1.chatView"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension-v1.startAssistant",
+        "title": "Start AI Coding Assistant"
+      },
+      {
+        "command": "extension-v1.analyzeRequirements",
+        "title": "Analyze Business Requirements"
+      },
+      {
+        "command": "extension-v1.generateCode",
+        "title": "Generate Code from Requirements"
+      },
+      {
+        "command": "extension-v1.openChatView",
+        "title": "Open AI Assistant Chat"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ai-coding-assistant",
+          "title": "RepoMind",
+          "icon": "media/robot.svg"
+        }
+      ]
+    },
+    "views": {
+      "ai-coding-assistant": [
+        {
+          "type": "webview",
+          "id": "extension-v1.chatView",
+          "name": "RepoMind Chat"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "RepoMind",
+      "properties": {
+        "extension-v1.llmProvider": {
+          "type": "string",
+          "default": "openrouter",
+          "enum": [
+            "openrouter",
+            "openai"
+          ],
+          "description": "The LLM provider to use for code generation"
+        },
+        "extension-v1.modelName": {
+          "type": "string",
+          "default": "llama",
+          "description": "The model name to use for code generation"
+        },
+        "extension-v1.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for the LLM provider"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "npx webpack",
+    "watch": "npx webpack --watch",
+    "package": "npx webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test",
+    "start": "npm run compile && code --new-window --extensionDevelopmentPath=/Users/shreyah/Documents/Projects/SAP/RepoMind/extension-v1 /Users/shreyah/Documents/Projects/SAP/testshreya",
+    "testshreya": "npm run compile && code --new-window --extensionDevelopmentPath=/Users/shreyah/Documents/Projects/SAP/RepoMind/extension-v1 /Users/shreyah/Documents/Projects/SAP/testshreya"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.17.32",
+    "@types/vscode": "^1.99.1",
+    "@vscode/codicons": "^0.0.35",
+    "copy-webpack-plugin": "^13.0.0",
+    "mocha": "^11.2.2",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.3",
+    "webpack": "^5.99.7",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "natural": "^8.0.1"
+  }
+}

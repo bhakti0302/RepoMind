@@ -1,0 +1,29 @@
+Query: Business Requirement: Employee Search Functionality
+
+Objective: Implement a search feature that allows users to find employees based on various criteria.
+
+Functional Requirements:
+1. Search by Name
+   - Users should be able to search for employees by first name, last name, or full name
+   - The search should support partial name matching (e.g., "Jo" should find "John" and "Joseph")
+   - The search should be case-insensitive
+
+2. Search by Department
+   - Users should be able to filter employees by their department
+   - The system should display all employees in the selected department
+
+3. Search by Skills
+   - Users should be able to search for employees with specific skills
+   - The system should support searching for multiple skills at once
+   - Results should be ranked by the number of matching skills
+
+4. Search Results Display
+   - For each matching employee, display their name, ID, department, and role
+   - Include a profile picture if available
+   - Provide an option to view the employee's full profile
+
+Suggested Code Enhancements:
+- Add a `searchEmployees(String criteria, SearchType type)` method in the `EmployeeManager` class
+- Implement an enum `SearchType` with values NAME, DEPARTMENT, SKILLS, ALL
+- Create a `SearchResult` class to store and rank search results
+- Add a UI component for the search functionality in the main application

@@ -81,11 +81,23 @@ __pycache__/
 
 # LanceDB files
 lancedb/
+.lancedb/
 *.lance
+
+# Model cache directories
+.cache/
+codebase-analyser/.cache/
+**/.cache/
+.huggingface/
+.transformers_cache/
 
 # Project specific
 .langchain.db/
 .langchain/
+data/projects/*/
+data/visualizations/
+*testshreya*
+*Testshreya*
 
 # VS Code Extension specific
 *.vsix

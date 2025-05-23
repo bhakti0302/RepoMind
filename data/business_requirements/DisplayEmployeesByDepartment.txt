@@ -1,0 +1,15 @@
+Query: Business Requirement: Display Employees by Department  
+
+Objective: Allow the system to list all employees belonging to a specific department. 
+
+Functional Requirements: 
+1. Filter by Department
+   - Users should be able to enter a department name (e.g., "Engineering", "HR").
+   - The system should display all employees working in that department. 
+
+2. Display Details
+   - For each matching employee, display their name, ID, and role. 
+
+Suggested Code Enhancements:
+- Add a method `getEmployeesByDepartment(String department)` in the `EmployeeManager` class. 
+- Use this method in the main class to demonstrate filtering functionality.

@@ -1,0 +1,39 @@
+Multi-Hop RAG Test Results
+=========================
+
+Query: book author availability
+
+Architectural Patterns:
+
+Implementation Details:
+  - Book class
+  - LibraryController class
+  - BookService class
+  - Book() method
+  - LibraryController() method
+  - checkAvailability() method
+  - displayBooksByAuthor() method
+
+Related Components:
+  - Book
+  - LibraryController
+  - BookService
+
+Context Sample:
+--- Document 1: library/services/BookService.java ---
+
+public class BookService {
+    private List<Book> books = new ArrayList<>();
+
+    public List<Book> searchByAuthor(String author) {
+        return books.stream()
+            .filter(book -> book.getAuthor().equalsIgnoreCase(author))
+            .collect(Collectors.toList());
+    }
+
+    public boolean checkAvailability(String isbn) {
+        return books.stream()
+            .filter(book -> book.getIsbn().equals(isbn))
+            .findFirst(...
+
+Total Tokens: 228

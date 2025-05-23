@@ -1,0 +1,539 @@
+# RepoMind Codebase Analyser
+
+This service is responsible for analyzing codebases using Tree-sitter, generating semantic code chunks, creating embeddings for the vector database, and building dependency graphs.
+
+## Main Run Scripts
+
+You can choose between two main analysis scripts depending on your needs:
+
+### 1. Complete Codebase Analysis
+
+The main script for analyzing any codebase is `run_codebase_analysis.py`. This script supports multiple programming languages and provides a comprehensive analysis of your codebase.
+
+```bash
+python scripts/run_codebase_analysis.py --repo-path <path_to_repo> [options]
+```
+
+Or use the convenient shell wrapper:
+
+```bash
+./scripts/analyze.sh <path_to_repo> [options]
+```
+
+Options:
+- `--db-path`: Path to the LanceDB database (default: codebase-analyser/.lancedb)
+- `--clear-db`: Clear the database before processing
+- `--minimal-schema`: Use minimal schema for reduced storage
+- `--embedding-model`: Model to use for embeddings (default: microsoft/codebert-base)
+- `--embedding-batch-size`: Batch size for embedding generation (default: 8)
+- `--mock-embeddings`: Use mock embeddings instead of a real model
+- `--visualize`: Generate dependency graph visualization
+- `--output-dir`: Directory to save visualization outputs (default: samples)
+- `--graph-format`: Format for graph visualization (png or dot)
+- `--project-id`: Project ID for multi-project support
+- `--max-files`: Maximum number of files to process (for testing)
+- `--skip-large-files`: Skip files larger than 1MB
+
+Ready-to-run examples with sample projects:
+
+For the complex Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/run_codebase_analysis.py --repo-path samples/complex_java --clear-db --mock-embeddings --visualize
+```
+
+For the simple Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/run_codebase_analysis.py --repo-path samples/java_test_project --clear-db --mock-embeddings --visualize
+```
+
+### 2. Java-Specific Analysis
+
+For Java projects specifically, you can use the `analyze_java.py` script which is optimized for Java code with enhanced parsing capabilities:
+
+```bash
+python scripts/analyze_java.py <path_to_java_project> [options]
+```
+
+Options:
+- `--clear-db`: Clear the database before adding new chunks
+- `--mock-embeddings`: Use mock embeddings instead of generating real ones
+- `--visualize`: Generate visualization of the dependency graph
+- `--project-id`: Project ID for the chunks
+- `--max-files`: Maximum number of files to process (default: 100)
+- `--skip-large-files`: Skip files larger than 1MB
+- `--minimal-schema`: Use minimal schema for the database
+
+Ready-to-run examples with sample projects:
+
+For the complex Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
+```
+
+For the simple Java project:
+```bash
+# Run from the codebase-analyser directory
+python scripts/analyze_java.py samples/java_test_project --clear-db --mock-embeddings --visualize
+```
+
+To run tests on the sample projects:
+```bash
+# Run from the codebase-analyser directory
+python samples/test/run_sample_tests.py
+```
+
+Both scripts will:
+1. Parse all files in the specified directory
+2. Extract code structures and their relationships
+3. Generate embeddings for the code chunks
+4. Store the chunks in the LanceDB database
+5. Generate a visualization of the dependency graph (if requested)
+
+Choose the script that best fits your needs:
+- Use `run_codebase_analysis.py` for multi-language projects or general analysis
+- Use `analyze_java.py` for Java-specific projects with enhanced Java parsing
+
+## Quick Test
+
+Here are some ready-to-run commands to quickly test the system:
+
+```bash
+# Run the complete analysis pipeline with mock embeddings (fast)
+python scripts/analyze_java.py samples/complex_java --clear-db --mock-embeddings --visualize
+
+# Run the analysis on the simple Java project
+python scripts/analyze_java.py samples/java_test_project --clear-db --mock-embeddings --visualize
+
+# Run the general codebase analysis on a sample project
+python scripts/run_codebase_analysis.py --repo-path samples/complex_java --clear-db --mock-embeddings --visualize
+
+# Run the sample tests
+python samples/test/run_sample_tests.py
+
+# Run individual tests
+python -m unittest tests/parsing/test_java_parser_adapter.py
+python -m unittest tests/database/test_database_integration.py
+```
+
+All these commands can be run directly from the codebase-analyser directory without any modifications.
+
+## Key Features
+
+- **AST Parsing**: Tree-sitter integration for multiple languages with specialized Java support
+- **Semantic Code Chunking**: Hierarchical chunking with structural integrity and context preservation
+- **Dependency Analysis**: Comprehensive analysis of relationships between code components
+- **Vector Database**: LanceDB integration for storing and querying code embeddings
+- **Code Embeddings**: Generation using CodeBERT with batch processing and caching
+- **Dependency Graphs**: Optional construction and visualization of code relationships
+- **Command-line Interface**: Tools for various operations including graph visualization
+
+## Setup
+
+1. Create a Python virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Note: When running the code for the first time, model files will be downloaded and cached in the `.cache` directory. This directory is not included in the repository and will be created automatically when needed.
+
+## Quick Start
+
+### Complete Analysis Pipeline
+
+```bash
+# Run the complete analysis pipeline
+./analyze.sh /path/to/repo
+
+# With options
+./analyze.sh /path/to/repo --clear-db --visualize --project-id my-project
+```
+
+### Individual Components
+
+```bash
+# Parse a Java file and generate chunks
+python tests/test_parser.py samples/SimpleClass.java
+
+# Generate embeddings for code chunks
+python tests/test_embeddings.py
+
+# Build a dependency graph from code chunks
+python tests/test_dependency_graph.py
+```
+
+### Visualizing Dependency Graphs
+
+```bash
+# Visualize a dependency graph
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --output-file samples/graph.png
+```
+
+## API Usage
+
+```python
+from codebase_analyser import CodebaseAnalyser
+from codebase_analyser.database import LanceDBManager
+from codebase_analyser.embeddings import EmbeddingGenerator
+
+# Parse a codebase
+analyser = CodebaseAnalyser(repo_path="/path/to/repo")
+analyser.parse()
+chunks = analyser.get_chunks()
+
+# Generate embeddings
+generator = EmbeddingGenerator()
+for chunk in chunks:
+    chunk.embedding = generator.generate_embedding(chunk.content, chunk.language)
+
+# Store in database
+db_manager = LanceDBManager(db_path="codebase-analyser/.lancedb")
+db_manager.add_code_chunks([chunk.to_dict() for chunk in chunks])
+
+# Search for similar code
+query_embedding = generator.generate_embedding("def calculate_sum(a, b):", "python")
+results = db_manager.search_code_chunks(query_embedding, limit=5)
+```
+
+## Java Parsing
+
+The analyser includes specialized support for Java files with two parser implementations:
+
+### Standard Java Parser
+- Basic parsing of Java files
+- Extracts package declarations, imports, classes, fields, and methods
+- Treats each file as a single unit
+
+### Enhanced Java Parser (New)
+- Granular extraction of code elements as separate chunks
+- Hierarchical structure with parent-child relationships
+- Automatic dependency detection between chunks:
+  - Import dependencies
+  - Inheritance relationships (extends)
+  - Interface implementation (implements)
+  - Method calls
+  - Field usage
+- Better support for multi-file projects
+- Improved visualization with more detailed dependency graphs
+
+To test Java parsing:
+
+```bash
+# Test standard Java parser
+python tests/test_java_parser.py /path/to/your/JavaFile.java
+
+# Test enhanced Java parser (automatically used by the analysis service)
+./analyze.sh /path/to/java/project --clear-db --mock-embeddings --visualize
+```
+
+## Testing
+
+All tests are located in the `tests` folder. Run them from the project root:
+
+```bash
+# Basic parsing test
+python tests/test_parser.py /path/to/your/file.ext
+
+# Java-specific parsing
+python tests/test_java_parser.py /path/to/your/JavaFile.java
+
+# Comprehensive Java parsing with AST analysis
+python tests/test_java_parser_comprehensive.py /path/to/your/JavaFile.java
+
+# AST utility functions
+python tests/test_ast_utils.py /path/to/your/file.ext
+
+# Hierarchical code chunking
+python tests/test_hierarchical_chunking.py /path/to/your/file.ext
+
+# Context preservation and structural integrity
+python tests/test_context_preservation.py /path/to/your/file.ext
+
+# Dependency analysis and relationship mapping
+python tests/test_dependency_analysis.py /path/to/your/file.ext
+
+# Visualization utilities
+python tests/test_simple_visualization.py /path/to/your/file.ext
+
+# End-to-end integration test
+python tests/test_end_to_end_integration.py --clear-db
+
+# Custom relevance scoring test
+python tests/test_custom_relevance.py --clear-db --alpha 0.7 --beta 0.3
+```
+
+## Database Operations
+
+```bash
+# Test LanceDB installation and configuration
+python tests/test_lancedb.py
+
+# Clear and recreate tables
+python tests/test_lancedb.py --clear
+
+# Use a custom database path
+python tests/test_lancedb.py --db-path codebase-analyser/.lancedb
+```
+
+## Embedding Operations
+
+```bash
+# Test the embedding generator
+python tests/test_embeddings.py
+
+# Visualize embeddings
+python tests/test_embeddings.py --visualize
+
+# Embed chunks and store in database
+python tests/test_embed_chunks.py
+
+# Clear database before embedding
+python tests/test_embed_chunks.py --clear-db
+
+# Use a specific model
+python tests/test_embed_chunks.py --model microsoft/codebert-base
+```
+
+## Dependency Graph Operations
+
+```bash
+# Build graph
+python -m codebase_analyser.graph.cli build samples/sample_chunks.json --output-file samples/dependency_graph.json
+python -m codebase_analyser.graph.cli build samples/sample_chunks.json --db-path codebase-analyser/.lancedb --store-in-db
+
+# Visualize graph
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --output-file samples/dependency_graph.png
+python -m codebase_analyser.graph.cli visualize samples/dependency_graph.json --format dot --layout circular --node-size 1500
+
+# Query dependencies
+python -m codebase_analyser.graph.cli query
+python -m codebase_analyser.graph.cli query --source-id "file:sample1.java" --type "CONTAINS"
+
+# Test graph construction
+python tests/test_dependency_graph.py --input samples/sample_chunks.json --output-dir samples/graphs
+```
+
+
+
+## Large Project Support
+
+```
+Project
+├── File 1
+│   ├── Class A
+│   │   ├── Method X
+│   │   └── Method Y
+│   └── Class B
+└── File 2
+    └── Function Z
+```
+
+**Optimizations**:
+- Minimal schema option for reduced storage
+- Batch processing for embedding generation
+- Caching to avoid regenerating embeddings
+- Optional dimensionality reduction (PCA) for very large codebases
+
+## Database Management
+
+```bash
+# Database utilities
+python -m codebase_analyser.database.db_utils --info
+python -m codebase_analyser.database.db_utils --clear --full --db-path codebase-analyser/.lancedb
+```
+
+```python
+# Direct database API
+from codebase_analyser.database import open_db_connection, close_db_connection
+
+db_manager = open_db_connection(db_path="codebase-analyser/.lancedb", use_minimal_schema=True)
+db_manager.add_code_chunks(code_chunks)
+db_manager.add_dependencies(dependencies)
+results = db_manager.search_code_chunks(query_embedding, limit=10)
+close_db_connection(db_manager)
+```
+
+### LanceDB Options
+- **Schema**: Minimal (default) or full schema with additional metadata
+- **Compatibility**: Works with different LanceDB versions via adaptive API handling
+- **Storage**: Default path is `codebase-analyser/.lancedb`
+
+## Embedding Generation
+
+```python
+from codebase_analyser.embeddings import EmbeddingGenerator
+
+# Create generator
+generator = EmbeddingGenerator(
+    model_name="microsoft/codebert-base",
+    cache_dir=".cache",
+    batch_size=8
+)
+
+# Generate embeddings
+embedding = generator.generate_embedding(code, language="python")
+embeddings = generator.generate_embeddings_batch(codes, languages)
+
+# Store in database
+from codebase_analyser.embeddings import embed_and_store_chunks
+embed_and_store_chunks(chunks=code_chunks, db_path="codebase-analyser/.lancedb")
+```
+
+### Performance Options
+- **Dimensions**: 768 (default) or reduce to 384-512 with PCA for large codebases
+- **Batch Processing**: Process multiple chunks at once (8-16 recommended)
+- **Caching**: Avoid regenerating embeddings for unchanged code
+
+## Unified Storage
+
+```bash
+# Test unified storage
+python tests/test_unified_storage.py --clear-db
+
+# Options
+python tests/test_unified_storage.py --db-path codebase-analyser/.lancedb --full-schema
+```
+
+### Unified Storage API
+
+```python
+from codebase_analyser import open_unified_storage, close_unified_storage
+
+storage_manager = open_unified_storage(
+    db_path="codebase-analyser/.lancedb",
+    embedding_dim=768,
+    use_minimal_schema=True
+)
+
+# Add chunks with graph metadata
+storage_manager.add_code_chunks_with_graph_metadata(chunks=code_chunks)
+
+# Search with dependency filtering
+results = storage_manager.search_with_dependencies(
+    query_embedding=query_vector,
+    dependency_filter={"has_imports": True},
+    limit=10
+)
+
+# Search with combined scoring
+results = storage_manager.search_with_combined_scoring(
+    query_embedding=query_vector,
+    query_node_id="file:path/to/file.py",
+    alpha=0.7,  # Semantic weight
+    beta=0.3,   # Graph weight
+    limit=10
+)
+
+# Get chunk with dependencies
+chunk = storage_manager.get_chunk_with_dependencies(node_id)
+
+# Close connection
+close_unified_storage(storage_manager)
+```
+
+### Graph Metadata Schema
+
+```json
+{
+  "graph_metadata": {
+    "dependency_count": 5,
+    "incoming_count": 2,
+    "outgoing_count": 3,
+    "in_cycle": false,
+    "graph_position": "intermediate",
+    "instability": 0.6,
+    "has_imports": true,
+    "has_extends": false,
+    "has_implements": true,
+    "has_calls": true,
+    "has_uses": false,
+    "incoming_dependencies": ["node1", "node2"],
+    "outgoing_dependencies": ["node3", "node4", "node5"]
+  }
+}
+```
+
+## Enhanced Relationship Attributes
+
+The system captures rich relationship attributes to improve RAG capabilities:
+
+1. **Relationship Strength/Weight**: How strong the relationship is (e.g., inheritance is stronger than imports)
+2. **Relationship Frequency**: How many times the relationship occurs in the codebase
+3. **Bidirectionality**: Whether the relationship is bidirectional (exists in both directions)
+4. **Transitive Relationships**: Relationships that exist through intermediate nodes
+5. **Group Membership**: Package/module groupings that relationships belong to
+6. **Inferred Relationships**: Relationships that are inferred rather than explicit in the code
+
+These enhanced attributes are used in the relevance scoring algorithm to provide more accurate and contextually relevant results.
+
+## Custom Relevance Scoring
+
+```bash
+# Test with default weights (α=0.7, β=0.3)
+python tests/test_custom_relevance.py --clear-db
+
+# Customize weights
+python tests/test_custom_relevance.py --alpha 0.5 --beta 0.5
+```
+
+Formula: `final_score = α * semantic_similarity + β * (1 / (1 + graph_distance))`
+
+- Combines vector similarity with graph proximity
+- Adjustable weights to prioritize semantic or structural relevance
+- Uses NetworkX for graph distance calculations
+- Incorporates enhanced relationship attributes (frequency, bidirectionality, etc.)
+- Considers transitive paths and their quality when calculating graph proximity
+
+## End-to-End Integration Testing
+
+```bash
+# Basic test
+python tests/test_end_to_end_integration.py --clear-db
+
+# Options
+python tests/test_end_to_end_integration.py --db-path /path/to/db --real-embeddings --full-schema
+python tests/test_end_to_end_integration.py --test-dir /path/to/test/files --keep-test-dir
+```
+
+Tests the complete pipeline:
+- Parses files in multiple languages (Java, Python, JavaScript)
+- Generates chunks and embeddings
+- Stores in database with graph metadata
+- Tests search methods (vector, dependency-filtered, combined scoring)
+- Validates chunk retrieval with dependencies
+
+## Codebase Analysis Service
+
+```bash
+# Basic usage
+./analyze.sh /path/to/repo
+
+# With options
+./analyze.sh /path/to/repo --clear-db --visualize --minimal-schema
+```
+
+### Service Options
+
+```
+--repo-path PATH         Path to the repository to analyze (required)
+--db-path PATH           Path to the LanceDB database (default: codebase-analyser/.lancedb)
+--clear-db               Clear the database before processing
+--minimal-schema         Use minimal schema for reduced storage
+--embedding-model MODEL  Model to use for embeddings (default: microsoft/codebert-base)
+--embedding-batch-size N Batch size for embedding generation (default: 8)
+--mock-embeddings        Use mock embeddings instead of a real model (faster for testing)
+--visualize              Generate dependency graph visualization
+--output-dir DIR         Directory to save visualization outputs (default: samples)
+--graph-format FORMAT    Format for graph visualization (png or dot)
+--project-id ID          Project ID for multi-project support
+--max-files N            Maximum number of files to process (for testing)
+--skip-large-files       Skip files larger than 1MB
+```

@@ -1,0 +1,115 @@
+
+Requirements:
+{
+  "objective": "Implement a search feature that allows users to find employees based on various criteria.",
+  "requirements": "1. Search by Name\n   - Users should be able to search for employees by first name, last name, or full name\n   - The search should support partial name matching (e.g., \"Jo\" should find \"John\" and \"Joseph\")\n   - The search should be case-insensitive\n\n2. Search by Department\n   - Users should be able to filter employees by their department\n   - The system should display all employees in the selected department\n\n3. Search by Skills\n   - Users should be able to search for employees with specific skills\n   - The system should support searching for multiple skills at once\n   - Results should be ranked by the number of matching skills\n\n4. Search Results Display\n   - For each matching employee, display their name, ID, department, and role\n   - Include a profile picture if available\n   - Provide an option to view the employee's full profile",
+  "enhancements": "- Add a `searchEmployees(String criteria, SearchType type)` method in the `EmployeeManager` class\n- Implement an enum `SearchType` with values NAME, DEPARTMENT, SKILLS, ALL\n- Create a `SearchResult` class to store and rank search results\n- Add a UI component for the search functionality in the main application"
+}
+
+Generated Code:
+```java
+
+package com.example.employee;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Employee Search Implementation
+ * Generated based on business requirements
+ */
+public class EmployeeSearch {
+    private EmployeeManager employeeManager;
+
+    public EmployeeSearch(EmployeeManager employeeManager) {
+        this.employeeManager = employeeManager;
+    }
+
+    /**
+     * Search for employees based on various criteria
+     * @param criteria The search criteria
+     * @param type The type of search to perform
+     * @return List of matching employees
+     */
+    public List<Employee> searchEmployees(String criteria, SearchType type) {
+        List<Employee> allEmployees = employeeManager.getAllEmployees();
+        List<Employee> results = new ArrayList<>();
+
+        switch (type) {
+            case NAME:
+                results = searchByName(allEmployees, criteria);
+                break;
+            case DEPARTMENT:
+                results = searchByDepartment(allEmployees, criteria);
+                break;
+            case SKILLS:
+                results = searchBySkills(allEmployees, criteria);
+                break;
+            case ALL:
+                results.addAll(searchByName(allEmployees, criteria));
+                results.addAll(searchByDepartment(allEmployees, criteria));
+                results.addAll(searchBySkills(allEmployees, criteria));
+                // Remove duplicates
+                results = results.stream().distinct().collect(Collectors.toList());
+                break;
+        }
+
+        return results;
+    }
+
+    private List<Employee> searchByName(List<Employee> employees, String name) {
+        String searchName = name.toLowerCase();
+        return employees.stream()
+            .filter(e -> e.getFirstName().toLowerCase().contains(searchName) ||
+                   e.getLastName().toLowerCase().contains(searchName))
+            .collect(Collectors.toList());
+    }
+
+    private List<Employee> searchByDepartment(List<Employee> employees, String department) {
+        String searchDept = department.toLowerCase();
+        return employees.stream()
+            .filter(e -> e.getDepartment().toLowerCase().equals(searchDept))
+            .collect(Collectors.toList());
+    }
+
+    private List<Employee> searchBySkills(List<Employee> employees, String skillsStr) {
+        String[] skills = skillsStr.toLowerCase().split(",");
+
+        return employees.stream()
+            .filter(e -> hasMatchingSkills(e, skills))
+            .sorted((e1, e2) -> countMatchingSkills(e2, skills) - countMatchingSkills(e1, skills))
+            .collect(Collectors.toList());
+    }
+
+    private boolean hasMatchingSkills(Employee employee, String[] skills) {
+        for (String skill : skills) {
+            if (employee.hasSkill(skill.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int countMatchingSkills(Employee employee, String[] skills) {
+        int count = 0;
+        for (String skill : skills) {
+            if (employee.hasSkill(skill.trim())) {
+                count++;
+            }
+        }
+        return count;
+    }
+}
+
+/**
+ * Search type enum
+ */
+enum SearchType {
+    NAME,
+    DEPARTMENT,
+    SKILLS,
+    ALL
+}
+
+```

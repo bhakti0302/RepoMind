@@ -1,0 +1,12 @@
+Multi-Hop RAG Results
+====================
+
+Query: employee management system
+
+Architectural Patterns:
+
+Implementation Details:
+
+Related Components:
+
+Context:

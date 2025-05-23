@@ -1,0 +1,209 @@
+"""
+Entity Extractor module.
+
+This module provides functionality for extracting entities from business requirements.
+"""
+
+import logging
+import spacy
+from spacy.matcher import Matcher, PhraseMatcher
+from spacy.tokens import Doc, Span
+from typing import Dict, List, Optional, Any, Union, Tuple
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
+class EntityExtractor:
+    """Extractor for entities in business requirements."""
+    
+    def __init__(self, nlp=None):
+        """Initialize the entity extractor.
+        
+        Args:
+            nlp: spaCy NLP model (if None, will load en_core_web_md)
+        """
+        self.nlp = nlp
+        if self.nlp is None:
+            try:
+                self.nlp = spacy.load("en_core_web_md")
+                logger.info("Loaded spaCy model: en_core_web_md")
+            except OSError:
+                logger.error("Failed to load spaCy model")
+                raise
+        
+        # Initialize matchers
+        self.matcher = Matcher(self.nlp.vocab)
+        self.phrase_matcher = PhraseMatcher(self.nlp.vocab)
+        
+        # Add patterns for software engineering concepts
+        self._add_software_patterns()
+    
+    def _add_software_patterns(self):
+        """Add patterns for software engineering concepts."""
+        # Class patterns
+        self.matcher.add("CLASS", [
+            [{"LOWER": "class"}, {"POS": "PROPN"}],
+            [{"LOWER": "class"}, {"POS": "NOUN"}],
+            [{"LOWER": "class"}, {"IS_PUNCT": True, "OP": "?"}, {"IS_UPPER": True}],
+            [{"LOWER": "class"}, {"IS_PUNCT": True, "OP": "?"}, {"SHAPE": "Xxxxx"}]
+        ])
+        
+        # Method patterns
+        self.matcher.add("METHOD", [
+            [{"LOWER": "method"}, {"POS": "PROPN"}],
+            [{"LOWER": "method"}, {"POS": "NOUN"}],
+            [{"LOWER": "function"}, {"POS": "PROPN"}],
+            [{"LOWER": "function"}, {"POS": "NOUN"}],
+            [{"LOWER": "api"}, {"POS": "PROPN"}],
+            [{"LOWER": "api"}, {"POS": "NOUN"}]
+        ])
+        
+        # Database patterns
+        self.matcher.add("DATABASE", [
+            [{"LOWER": "database"}],
+            [{"LOWER": "db"}],
+            [{"LOWER": "table"}],
+            [{"LOWER": "schema"}]
+        ])
+        
+        # UI patterns
+        self.matcher.add("UI", [
+            [{"LOWER": "ui"}],
+            [{"LOWER": "user"}, {"LOWER": "interface"}],
+            [{"LOWER": "button"}],
+            [{"LOWER": "form"}],
+            [{"LOWER": "page"}],
+            [{"LOWER": "screen"}]
+        ])
+        
+        # API patterns
+        self.matcher.add("API", [
+            [{"LOWER": "api"}],
+            [{"LOWER": "endpoint"}],
+            [{"LOWER": "rest"}],
+            [{"LOWER": "graphql"}]
+        ])
+        
+        # Add common software engineering terms
+        software_terms = [
+            "authentication", "authorization", "login", "logout", "signup",
+            "user", "admin", "password", "email", "verification", "validation",
+            "database", "server", "client", "frontend", "backend", "middleware",
+            "API", "REST", "SOAP", "GraphQL", "HTTP", "HTTPS", "GET", "POST",
+            "PUT", "DELETE", "JSON", "XML", "HTML", "CSS", "JavaScript"
+        ]
+        
+        software_patterns = [self.nlp(term) for term in software_terms]
+        self.phrase_matcher.add("SOFTWARE_TERMS", None, *software_patterns)
+    
+    def extract_entities(self, text: str) -> Dict[str, List[Dict[str, Any]]]:
+        """Extract entities from text.
+        
+        Args:
+            text: Business requirements text
+            
+        Returns:
+            Dictionary containing extracted entities by category
+        """
+        try:
+            # Process the text with spaCy
+            doc = self.nlp(text)
+            
+            # Extract standard named entities
+            standard_entities = [
+                {
+                    "text": ent.text,
+                    "label": ent.label_,
+                    "start": ent.start_char,
+                    "end": ent.end_char
+                }
+                for ent in doc.ents
+            ]
+            
+            # Extract software engineering entities using the matcher
+            software_entities = []
+            matches = self.matcher(doc)
+            for match_id, start, end in matches:
+                match_label = self.nlp.vocab.strings[match_id]
+                span = doc[start:end]
+                software_entities.append({
+                    "text": span.text,
+                    "label": match_label,
+                    "start": span.start_char,
+                    "end": span.end_char
+                })
+            
+            # Extract software terms using the phrase matcher
+            term_matches = self.phrase_matcher(doc)
+            for match_id, start, end in term_matches:
+                match_label = self.nlp.vocab.strings[match_id]
+                span = doc[start:end]
+                software_entities.append({
+                    "text": span.text,
+                    "label": match_label,
+                    "start": span.start_char,
+                    "end": span.end_char
+                })
+            
+            # Group entities by category
+            entities_by_category = {
+                "standard": standard_entities,
+                "software": software_entities
+            }
+            
+            # Flatten all entities for convenience
+            all_entities = standard_entities + software_entities
+            entities_by_category["all"] = all_entities
+            
+            return entities_by_category
+        
+        except Exception as e:
+            logger.error(f"Error extracting entities: {e}")
+            return {"error": str(e)}
+    
+    def extract_entities_from_file(self, file_path: str) -> Dict[str, List[Dict[str, Any]]]:
+        """Extract entities from a file.
+        
+        Args:
+            file_path: Path to the requirements file
+            
+        Returns:
+            Dictionary containing extracted entities by category
+        """
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                text = f.read()
+            
+            logger.info(f"Extracting entities from file: {file_path}")
+            return self.extract_entities(text)
+        
+        except Exception as e:
+            logger.error(f"Error reading or processing file {file_path}: {e}")
+            return {"error": str(e)}
+
+
+# Example usage
+if __name__ == "__main__":
+    extractor = EntityExtractor()
+    
+    # Example text
+    example_text = """
+    The system should implement a UserService class that handles authentication.
+    The login method should verify user credentials against the database.
+    The UI should display error messages for failed login attempts.
+    The REST API should return JWT tokens for authenticated users.
+    """
+    
+    result = extractor.extract_entities(example_text)
+    print("Extracted Entities:")
+    print("\nStandard Entities:")
+    for entity in result["standard"]:
+        print(f"  - {entity['text']} ({entity['label']})")
+    
+    print("\nSoftware Entities:")
+    for entity in result["software"]:
+        print(f"  - {entity['text']} ({entity['label']})")
