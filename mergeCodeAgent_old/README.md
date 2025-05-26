@@ -37,7 +37,7 @@ python run_agent.py <instructions_file> <codebase_path>
 
 For example:
 ```bash
-python run_agent.py examples/testshreya_modify.txt /path/to/your/codebase/
+python3 run_agent.py examples/testshreya_modify.txt /path/to/your/codebase/
 ```
 
 ## Instruction File Format

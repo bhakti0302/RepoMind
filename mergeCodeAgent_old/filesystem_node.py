@@ -109,41 +109,10 @@ class FilesystemNode:
             except Exception as e:
                 return False, f"Error analyzing file for modification: {str(e)}"
 
-            # If no change is needed, return early
-            if modification.get("modification_type") == "no_change":
-                print(f"\n{modification.get('message', 'No changes needed')}")
-                return True, None
-
-            # If the modification type is 'replace_file', replace the entire file content
-            if modification.get("modification_type") == "replace_file":
-                new_content = modification.get("new_content", "")
-                
-                # Show git diff
-                print("\nProposed changes:")
-                print("=" * 80)
-                diff_output = self._show_git_diff(file_path, file_content, new_content)
-                if diff_output:
-                    print("\nDo you want to apply these changes? (y/n): ", end='', flush=True)
-                    response = input().lower()
-                    if response != 'y':
-                        print("Changes rejected by user")
-                        return False, "Changes rejected by user"
-
-                    # Write the new content to the file
-                    with open(file_path, 'w') as f:
-                        f.write(new_content)
-
-                    print(f"Replaced entire file: {file_path}")
-                    return True, None
-                else:
-                    print("No changes detected")
-                    return True, None
-
-            # For other modification types, proceed with the existing logic
+            # Check for duplicates before applying the modification
             if file_path.endswith(".java"):
                 modification = self._check_for_duplicates(file_path, file_content, modification)
                 if not modification:
-                    print("\nAll requested changes are already present in the file")
                     return True, None  # Skip if everything is already present
 
             # Apply the modification
@@ -152,159 +121,21 @@ class FilesystemNode:
                 if not success:
                     return False, error
 
-                # Show git diff
-                print("\nProposed changes:")
-                print("=" * 80)
-                diff_output = self._show_git_diff(file_path, file_content, modified_content)
-                if diff_output:
-                    print("\nDo you want to apply these changes? (y/n): ", end='', flush=True)
-                    response = input().lower()
-                    if response != 'y':
-                        print("Changes rejected by user")
-                        return False, "Changes rejected by user"
+                # Write the modified content back to the file
+                with open(file_path, 'w') as f:
+                    f.write(modified_content)
 
-                    # Write the modified content back to the file
-                    with open(file_path, 'w') as f:
-                        f.write(modified_content)
+                print(f"Modified file: {file_path}")
 
-                    print(f"Modified file: {file_path}")
-                    return True, None
-                else:
-                    print("No changes detected")
-                    return True, None
+                # Format Java files
+                if file_path.endswith(".java"):
+                    self.format_java_file(file_path)
+
+                return True, None
             except Exception as e:
                 return False, f"Error modifying file: {str(e)}"
         except Exception as e:
             return False, f"Error modifying file: {str(e)}"
-
-    def _show_git_diff(self, file_path: str, old_content: str, new_content: str) -> str:
-        """
-        Show a git-style diff of the changes in the actual repository with colored output.
-
-        Args:
-            file_path: Path to the file
-            old_content: Old content of the file
-            new_content: New content of the file
-
-        Returns:
-            The diff output as a string, or empty string if no changes
-        """
-        import tempfile
-        import subprocess
-        import os
-        import re
-
-        # Get the repository root directory
-        repo_root = self.codebase_path
-
-        # Create a temporary file for the new content
-        with tempfile.NamedTemporaryFile(suffix=".new", delete=False) as new_file:
-            new_path = new_file.name
-            new_file.write(new_content.encode())
-
-        try:
-            # Save the original file content
-            original_content = None
-            if os.path.exists(file_path):
-                with open(file_path, 'r') as f:
-                    original_content = f.read()
-
-            # Write the new content to the actual file
-            with open(file_path, 'w') as f:
-                f.write(new_content)
-
-            # Stage the changes in git
-            subprocess.run(["git", "add", file_path], cwd=repo_root, check=True)
-
-            # Show the diff
-            result = subprocess.run(
-                ["git", "diff", "--cached", "--color=always", "--unified=3"],
-                cwd=repo_root,
-                capture_output=True,
-                text=True
-            )
-
-            # Restore the original content
-            if original_content is not None:
-                with open(file_path, 'w') as f:
-                    f.write(original_content)
-            subprocess.run(["git", "reset", file_path], cwd=repo_root, check=True)
-
-            # Process the diff output to enhance colors
-            if result.stdout:
-                # ANSI color codes
-                GREEN = '\033[32m'
-                RED = '\033[31m'
-                RESET = '\033[0m'
-                BOLD = '\033[1m'
-
-                # Split the diff into lines
-                lines = result.stdout.splitlines()
-                enhanced_lines = []
-
-                for line in lines:
-                    if line.startswith('+') and not line.startswith('+++'):
-                        # Add green color to added lines
-                        enhanced_lines.append(f"{GREEN}{line}{RESET}")
-                    elif line.startswith('-') and not line.startswith('---'):
-                        # Add red color to removed lines
-                        enhanced_lines.append(f"{RED}{line}{RESET}")
-                    elif line.startswith('@@'):
-                        # Make the hunk header bold
-                        enhanced_lines.append(f"{BOLD}{line}{RESET}")
-                    else:
-                        enhanced_lines.append(line)
-
-                # Join the lines back together
-                enhanced_diff = '\n'.join(enhanced_lines)
-
-                # Print the enhanced diff
-                print(enhanced_diff)
-                return enhanced_diff
-            else:
-                print("No changes detected")
-                return ""
-
-        finally:
-            # Clean up temporary file
-            if os.path.exists(new_path):
-                os.unlink(new_path)
-
-    def _highlight_changes(self, old_lines: List[str], new_lines: List[str]) -> str:
-        """
-        Highlight the differences between old and new content.
-
-        Args:
-            old_lines: List of lines from the old content
-            new_lines: List of lines from the new content
-
-        Returns:
-            A string with highlighted differences
-        """
-        from difflib import unified_diff
-
-        # ANSI color codes
-        GREEN = '\033[32m'
-        RED = '\033[31m'
-        RESET = '\033[0m'
-        BOLD = '\033[1m'
-
-        # Generate the diff
-        diff = list(unified_diff(old_lines, new_lines, n=3))
-
-        # Process the diff to add colors
-        enhanced_diff = []
-        for line in diff:
-            if line.startswith('+') and not line.startswith('+++'):
-                enhanced_diff.append(f"{GREEN}{line}{RESET}")
-            elif line.startswith('-') and not line.startswith('---'):
-                enhanced_diff.append(f"{RED}{line}{RESET}")
-            elif line.startswith('@@'):
-                enhanced_diff.append(f"{BOLD}{line}{RESET}")
-            else:
-                enhanced_diff.append(line)
-
-        return '\n'.join(enhanced_diff)
 
     def delete_file(self, file_path: str) -> Tuple[bool, Optional[str]]:
         """
@@ -436,24 +267,18 @@ class FilesystemNode:
                     break
 
             # Check if each method already exists in the file
-            all_methods_exist = False  # Default to false - don't skip unless we have methods to check
-            if method_matches:  # Only check if we have methods to check
-                all_methods_exist = True
-                for match in method_matches:
-                    method_name = match.group(2)
+            all_methods_exist = True
+            for match in method_matches:
+                method_name = match.group(2)
 
-                    # Skip unauthorized methods
-                    if method_name in unauthorized_methods:
-                        continue
+                # Skip unauthorized methods
+                if method_name in unauthorized_methods:
+                    continue
 
-                    # Create a more precise regex to match the method
-                    method_regex = r'(public|private|protected)(?:\s+\w+)*\s+' + re.escape(method_name) + r'\s*\([^)]*\)\s*{'
-                    if not re.search(method_regex, file_content):
-                        all_methods_exist = False
-                        print(f"Method {method_name} does not exist in the file")
-                        break
-                    else:
-                        print(f"Method {method_name} already exists in the file")
+                method_regex = r'(public|private|protected)(?:\s+\w+)*\s+' + re.escape(method_name) + r'\s*\([^)]*\)\s*{'
+                if not re.search(method_regex, file_content):
+                    all_methods_exist = False
+                    break
 
             # Check for toString method specifically
             if "toString" in new_content:
@@ -499,7 +324,7 @@ class FilesystemNode:
                         return modification
 
             # If all fields and methods already exist, skip the modification
-            if all_fields_exist and all_methods_exist and (field_matches or method_matches):
+            if all_fields_exist and all_methods_exist:
                 print("All fields and methods already exist, skipping modification")
                 return None
 
@@ -644,97 +469,3 @@ class FilesystemNode:
         # For now, just return the content as is
         # This is a safer approach until we can implement a more robust Java formatter
         return content
-
-    def check_java_syntax(self, code: str) -> Tuple[bool, Optional[str]]:
-        """
-        Check the syntax of Java code.
-
-        Args:
-            code: Java code to check
-
-        Returns:
-            A tuple of (is_valid, error_message)
-        """
-        try:
-            # Create a temporary file
-            import tempfile
-            import os
-            import subprocess
-
-            with tempfile.NamedTemporaryFile(suffix=".java", delete=False) as temp:
-                temp_path = temp.name
-                temp.write(code.encode())
-
-            # Try to compile the file
-            result = subprocess.run(["javac", temp_path], capture_output=True, text=True)
-
-            # Clean up
-            os.unlink(temp_path)
-
-            # Check if compilation was successful
-            if result.returncode == 0:
-                return True, None
-            else:
-                return False, result.stderr
-        except Exception as e:
-            return False, str(e)
-
-    def _fix_common_java_syntax_issues(self, code: str) -> str:
-        """
-        Fix common Java syntax issues.
-
-        Args:
-            code: Java code to fix
-
-        Returns:
-            Fixed Java code
-        """
-        # Fix missing semicolons
-        lines = code.splitlines()
-        fixed_lines = []
-
-        for line in lines:
-            line_stripped = line.strip()
-
-            # Skip empty lines, comments, and lines that already end with semicolon, brace, or are import/package statements
-            if (not line_stripped or
-                line_stripped.startswith("//") or
-                line_stripped.startswith("/*") or
-                line_stripped.endswith(";") or
-                line_stripped.endswith("{") or
-                line_stripped.endswith("}") or
-                line_stripped.startswith("import ") or
-                line_stripped.startswith("package ")):
-                fixed_lines.append(line)
-                continue
-
-            # Check if this line needs a semicolon
-            needs_semicolon = True
-
-            # Don't add semicolons to method declarations, class declarations, etc.
-            if (re.search(r'(public|private|protected)(?:\s+\w+)*\s+\w+\s*\([^)]*\)\s*{?$', line_stripped) or
-                re.search(r'(class|interface|enum)\s+\w+', line_stripped) or
-                re.search(r'if\s*\([^)]*\)', line_stripped) or
-                re.search(r'for\s*\([^)]*\)', line_stripped) or
-                re.search(r'while\s*\([^)]*\)', line_stripped) or
-                re.search(r'switch\s*\([^)]*\)', line_stripped) or
-                "}" in line_stripped):
-                needs_semicolon = False
-
-            if needs_semicolon:
-                fixed_lines.append(line + ";")
-            else:
-                fixed_lines.append(line)
-
-        # Fix missing braces
-        code = "\n".join(fixed_lines)
-
-        # Fix missing closing braces
-        open_braces = code.count("{")
-        close_braces = code.count("}")
-
-        if open_braces > close_braces:
-            # Add missing closing braces
-            code += "\n" + "}" * (open_braces - close_braces)
-
-        return code

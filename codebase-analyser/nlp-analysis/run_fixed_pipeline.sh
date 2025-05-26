@@ -18,9 +18,11 @@ export PYTHONPATH=$PYTHONPATH:/Users/bhaktichindhe/Desktop/Project/RepoMind/code
 # Define parameters
 DB_PATH="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/.lancedb"
 OUTPUT_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output"
+LOGS_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/logs"
 
-# Create logs directory if it doesn't exist
- mkdir -p "$LOGS_DIR"
+# Create logs and output directories if they don't exist
+mkdir -p "$LOGS_DIR"
+mkdir -p "$OUTPUT_DIR"
 
 # Create a log file with timestamp
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")

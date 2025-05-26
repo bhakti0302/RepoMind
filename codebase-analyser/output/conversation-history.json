@@ -1,6 +1,6 @@
 [
   {
-    "user": "What are the methods in EmployeeService.java?",
-    "assistant": "**Methods in `EmployeeService.java`**\n\nBased on the provided **Document 2** (`/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`), the methods in `EmployeeService.java` are:\n\n1. **`addEmployee(Employee employee)`**\n   - **Visibility**: `public`\n   - **Return Type**: `void`\n   - **Parameter**: `Employee employee`\n   - **Description**: Adds an `Employee` object to the list of employees.\n\n2. **`getAllEmployees()`**\n   - **Visibility**: `public`\n   - **Return Type**: `List<Employee>`\n   - **Parameters**: None\n   - **Description**: Returns the list of all employees.\n\n3. **`EmployeeService()`** (Constructor)\n   - **Visibility**: Implicit `public` (since no access modifier is specified)\n   - **Return Type**: None (Constructor)\n   - **Parameters**: None\n   - **Description**: Default constructor for `EmployeeService`, initializes an empty list of employees.\n\n### Summary Table for Quick Reference\n\n| **Method/Constructor** | **Visibility** | **Return Type** | **Parameters** |\n| --- | --- | --- | --- |\n| `addEmployee` | `public` | `void` | `Employee employee` |\n| `getAllEmployees` | `public` | `List<Employee>` | - |\n| `EmployeeService()` | `public` (implicit) | - | - |"
+    "user": "what are the methods in EmployeeService.java",
+    "assistant": "Error generating text: 429 Client Error: Too Many Requests for url: https://openrouter.ai/api/v1/chat/completions"
   }
 ]

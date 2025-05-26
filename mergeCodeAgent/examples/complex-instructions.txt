@@ -1,0 +1,33 @@
+Update the Employee class in /Users/sakshi/Documents/EmployeeManagementSystem/src/com/company/model/Employee.java to add a new field 'salary' and its getter/setter:
+
+private double salary;
+
+public double getSalary() {
+    return salary;
+}
+
+public void setSalary(double salary) {
+    this.salary = salary;
+}
+
+Add a new method to calculate bonus in /Users/sakshi/Documents/EmployeeManagementSystem/src/com/company/service/EmployeeService.java:
+
+public double calculateBonus(Employee employee) {
+    double baseBonus = 1000.0;
+    if (employee.getSalary() > 50000) {
+        baseBonus *= 1.5;
+    }
+    return baseBonus;
+}
+
+Delete the existing printEmployees method from /Users/sakshi/Documents/EmployeeManagementSystem/src/com/company/app/Main.java and replace it with a new method that shows salary information:
+
+public static void printEmployees(List<Employee> employees) {
+    System.out.println("\nEmployee List with Salary Information:");
+    System.out.println("----------------------------------------");
+    for (Employee emp : employees) {
+        System.out.printf("ID: %d, Name: %s, Department: %s, Salary: $%.2f%n",
+            emp.getId(), emp.getName(), emp.getDepartment(), emp.getSalary());
+    }
+    System.out.println("----------------------------------------");
+} 

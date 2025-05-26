@@ -1,0 +1,708 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AgentFlow – Autonomous AI for Modern Business</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #5f5fff;
+      --primary-dark: #232946;
+      --accent: #00e0d6;
+      --background: #f8f9fb;
+      --card-bg: #fff;
+      --text: #222;
+      --muted: #6b7280;
+      --radius: 18px;
+      --shadow: 0 4px 24px rgba(95,95,255,0.07), 0 1.5px 6px rgba(0,0,0,0.04);
+    }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+    .hero {
+      background: linear-gradient(100deg, var(--primary) 0%, var(--accent) 100%);
+      color: #fff;
+      padding: 4rem 1rem 3rem 1rem;
+      text-align: center;
+      border-bottom-left-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero h1 {
+      font-size: 2.8rem;
+      letter-spacing: -1px;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    .hero .tagline {
+      font-size: 1.35rem;
+      color: #e0e7ff;
+      margin-bottom: 2rem;
+    }
+    .hero .cta {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .cta-btn {
+      background: var(--accent);
+      color: var(--primary-dark);
+      border: none;
+      padding: 1rem 2.2rem;
+      border-radius: var(--radius);
+      font-size: 1.1rem;
+      font-weight: 600;
+      box-shadow: 0 2px 12px rgba(0,224,214,0.15);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .cta-btn.secondary {
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+    }
+    .container {
+      max-width: 1100px;
+      margin: -3rem auto 2rem auto;
+      background: transparent;
+      padding: 0 1rem;
+    }
+    .section {
+      margin-bottom: 2.5rem;
+    }
+    .card-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem 1.5rem;
+      flex: 1 1 260px;
+      min-width: 260px;
+      max-width: 350px;
+      margin-bottom: 1rem;
+      transition: transform 0.15s;
+    }
+    .card:hover { transform: translateY(-6px) scale(1.025);}
+    .card h3 { margin-top: 0; color: var(--primary);}
+    .features-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0 0;
+    }
+    .features-list li {
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      font-size: 1.07rem;
+    }
+    .features-list li:before {
+      content: "✓";
+      color: var(--accent);
+      font-weight: bold;
+      margin-right: 0.7em;
+    }
+    .pricing-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .pricing-table th, .pricing-table td {
+      padding: 1.2rem 1.2rem;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+      font-size: 1.08rem;
+    }
+    .pricing-table th {
+      background: #f3f4f6;
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .testimonials {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .testimonial {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      flex: 1 1 320px;
+      max-width: 400px;
+      font-style: italic;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .testimonial:before {
+      content: "“";
+      font-size: 2.5rem;
+      color: var(--accent);
+      position: absolute;
+      left: 1rem;
+      top: 0.5rem;
+    }
+    .testimonial .author {
+      font-style: normal;
+      color: var(--primary-dark);
+      font-weight: 600;
+      margin-top: 1.2rem;
+      display: block;
+    }
+    .tech-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin-top: 1.5rem;
+      justify-content: center;
+    }
+    .spec-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.2rem 1rem;
+      flex: 1 1 220px;
+      min-width: 220px;
+      max-width: 300px;
+      margin-bottom: 1rem;
+    }
+    .faq-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .faq-list li {
+      margin-bottom: 1.2rem;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.2rem;
+    }
+    .trust {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 2rem;
+    }
+    .trust img {
+      height: 32px;
+      margin: 0 0.7rem;
+      vertical-align: middle;
+      filter: grayscale(1) brightness(0.8);
+      opacity: 0.7;
+    }
+    @media (max-width: 900px) {
+      .card-row, .testimonials, .tech-specs {
+        flex-direction: column;
+        align-items: center;
+      }
+      .container { padding: 0 0.5rem;}
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2rem;}
+      .hero { padding: 2.2rem 0.5rem 1.5rem 0.5rem;}
+      .card, .testimonial, .spec-card { padding: 1rem;}
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>AgentFlow</h1>
+    <div class="tagline">Empower your team with intelligent, self-directed automation.</div>
+    <div class="cta">
+      <button class="cta-btn">Start Free Trial</button>
+      <button class="cta-btn secondary">Book a Demo</button>
+    </div>
+  </div>
+  <div class="container">
+    <section class="section">
+      <div class="card-row">
+        <div class="card">
+          <h3>Autonomous Agents</h3>
+          <ul class="features-list">
+            <li>Real-time, adaptive decision-making</li>
+            <li>Automate complex workflows</li>
+            <li>Self-learning from feedback</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Seamless Integrations</h3>
+          <ul class="features-list">
+            <li>Connect CRM, ERP, cloud apps</li>
+            <li>Native API & Zapier support</li>
+            <li>Plug-and-play setup</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Enterprise Security</h3>
+          <ul class="features-list">
+            <li>SOC 2 Type II compliant</li>
+            <li>End-to-end encryption</li>
+            <li>Role-based access control</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="text-align:center;color:var(--primary-dark);margin-bottom:1.5rem;">Pricing & Subscription</h2>
+      <table class="pricing-table">
+        <tr>
+          <th>Plan</th>
+          <th>Monthly Price</th>
+          <th>Features Included</th>
+        </tr>
+        <tr>
+          <td>Starter</td>
+          <td>$49</td>
+          <td>3 agents, 1,000 actions/mo, standard support</td>
+        </tr>
+        <tr>
+          <td>Professional</td>
+          <td>$199</td>
+          <td>15 agents, 10,000 actions/mo, integrations, API</td>
+        </tr>
+        <tr>
+          <td>Enterprise</td>
+          <td>Custom</td>
+          <td>Unlimited agents/actions, priority support, SSO</td>
+        </tr>
+      </table>
+      <div class="cta" style="justify-content:center;">
+        <button class="cta-btn">Start Free Trial</button>
+        <button class="cta-btn secondary">Book a Demo</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="text-align:center;color:var(--primary-dark);margin-bottom:1.5rem;">Customer Testimonials</h2>
+      <div class="testimonials">
+        <div class="testimonial">
+          AgentFlow transformed our operations—what used to take days, now happens automatically.
+          <span class="author">— Jamie L., COO, RetailCo</span>
+        </div>
+        <div class="testimonial">
+          The integration was seamless and support outstanding. Highly recommended!
+          <span class="author">— Priya S., CTO, FinServ Inc.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="text-align:center;color:var(--primary-dark);margin-bottom:1.5rem;">Technical Specifications</h2>
+      <div class="tech-specs">
+        <div class="spec-card">
+          <strong>Supported Platforms</strong>
+          <div>Web, iOS, Android</div>
+        </div>
+        <div class="spec-card">
+          <strong>Integrations</strong>
+          <div>Salesforce, Slack, Google Workspace, Zapier, more</div>
+        </div>
+        <div class="spec-card">
+          <strong>Security</strong>
+          <div>SOC2, GDPR, SSO, 2FA</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="text-align:center;color:var(--primary-dark);margin-bottom:1.5rem;">Frequently Asked Questions</h2>
+      <ul class="faq-list">
+        <li><strong>How quickly can I deploy AgentFlow?</strong><br>Most customers are live within 48 hours.</li>
+        <li><strong>Is my data secure?</strong><br>Yes—AgentFlow uses enterprise-grade encryption and is fully compliant with major standards.</li>
+        <li><strong>Can I customize agent behaviors?</strong><br>Absolutely. Use our no-code builder or advanced API for full control.</li>
+      </ul>
+    </section>
+
+    <div class="trust">
+      <div style="margin-bottom: 0.7rem;">Trusted by</div>
+
+      <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" title="Microsoft">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" title="Google">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/9/96/Amazon_Web_Services_Logo.svg" alt="AWS" title="AWS">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg" alt="IBM" title="IBM">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" title="Stripe">
+    </div>
+    <div class="trust" style="margin-top:1.5rem;">
+      <strong>24/7 Support:</strong> Live chat, email, knowledge base &nbsp;|&nbsp;
+      <strong>Documentation:</strong> <a href="#" style="color:var(--primary);text-decoration:underline;">View Docs</a>
+    </div>
+    <div class="cta" style="justify-content:center; margin-top:2.5rem;">
+      <button class="cta-btn">Start Free Trial</button>
+      <button class="cta-btn secondary">Book a Demo</button>
+      <button class="cta-btn secondary">Contact Sales</button>
+    </div>
+  </div>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AgentFlow – Autonomous AI for Modern Business</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #5f5fff;
+      --primary-dark: #232946;
+      --accent: #00e0d6;
+      --background: #f8f9fb;
+      --card-bg: #fff;
+      --text: #222;
+      --muted: #6b7280;
+      --radius: 18px;
+      --shadow: 0 4px 24px rgba(95,95,255,0.07), 0 1.5px 6px rgba(0,0,0,0.04);
+    }
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+    }
+    .hero {
+      background: linear-gradient(100deg, var(--primary) 0%, var(--accent) 100%);
+      color: #fff;
+      padding: 4rem 1rem 3rem 1rem;
+      text-align: center;
+      border-bottom-left-radius: var(--radius);
+      border-bottom-right-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .hero h1 {
+      font-size: 2.8rem;
+      letter-spacing: -1px;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    .hero .tagline {
+      font-size: 1.35rem;
+      color: #e0e7ff;
+      margin-bottom: 2rem;
+    }
+    .hero .cta {
+      margin-top: 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+    .cta-btn {
+      background: var(--accent);
+      color: var(--primary-dark);
+      border: none;
+      padding: 1rem 2.2rem;
+      border-radius: var(--radius);
+      font-size: 1.1rem;
+      font-weight: 600;
+      box-shadow: 0 2px 12px rgba(0,224,214,0.15);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .cta-btn.secondary {
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+    }
+    .container {
+      max-width: 1100px;
+      margin: -3rem auto 2rem auto;
+      background: transparent;
+      padding: 0 1rem;
+    }
+    .section {
+      margin-bottom: 2.5rem;
+    }
+    .card-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem 1.5rem;
+      flex: 1 1 260px;
+      min-width: 260px;
+      max-width: 350px;
+      margin-bottom: 1rem;
+      transition: transform 0.15s;
+    }
+    .card:hover { transform: translateY(-6px) scale(1.025);}
+    .card h3 { margin-top: 0; color: var(--primary);}
+    .features-list {
+      list-style: none;
+      padding: 0;
+      margin: 1rem 0 0 0;
+    }
+    .features-list li {
+      margin-bottom: 0.8rem;
+      display: flex;
+      align-items: center;
+      font-size: 1.07rem;
+    }
+    .features-list li:before {
+      content: "✓";
+      color: var(--accent);
+      font-weight: bold;
+      margin-right: 0.7em;
+    }
+    .pricing-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .pricing-table th, .pricing-table td {
+      padding: 1.2rem 1.2rem;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+      font-size: 1.08rem;
+    }
+    .pricing-table th {
+      background: #f3f4f6;
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .testimonials {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .testimonial {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+      flex: 1 1 320px;
+      max-width: 400px;
+      font-style: italic;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      position: relative;
+    }
+    .testimonial:before {
+      content: "“";
+      font-size: 2.5rem;
+      color: var(--accent);
+      position: absolute;
+      left: 1rem;
+      top: 0.5rem;
+    }
+    .testimonial .author {
+      font-style: normal;
+      color: var(--primary-dark);
+      font-weight: 600;
+      margin-top: 1.2rem;
+      display: block;
+    }
+    .tech-specs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin-top: 1.5rem;
+      justify-content: center;
+    }
+    .spec-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.2rem 1rem;
+      flex: 1 1 220px;
+      min-width: 220px;
+      max-width: 300px;
+      margin-bottom: 1rem;
+    }
+    .faq-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .faq-list li {
+      margin-bottom: 1.2rem;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.2rem;
+    }
+    .trust {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 2rem;
+    }
+    .trust img {
+      height: 32px;
+      margin: 0 0.7rem;
+      vertical-align: middle;
+      filter: grayscale(1) brightness(0.8);
+      opacity: 0.7;
+    }
+    @media (max-width: 900px) {
+      .card-row, .testimonials, .tech-specs {
+        flex-direction: column;
+        align-items: center;
+      }
+      .container { padding: 0 0.5rem;}
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2rem;}
+      .hero { padding: 2.2rem 0.5rem 1.5rem 0.5rem;}
+      .card, .testimonial, .spec-card { padding: 1rem;}
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>AgentFlow</h1>
+    <div class="tagline">Empower your team with intelligent, self-directed automation.</div>
+    <div class="cta">
+      <button class="cta-btn">Start Free Trial</button>
+      <button class="cta-btn secondary">Book a Demo</button>
+    </div>
+  </div>
+  <div class="container">
+    <section class="section">
+      <div class="card-row">
+        <div class="card">
+          <h3>Autonomous Agents</h3>
+          <ul class="features-list">
+            <li>Real-time, adaptive decision-making</li>
+            <li>Automate complex workflows</li>
+            <li>Self-learning from feedback</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Seamless Integrations</h3>
+          <ul class="features-list">
+            <li>Connect CRM, ERP, cloud apps</li>
+            <li>Native API & Zapier support</li>
+            <li>Plug-and-play setup</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Enterprise Security</h3>
+          <ul class="features-list">
+            <li>SOC 2 Type II compliant</li>
+            <li>End-to-end encryption</li>
+            <li>Role-based access control</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="text-align:center;color:var(--primary-dark);margin-bottom:1.5rem;">Pricing & Subscription</h2>
+      <table class="pricing-table">
+        <tr>
+          <th>Plan</th>
+          <th>Monthly Price</th>
+          <th>Features Included</th>
+        </tr>
+        <tr>
+          <td>Starter</td>
+          <td>$49</td>
+          <td>3 agents, 1,000 actions/mo, standard support</td>
+        </tr>
+        <tr>
+          <td>Professional</td>
+          <td>$199</td>
+          <td>15 agents, 10,000 actions/mo, integrations, API</td>
+        </tr>
+        <tr>
+          <td>Enterprise</td>
+          <td>Custom</td>
+          <td>Unlimited agents/actions, priority support, SSO</td>
+        </tr>
+      </table>
+      <div class="cta" style="justify-content:center;">
+        <button class="cta-btn">Start Free Trial</button>
+        <button class="cta-btn secondary">Book a Demo</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="text-align:center;color:var(--primary-dark);margin-bottom:1.5rem;">Customer Testimonials</h2>
+      <div class="testimonials">
+        <div class="testimonial">
+          AgentFlow transformed our operations—what used to take days, now happens automatically.
+          <span class="author">— Jamie L., COO, RetailCo</span>
+        </div>
+        <div class="testimonial">
+          The integration was seamless and support outstanding. Highly recommended!
+          <span class="author">— Priya S., CTO, FinServ Inc.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="text-align:center;color:var(--primary-dark);margin-bottom:1.5rem;">Technical Specifications</h2>
+      <div class="tech-specs">
+        <div class="spec-card">
+          <strong>Supported Platforms</strong>
+          <div>Web, iOS, Android</div>
+        </div>
+        <div class="spec-card">
+          <strong>Integrations</strong>
+          <div>Salesforce, Slack, Google Workspace, Zapier, more</div>
+        </div>
+        <div class="spec-card">
+          <strong>Security</strong>
+          <div>SOC2, GDPR, SSO, 2FA</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 style="text-align:center;color:var(--primary-dark);margin-bottom:1.5rem;">Frequently Asked Questions</h2>
+      <ul class="faq-list">
+        <li><strong>How quickly can I deploy AgentFlow?</strong><br>Most customers are live within 48 hours.</li>
+        <li><strong>Is my data secure?</strong><br>Yes—AgentFlow uses enterprise-grade encryption and is fully compliant with major standards.</li>
+        <li><strong>Can I customize agent behaviors?</strong><br>Absolutely. Use our no-code builder or advanced API for full control.</li>
+      </ul>
+    </section>
+
+    <div class="trust">
+      <div style="margin-bottom: 0.7rem;">Trusted by</div>
+      <!-- Dummy logos for illustration -->
+      <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Microsoft" title="Microsoft">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" title="Google">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/9/96/Amazon_Web_Services_Logo.svg" alt="AWS" title="AWS">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg" alt="IBM" title="IBM">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" title="Stripe">
+    </div>
+    <div class="trust" style="margin-top:1.5rem;">
+      <strong>24/7 Support:</strong> Live chat, email, knowledge base &nbsp;|&nbsp;
+      <strong>Documentation:</strong> <a href="#" style="color:var(--primary);text-decoration:underline;">View Docs</a>
+    </div>
+    <div class="cta" style="justify-content:center; margin-top:2.5rem;">
+      <button class="cta-btn">Start Free Trial</button>
+      <button class="cta-btn secondary">Book a Demo</button>
+      <button class="cta-btn secondary">Contact Sales</button>
+    </div>
+  </div>
+</body>
+</html>

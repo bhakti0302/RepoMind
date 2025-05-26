@@ -61,64 +61,64 @@ If there are any other changes that needs to be done, other than Create, Add, Mo
 Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.
 
 Domain Entities:
-  - Filter
-  - Prompt
-  - Just
-  - Key
-  - Your
-  - Business
-  - manager
-  - For
-  - hr
-  - Department
-  - Changes
-  - Requirements
-  - Overview
-  - Engineering
-  - You
-  - Allow
-  - Suggested
-  - Details
-  - Add
-  - Display
-  - Create
-  - String
-  - Functional
-  - The
-  - Use
-  - Objective
-  - employee
   - Enhancements
-  - EmployeeManager
-  - Code
-  - Employees
-  - Users
-  - Insert
-  - Modify
   - Components
-  - If
-  - getEmployeesByDepartment
   - Update
-  - user
+  - Insert
+  - Use
+  - Business
+  - Add
+  - Users
+  - Key
+  - Allow
   - Requirement
-  - Structure
-  - department
+  - user
+  - manager
+  - If
+  - Prompt
+  - Requirements
+  - Filter
+  - Create
+  - Employees
+  - employee
+  - Details
+  - Overview
+  - Your
   - Do
+  - For
+  - department
+  - Suggested
+  - The
+  - String
+  - EmployeeManager
+  - Objective
+  - Department
+  - Functional
+  - Changes
+  - Engineering
+  - Structure
+  - hr
+  - getEmployeesByDepartment
+  - Code
+  - Modify
+  - Just
+  - Display
+  - You
 
 Architectural Patterns:
   - Service Layer Pattern
 
 Implementation Details:
-  - Main class
   - EmployeeService class
+  - Main class
   - EmployeeService() method
   - getAllEmployees() method
-  - Employee() method
   - addEmployee() method
+  - Employee() method
 
 Related Components:
-  - Main
   - EmployeeService
+  - Main
 
 Context:
 --- Document 1: /Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java ---

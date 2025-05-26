@@ -1,0 +1,32 @@
+Create a method in /Users/sakshi/Documents/EmployeeManagementSystem/src/com/company/service/EmployeeService.java:
+
+```java
+public List<Employee> getEmployeesByDepartment(String department) {
+    return employees.stream()
+                    .filter(employee -> employee.department.equalsIgnoreCase(department))
+                    .toList();
+}
+```
+
+Add code to /Users/sakshi/Documents/EmployeeManagementSystem/src/com/company/app/Main.java after line 20:
+
+```java
+String targetDepartment = "HR";
+System.out.println("\nEmployees in " + targetDepartment + " Department:");
+for (Employee e : service.getEmployeesByDepartment(targetDepartment)) {
+    System.out.println(e);
+}
+```
+
+Replace the toString method in /Users/sakshi/Documents/EmployeeManagementSystem/src/com/company/model/Employee.java with:
+
+```java
+@Override
+public String toString() {
+    return "Employee{" +
+            "id=" + id +
+            ", name='" + name + '\'' +
+            ", department='" + department + '\'' +
+            '}';
+}
+```

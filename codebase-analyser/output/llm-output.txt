@@ -1,95 +1,72 @@
-Given the strict format requirement for the response and the instruction to not provide a testing approach or implementation plan (contrary to the final instructions listed, which seem to be an oversight given the initial constraints), I'll align the response with the **initial format** you provided, focusing on **Code Changes** as that's where the action items are, and then briefly address the overlooked instructions in a condensed manner at the end for completeness, without elaborating on testing or detailed implementation plans.
+I'll follow the original format you specified for the output since that's what you requested, but I'll also include the additional sections (1-5) you mentioned in the instructions at the end for completeness, as they provide valuable context. Please note, however, that you explicitly asked for no testing approach, so I'll omit that section.
 
-### Overview :
-Implementing the "Display Employees by Department" feature involves updating the existing `EmployeeService` class to include a department filtering method and modifying the `Main` class to demonstrate this functionality.
+### **Original Format Response**
 
-### Key Components :
-- **EmployeeService.java**: Handles employee data and operations.
-- **Main.java**: Demonstrates the application's functionality.
+#### Overview :
+Implementation to display employees by department involves adding a method to filter employees and updating the main class to utilize this method.
 
-### Code Changes :
+#### Key Components :
+- `EmployeeService` class for business logic
+- `Main` class for demonstration
 
-#### **Add** to `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java**
-```java
-/**
- * Retrieves a list of employees filtered by the specified department.
- * @param department Name of the department to filter by.
- * @return List of Employees in the specified department.
- */
-public List<Employee> getEmployeesByDepartment(String department) {
-    return employees.stream()
-            .filter(employee -> employee.getDepartment().equalsIgnoreCase(department))
-            .toList();
-}
-```
+#### Code Changes :
 
-#### **Modify** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/model/Employee.java` 
-**(Assuming `getDepartment()`, `getName()`, `getId()`, and `getRole()` are not already defined, add them)**
+  **Add to** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/service/EmployeeService.java**
+  ```java
+  /**
+   * Retrieves a list of employees belonging to a specific department.
+   * @param department Name of the department
+   * @return List of Employee objects in the specified department
+   */
+  public List<Employee> getEmployeesByDepartment(String department) {
+      return employees.stream()
+              .filter(employee -> employee.department.equalsIgnoreCase(department))
+              .toList();
+  }
+  ```
 
-```java
-public String getDepartment() {
-    return department;
-}
+  **Modify** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java`
+  ```java
+  public static void main(String[] args) {
+      EmployeeService service = new EmployeeService();
+      service.addEmployee(new Employee(1, "Alice", "HR"));
+      service.addEmployee(new Employee(2, "Bob", "IT"));
+      service.addEmployee(new Employee(3, "Charlie", "HR")); // Added for demo
 
-public String getName() {
-    return name;
-}
+      System.out.println("All Employees:");
+      for (Employee e : service.getAllEmployees()) {
+          System.out.println(e);
+      }
+      
+      String targetDepartment = "HR"; // Example department filter
+      System.out.println("\nEmployees in " + targetDepartment + " Department:");
+      for (Employee e : service.getEmployeesByDepartment(targetDepartment)) {
+          System.out.println("Name: " + e.name + ", ID: " + e.id + ", Role: " + e.role); // Assumes 'role' is an attribute
+      }
+  }
+  ```
 
-public int getId() {
-    return id;
-}
+  **Note on `Employee` class**: Ensure `department`, `name`, `id`, and `role` are accessible (consider getter methods for encapsulation).
 
-// Assuming 'role' is not defined in the constructor, add it to the class and its getter
-private String role;
-
-public Employee(int id, String name, String department, String role) {
-    this.id = id;
-    this.name = name;
-    this.department = department;
-    this.role = role;
-}
-
-public String getRole() {
-    return role;
-}
-```
-
-#### **Update** `/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem/src/com/company/app/Main.java` 
-**(To demonstrate the new filtering functionality and display details)**
-
-```java
-public static void main(String[] args) {
-    EmployeeService service = new EmployeeService();
-    service.addEmployee(new Employee(1, "Alice", "HR", "Manager"));
-    service.addEmployee(new Employee(2, "Bob", "IT", "Developer"));
-    service.addEmployee(new Employee(3, "Charlie", "HR", "Assistant"));
-
-    System.out.println("Employees in HR Department:");
-    for (Employee e : service.getEmployeesByDepartment("HR")) {
-        System.out.println("Name: " + e.getName() + ", ID: " + e.getId() + ", Role: " + e.getRole());
-    }
-}
-```
-
-### **Condensed Response to Overlooked Instructions for Completeness**
+### **Additional Sections for Completeness (As Per Instructions)**
 
 #### 1. **Overview of the Implementation Approach**
-- **Service Layer Enhancement**: Enhance `EmployeeService` for filtering.
-- **Demonstration in Main**: Update `Main` to show the new functionality.
+The approach involves enhancing the `EmployeeService` class with a department-based filtering method and updating the `Main` class to demonstrate this functionality. This leverages Java's stream API for efficient filtering.
 
 #### 2. **Key Components and Their Responsibilities**
-- **Already Covered Above**
+- **`EmployeeService`**: Holds employee data, manages CRUD operations, and now, department-wise filtering.
+- **`Main`**: Demonstrates the usage of `EmployeeService`, including the new filtering capability.
 
 #### 3. **Detailed Implementation Steps**
-1. **Enhance `EmployeeService`** with `getEmployeesByDepartment`.
-2. **Ensure `Employee` has Necessary Getters**.
-3. **Update `Main` for Demonstration**.
+1. **Enhance `EmployeeService`**:
+   - Add the `getEmployeesByDepartment` method.
+2. **Update `Main`**:
+   - Showcase filtering by department using the new method.
+3. **Ensure `Employee` Class Accessibility**:
+   - Use getter methods for `name`, `id`, `department`, and `role` for better encapsulation.
 
 #### 4. **Code Examples for Critical Parts**
-- **Already Provided Above**
+Provided in the **Code Changes** section above.
 
-#### 5. **Testing Approach** (Brief, as per initial instruction to not provide)
-- **Unit Test for `getEmployeesByDepartment`**: Verify correct filtering by department.
-- **Integration Test in `Main`**: Manually verify output for HR department matches expectations. 
-
-**Note**: The above response prioritizes the initial format request. For a detailed implementation plan or testing approach, please request separately.
+#### 5. **Testing Approach (Omitted as Per Request)**
+*N/A*
