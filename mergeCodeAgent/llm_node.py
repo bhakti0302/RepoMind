@@ -470,8 +470,55 @@ class LLMNode:
             else:
                 json_str = content
 
+            # Print the raw JSON string for debugging
+            print("\n" + "="*80)
+            print("RAW JSON STRING:")
+            print("="*80)
+            print(repr(json_str))  # Use repr to show control characters
+            print("="*80 + "\n")
+
+            # Clean the JSON string
+            # 1. Remove any control characters except newlines, tabs, and carriage returns
+            json_str = ''.join(char for char in json_str if ord(char) >= 32 or char in '\n\r\t')
+            
+            # 2. Remove any BOM or other invisible characters at the start
+            json_str = json_str.lstrip('\ufeff')
+            
+            # 3. Ensure the string starts with a valid JSON character
+            json_str = json_str.lstrip()
+            if not json_str.startswith('{'):
+                # Try to find the first occurrence of a valid JSON object
+                brace_match = re.search(r'({.*})', json_str, re.DOTALL)
+                if brace_match:
+                    json_str = brace_match.group(1)
+                else:
+                    raise ValueError("No valid JSON object found in response")
+
+            # Print the cleaned JSON string for debugging
+            print("\n" + "="*80)
+            print("CLEANED JSON STRING:")
+            print("="*80)
+            print(repr(json_str))  # Use repr to show control characters
+            print("="*80 + "\n")
+            
             # Parse the JSON
-            action = json.loads(json_str)
+            try:
+                action = json.loads(json_str)
+            except json.JSONDecodeError as je:
+                print(f"First JSON parse attempt failed: {str(je)}")
+                # If JSON parsing fails, try to fix common issues
+                # 1. Replace single quotes with double quotes
+                json_str = json_str.replace("'", '"')
+                # 2. Fix unescaped quotes in strings
+                json_str = re.sub(r'(?<!\\)"([^"]*?)(?<!\\)"', r'"\1"', json_str)
+                # Print the fixed JSON string for debugging
+                print("\n" + "="*80)
+                print("FIXED JSON STRING:")
+                print("="*80)
+                print(repr(json_str))  # Use repr to show control characters
+                print("="*80 + "\n")
+                # Try parsing again
+                action = json.loads(json_str)
 
             # Post-process the action
             action = self._postprocess_actions([action], instruction_block)[0]
@@ -575,147 +622,12 @@ class LLMNode:
             if "/" in path or "." in path:  # Likely a file path
                 file_paths.append(path)
 
-        # If we have file paths from the instruction but the LLM used generic paths
-        if file_paths and actions:
-            generic_paths = ["new_file.txt", "file.txt", "code.txt", "output.txt", "a"]
+        # If file paths were found, add a summary at the beginning
+        if file_paths:
+            summary = "DETECTED FILE PATHS:\n"
+            for i, path in enumerate(file_paths, 1):
+                summary += f"{i}. {path}\n"
 
-            for action in actions:
-                if action.get("file_path") in generic_paths and file_paths:
-                    # Replace generic path with the first extracted path
-                    print(f"Replacing generic path '{action.get('file_path')}' with '{file_paths[0]}'")
-                    action["file_path"] = file_paths[0]
-                    # Remove this path from the list so we don't reuse it
-                    file_paths.pop(0)
-
-        # Check for code blocks that should be added to files
-        code_blocks = re.findall(r"```(?:\w+)?\n(.*?)```", instruction_block, re.DOTALL)
-
-        # If we have create_file actions without content but code blocks exist
-        for action in actions:
-            if action.get("action") == "create_file" and not action.get("content") and code_blocks:
-                # Use the first code block as content
-                print(f"Adding code block to create_file action for '{action.get('file_path')}'")
-                action["content"] = code_blocks[0]
-                # Remove this code block from the list so we don't reuse it
-                code_blocks.pop(0)
+            instruction_block = summary + "\n" + instruction_block
 
         return actions
-
-    def analyze_file_for_modification(self, instruction: str, file_path: str, file_content: str) -> Dict[str, Any]:
-        """
-        Analyze a file to determine how to modify it based on the instruction.
-
-        Args:
-            instruction: The instruction for modifying the file
-            file_path: Path to the file
-            file_content: Current content of the file
-
-        Returns:
-            A dictionary containing the modification details
-        """
-        # Analyze the file to determine how to modify it
-        prompt = f"""
-        You are an expert code modification assistant. Your task is to analyze a file and determine how to modify it based on the given instruction.
-
-        File Path: {file_path}
-        Current Content:
-        ```
-        {file_content}
-        ```
-
-        Instruction:
-        ```
-        {instruction}
-        ```
-
-        Please analyze the file and determine the appropriate modifications. If the instruction involves adding a method, ensure it is placed at the appropriate location (e.g., imports at the top, declarations at the top, methods in the appropriate class).
-
-        Return a JSON object with the following structure:
-        {{
-            "modification_type": "replace_file",
-            "new_content": "The complete new content of the file after modifications"
-        }}
-
-        Only include the JSON object in your response, nothing else.
-        """
-
-        # Call the LLM API
-        response = self._call_llm_api(prompt)
-
-        # Parse the response
-        try:
-            modification = json.loads(response)
-            return modification
-        except json.JSONDecodeError:
-            raise ValueError(f"Could not parse LLM response as JSON: {response}")
-
-    def _show_git_diff(self, file_path: str, old_content: str, new_content: str) -> str:
-        """
-        Show a git-style diff of the changes in the actual repository with colored output.
-
-        Args:
-            file_path: Path to the file
-            old_content: Old content of the file
-            new_content: New content of the file
-
-        Returns:
-            The diff output as a string, or empty string if no changes
-        """
-        import tempfile
-        import subprocess
-        import os
-        import re
-
-        # Get the repository root directory
-        repo_root = self.codebase_path
-
-        # Create a temporary file for the new content
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
-            temp_file.write(new_content)
-            temp_file_path = temp_file.name
-
-        # Stage the changes in git
-        subprocess.run(["git", "add", file_path], cwd=repo_root, check=True)
-
-        # Run git diff to show the staged changes
-        diff_output = subprocess.run(["git", "diff", "--cached"], cwd=repo_root, capture_output=True, text=True).stdout
-
-        # Restore the original file content
-        with open(file_path, 'w') as f:
-            f.write(old_content)
-
-        # Clean up the temporary file
-        os.unlink(temp_file_path)
-
-        # Highlight added lines in green
-        diff_lines = diff_output.splitlines()
-        highlighted_diff = []
-        for line in diff_lines:
-            if line.startswith('+'):
-                highlighted_diff.append(f"\033[92m{line}\033[0m")  # Green for added lines
-            elif line.startswith('-'):
-                highlighted_diff.append(f"\033[91m{line}\033[0m")  # Red for removed lines
-            else:
-                highlighted_diff.append(line)
-
-        return '\n'.join(highlighted_diff)
-
-    def process_instructions(self, instructions_path: str) -> List[Dict[str, Any]]:
-        """
-        Process the instructions file and return structured actions.
-
-        Args:
-            instructions_path: Path to the instructions file
-
-        Returns:
-            A list of structured actions
-        """
-        instructions = self.read_instructions(instructions_path)
-        return self.parse_instructions(instructions)
-
-    def analyze_instruction_block(self, instruction_block: str) -> dict:
-        """
-        Analyze a single instruction block and return a structured action.
-        """
-        # Let the LLM handle the parsing logic entirely
-        return self._llm_parse_instruction_block(instruction_block)[0]

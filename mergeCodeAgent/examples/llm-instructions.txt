@@ -1,0 +1,88 @@
+Since the prompt explicitly asks to follow a specific format for the output, which differs from the "Instructions" format you've provided at the end, I'll adhere to the original format for the main response as requested. However, I'll also include a brief summary in the requested "Instructions" format at the end for completeness, focusing only on the essential points due to the constraints.
+
+### **Response in Requested Format**
+
+#### Overview :
+Implementation involves enhancing the `EmployeeService` class to filter employees by department and updating the `Main` class to demonstrate this functionality.
+
+#### Key Components :
+- `EmployeeService` class
+- `Main` class
+- `Employee` class (implicitly used)
+
+#### Code Changes :
+
+* **Add to** `/Users/sakshi/Documents/proj/EmployeeManagementSystem/src/com/company/service/EmployeeService.java`
+  ```java
+  /**
+   * Retrieves a list of employees belonging to a specified department.
+   * @param department Name of the department to filter by.
+   * @return List of Employee objects in the given department.
+   */
+  public List<Employee> getEmployeesByDepartment(String department) {
+      return employees.stream()
+                      .filter(employee -> employee.department.equalsIgnoreCase(department))
+                      .toList();
+  }
+  ```
+
+* **Modify to** `/Users/sakshi/Documents/proj/EmployeeManagementSystem/src/com/company/app/Main.java`
+  ```java
+  public static void main(String[] args) {
+      EmployeeService service = new EmployeeService();
+      service.addEmployee(new Employee(1, "Alice", "HR"));
+      service.addEmployee(new Employee(2, "Bob", "IT"));
+      service.addEmployee(new Employee(3, "Charlie", "HR")); // Additional for demo
+
+      System.out.println("All Employees:");
+      for (Employee e : service.getAllEmployees()) {
+          System.out.println(e);
+      }
+
+      String targetDepartment = "HR";
+      System.out.println("\nEmployees in " + targetDepartment + " Department:");
+      for (Employee e : service.getEmployeesByDepartment(targetDepartment)) {
+          System.out.println("Name: " + e.name + ", ID: " + e.id + ", Role: " + e.role); // Assumes 'role' is an attribute
+      }
+  }
+  ```
+
+  **Note on `role` attribute**: The `Employee` class in provided documents doesn't explicitly include a `role` attribute. You might need to **Add** a `role` field to the `/Users/sakshi/Documents/proj/EmployeeManagementSystem/src/com/company/model/Employee.java` class if it's not already present:
+  ```java
+  public class Employee {
+      // Existing fields...
+      public String role; // Example addition
+
+      public Employee(int id, String name, String department, String role) {
+          // Initialize existing fields...
+          this.role = role;
+      }
+      // ...
+  }
+  ```
+  And update `addEmployee` calls in `Main` to include roles:
+  ```java
+  service.addEmployee(new Employee(1, "Alice", "HR", "Manager"));
+  service.addEmployee(new Employee(2, "Bob", "IT", "Developer"));
+  service.addEmployee(new Employee(3, "Charlie", "HR", "Assistant"));
+  ```
+
+### **Brief Summary in "Instructions" Format (Focused on Essentials)**
+
+#### 1. Overview of the implementation approach
+Enhance `EmployeeService` with a department filter method and update `Main` for demonstration.
+
+#### 2. Key components and their responsibilities
+- **`EmployeeService`**: Manage employee data, including filtering by department.
+- **`Main`**: Demonstrate the filtering functionality.
+
+#### 3. Detailed implementation steps
+1. **Add `getEmployeesByDepartment` to `EmployeeService`**.
+2. **Update `Main` to use the new method**.
+3. **Optionally, add `role` to `Employee` if missing**.
+
+#### 4. Code examples for critical parts
+ Provided in the **Code Changes** section above.
+
+#### 5. Testing approach
+ **Not Provided** (as per your request)

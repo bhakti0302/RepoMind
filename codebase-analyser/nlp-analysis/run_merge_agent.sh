@@ -3,16 +3,21 @@
 # Script to run the Merge Agent after the pipeline completes
 # This version is designed to run in interactive mode in the VS Code terminal
 
+# Get the workspace root directory
+WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
 # Check if the LLM instructions file exists
-LLM_INSTRUCTIONS_FILE="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output/LLM-instructions.txt"
+LLM_INSTRUCTIONS_FILE="$WORKSPACE_ROOT/codebase-analyser/output/LLM-instructions.txt"
 # Also check for the alternative file name (llm-output.txt)
 if [ ! -f "$LLM_INSTRUCTIONS_FILE" ]; then
-    LLM_INSTRUCTIONS_FILE="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output/llm-output.txt"
+    LLM_INSTRUCTIONS_FILE="$WORKSPACE_ROOT/codebase-analyser/output/llm-output.txt"
 fi
-TARGET_PROJECT="/Users/bhaktichindhe/Desktop/Project/EmployeeManagementSystem"
+
+# Set the target project directory
+TARGET_PROJECT="$WORKSPACE_ROOT/target-project"
 
 # Create logs directory if it doesn't exist
-LOGS_DIR="/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/logs"
+LOGS_DIR="$WORKSPACE_ROOT/codebase-analyser/logs"
 mkdir -p "$LOGS_DIR"
 
 # Create a log file with timestamp
@@ -43,7 +48,7 @@ if [ ! -d "$TARGET_PROJECT" ]; then
 fi
 
 # Path to the Merge Agent
-MERGE_AGENT_PATH="/Users/bhaktichindhe/Desktop/Project/RepoMind/mergeCodeAgent"
+MERGE_AGENT_PATH="$WORKSPACE_ROOT/mergeCodeAgent"
 
 # Check if the Merge Agent exists
 if [ ! -d "$MERGE_AGENT_PATH" ]; then

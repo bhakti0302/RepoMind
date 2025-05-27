@@ -14,7 +14,7 @@ def main():
     
     # Initialize the nodes
     llm_node = LLMNode()
-    filesystem_node = FilesystemNode("/Users/sakshi/Documents/EmployeeManagementSystem", llm_node)
+    filesystem_node = FilesystemNode("/Users/sakshi/Documents/proj/EmployeeManagementSystem", llm_node)
     
     # Read the instructions file
     with open(instructions_file, 'r') as f:
