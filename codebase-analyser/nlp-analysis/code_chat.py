@@ -11,6 +11,8 @@ import sys
 import logging
 import json
 import argparse
+import time
+import hashlib
 from typing import Dict, List, Any, Optional, Union, Tuple
 
 # Add the current directory to the Python path
@@ -32,6 +34,42 @@ except ImportError as e:
     logger.error(f"Error importing modules: {e}")
     sys.exit(1)
 
+def get_cache_key(question: str, conversation_history: List[Dict[str, str]] = None) -> str:
+    """Generate a cache key for the question and conversation history."""
+    content = question.lower().strip()
+    if conversation_history:
+        # Include last 2 conversation entries in cache key
+        recent_history = conversation_history[-2:] if len(conversation_history) > 2 else conversation_history
+        for entry in recent_history:
+            content += entry.get('user', '') + entry.get('assistant', '')
+
+    return hashlib.md5(content.encode()).hexdigest()
+
+def load_cache(cache_file: str) -> Dict:
+    """Load cache from file."""
+    if not os.path.exists(cache_file):
+        return {}
+
+    try:
+        with open(cache_file, 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        logger.warning(f"Failed to load cache: {e}")
+        return {}
+
+def save_cache(cache_file: str, cache: Dict):
+    """Save cache to file."""
+    try:
+        # Keep only the last 100 entries to prevent cache from growing too large
+        if len(cache) > 100:
+            sorted_cache = sorted(cache.items(), key=lambda x: x[1].get('timestamp', 0))
+            cache = dict(sorted_cache[-100:])
+
+        with open(cache_file, 'w') as f:
+            json.dump(cache, f, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to save cache: {e}")
+
 def process_code_question(
     question: str,
     db_path: str,
@@ -40,7 +78,8 @@ def process_code_question(
     llm_api_key: str = None,
     llm_model_name: str = "nvidia/llama-3.3-nemotron-super-49b-v1:free",
     temperature: float = 0.7,
-    max_tokens: int = 2000
+    max_tokens: int = 2000,
+    enable_cache: bool = True
 ) -> str:
     """Process a question about code and generate a response.
 
@@ -60,6 +99,27 @@ def process_code_question(
     try:
         # Create output directory if it doesn't exist
         os.makedirs(output_dir, exist_ok=True)
+
+        # Check cache if enabled
+        cache_file = os.path.join(output_dir, 'chat_cache.json')
+        if enable_cache:
+            cache = load_cache(cache_file)
+            cache_key = get_cache_key(question, conversation_history)
+
+            if cache_key in cache:
+                cached_entry = cache[cache_key]
+                # Check if cache entry is less than 24 hours old
+                cache_age = time.time() - cached_entry.get('timestamp', 0)
+                if cache_age < 24 * 3600:  # 24 hours
+                    logger.info("Using cached response")
+                    cached_response = cached_entry['response']
+
+                    # Save cached response to output file
+                    chat_response_file = os.path.join(output_dir, "chat-response.txt")
+                    with open(chat_response_file, 'w') as f:
+                        f.write(f"{cached_response}\n\n*Note: This response was retrieved from cache.*")
+
+                    return f"{cached_response}\n\n*Note: This response was retrieved from cache.*"
 
         # Step 1: Run RAG to get context about the code
         logger.info("Step 1: Running RAG to get context")
@@ -188,10 +248,24 @@ def process_code_question(
 
         logger.info(f"Saved chat response to {chat_response_file}")
 
+        # Cache the response if caching is enabled
+        if enable_cache:
+            cache = load_cache(cache_file)
+            cache_key = get_cache_key(question, conversation_history)
+            cache[cache_key] = {
+                'question': question,
+                'response': llm_output,
+                'timestamp': time.time()
+            }
+            save_cache(cache_file, cache)
+            logger.info("Response cached for future use")
+
         # Clean up
         rag.close()
 
         # Update conversation history
+        if conversation_history is None:
+            conversation_history = []
         conversation_history.append({
             "user": question,
             "assistant": llm_output
@@ -235,8 +309,13 @@ def main():
     parser.add_argument("--max-tokens", type=int, default=2000,
                         help="Maximum tokens for LLM generation")
     parser.add_argument("--history-file", help="Path to the conversation history JSON file")
+    parser.add_argument("--enable-cache", action="store_true", default=True, help="Enable response caching")
+    parser.add_argument("--disable-cache", action="store_true", help="Disable response caching")
 
     args = parser.parse_args()
+
+    # Handle cache settings
+    enable_cache = args.enable_cache and not args.disable_cache
 
     # Log the parameters
     logger.info(f"Question: {args.question}")
@@ -263,7 +342,8 @@ def main():
         conversation_history=conversation_history,
         llm_model_name=args.llm_model,
         temperature=args.temperature,
-        max_tokens=args.max_tokens
+        max_tokens=args.max_tokens,
+        enable_cache=enable_cache
     )
 
     # Print the response

@@ -95,6 +95,9 @@ codebase-analyser/.cache/
 .langchain.db/
 .langchain/
 
+# Codebase analyser output
+codebase-analyser/output/
+
 # VS Code Extension specific
 *.vsix
 .vscode-test/

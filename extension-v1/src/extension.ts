@@ -1703,14 +1703,8 @@ Error running codebase analysis:
     let handleSendMessageCommand = vscode.commands.registerCommand('extension-v1.handleSendMessage', (text: string) => {
         console.log('Received sendMessage command with text:', text);
         if (chatViewProvider) {
-            // Add the message to the chat view
-            chatViewProvider.sendMessageToWebviews({
-                command: 'addMessage',
-                text: text,
-                isUser: true
-            });
-
-            // Process the message
+            // Don't add the message here - let the chatView handle it to avoid duplicates
+            // Process the message directly
             setTimeout(() => {
                 // Generate a response using the chat assistant
                 const { generateResponse } = require('./utils/chatAssistant');

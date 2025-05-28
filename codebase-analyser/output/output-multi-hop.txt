@@ -61,49 +61,49 @@ If there are any other changes that needs to be done, other than Create, Add, Mo
 Structure the output in this format. You can use other synonyms for the above keywords but strictly follow the format.
 
 Domain Entities:
+  - Code
+  - You
   - Enhancements
-  - Components
-  - Update
-  - Insert
-  - Use
-  - Business
-  - Add
-  - Users
-  - Key
-  - Allow
   - Requirement
+  - Structure
+  - Display
+  - Details
   - user
   - manager
-  - If
-  - Prompt
-  - Requirements
-  - Filter
-  - Create
-  - Employees
-  - employee
-  - Details
-  - Overview
-  - Your
-  - Do
-  - For
-  - department
-  - Suggested
-  - The
-  - String
-  - EmployeeManager
-  - Objective
   - Department
-  - Functional
+  - String
+  - department
+  - Use
+  - Requirements
+  - Overview
+  - Create
+  - Do
   - Changes
   - Engineering
-  - Structure
-  - hr
-  - getEmployeesByDepartment
-  - Code
+  - Objective
+  - Functional
+  - Suggested
   - Modify
+  - Users
+  - getEmployeesByDepartment
+  - If
+  - For
+  - employee
+  - Insert
+  - Allow
+  - Prompt
+  - Components
+  - Key
+  - The
+  - Filter
+  - Business
+  - Your
+  - Employees
+  - hr
   - Just
-  - Display
-  - You
+  - Update
+  - EmployeeManager
+  - Add
 
 Architectural Patterns:
   - Service Layer Pattern
@@ -111,10 +111,10 @@ Architectural Patterns:
 Implementation Details:
   - EmployeeService class
   - Main class
+  - Employee() method
+  - addEmployee() method
   - EmployeeService() method
   - getAllEmployees() method
-  - addEmployee() method
-  - Employee() method
 
 Related Components:
   - EmployeeService

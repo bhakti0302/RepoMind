@@ -4,21 +4,21 @@
     "Main"
   ],
   "methods": [
-    "EmployeeService",
+    "Employee",
     "main",
-    "getAllEmployees",
     "addEmployee",
-    "Employee"
+    "EmployeeService",
+    "getAllEmployees"
   ],
   "variables": [
-    "employees",
-    "service"
+    "service",
+    "employees"
   ],
   "imports": [
-    "com.company.model.Employee",
-    "java.util.List",
     "java.util.ArrayList",
-    "com.company.service.EmployeeService"
+    "com.company.service.EmployeeService",
+    "com.company.model.Employee",
+    "java.util.List"
   ],
   "interfaces": [],
   "annotations": [],

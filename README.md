@@ -1,350 +1,246 @@
 # RepoMind - Intelligent Coding Assistant
 
-RepoMind is an AI-powered coding assistant that provides intelligent code understanding and generation capabilities. The project consists of a codebase analysis system for deep code understanding and a VS Code extension for the user interface.
+RepoMind is an AI-powered VS Code extension that provides intelligent code analysis, understanding, and generation capabilities. It combines advanced codebase analysis with natural language processing to help developers understand existing code and generate new implementations based on business requirements.
 
-## Project Components
+## 🚀 Overview
 
-1. **Codebase Analyser**: Advanced code analysis system for parsing, chunking, and understanding code
-2. **VS Code Extension**: User interface for interacting with the codebase analyser
-3. **Documentation**: Comprehensive documentation for the project
+RepoMind transforms how developers interact with codebases by providing:
 
-## Features
+- **Intelligent Code Analysis**: Deep understanding of code structure, dependencies, and relationships
+- **Natural Language Processing**: Convert business requirements into actionable code implementations
+- **Context-Aware Code Generation**: Generate code that fits seamlessly into existing codebases
+- **Interactive Chat Interface**: VS Code integrated chat for seamless developer experience
+- **Multi-Language Support**: Support for Java, Python, JavaScript, and more
 
-### Codebase Analysis System
-- AST parsing with Tree-sitter for multiple languages
-- Hierarchical semantic code chunking
-- Dependency analysis and relationship mapping
-- Structural integrity and context preservation
-- Comprehensive metadata for code understanding
-- Memory-optimized processing for large codebases
-- Vector database integration with LanceDB
-- Code embedding generation using CodeBERT
-- Optional dependency graph visualization
-- Unified storage for vectors and graph metadata
-- Command-line interface for various operations
+## 🏗️ Architecture
 
-### VS Code Extension
-- Interactive chat interface for querying the codebase
-- One-click codebase synchronization
-- Project-specific context for accurate responses
-- File attachment capability for additional context
-- Status bar integration for quick access
-- Multi-project support with automatic project ID management
-- Code relationship visualization directly in the chat UI
-- Incremental codebase updates for improved performance
-- Comprehensive error logging for debugging
+RepoMind consists of four main components that work together to provide a comprehensive coding assistant experience:
 
-### Enhanced Java Parser
-- Parses Java files and extracts classes, methods, fields, and their relationships
-- Creates CodeChunk objects with proper parent-child relationships
-- Stores chunks in the database
-- Supports complex Java projects with multiple files and packages
+### 1. VS Code Extension (`extension-v1/`)
+The user interface and main interaction point:
+- **Chat Interface**: Interactive chat window for natural language queries
+- **File Upload**: Attach business requirement files for analysis
+- **Code Visualization**: Display generated code and analysis results
+- **Real-time Processing**: Live updates during analysis and generation
+- **Integration Hub**: Orchestrates communication between all components
 
-## Quick Start
+### 2. Codebase Analyzer (`codebase-analyser/`)
+Advanced code analysis and indexing system:
+- **Multi-Language Parsing**: Tree-sitter based parsing for multiple programming languages
+- **Semantic Chunking**: Intelligent code segmentation preserving context and structure
+- **Vector Embeddings**: Generate embeddings using CodeBERT for semantic similarity
+- **Dependency Analysis**: Build comprehensive dependency graphs and relationships
+- **LanceDB Storage**: Efficient vector database for code chunk storage and retrieval
+
+### 3. NLP Analysis Pipeline (`codebase-analyser/nlp-analysis/`)
+Natural language processing and code synthesis:
+- **Requirements Parsing**: Extract entities and components from business requirements
+- **Vector Search**: Find relevant code chunks using semantic similarity
+- **Multi-Hop RAG**: Retrieval-Augmented Generation with graph traversal
+- **Context Building**: Combine multiple code contexts for comprehensive understanding
+- **LLM Integration**: NVIDIA Llama 3.3 Nemotron for code generation
+
+### 4. Merge Code Agent (`mergeCodeAgent/`)
+Automated code modification and integration:
+- **Instruction Parsing**: Understand natural language modification instructions
+- **Code Integration**: Apply generated code to existing codebases
+- **Duplicate Detection**: Prevent redundant code additions
+- **User Approval**: Interactive approval process for code changes
+- **Automatic Formatting**: Ensure proper code formatting and organization
+
+## 🔄 Workflow
+
+RepoMind follows a comprehensive workflow from code analysis to generation:
+
+### Phase 1: Codebase Indexing
+1. **Code Parsing**: Analyze repository structure using Tree-sitter
+2. **Semantic Chunking**: Break code into meaningful, context-preserving chunks
+3. **Embedding Generation**: Create vector embeddings for semantic search
+4. **Dependency Mapping**: Build relationships between code components
+5. **Database Storage**: Store in LanceDB for efficient retrieval
+
+### Phase 2: Requirement Analysis
+1. **File Upload**: User uploads business requirements via VS Code extension
+2. **NLP Processing**: Extract entities, components, and relationships
+3. **Query Generation**: Create search queries from requirements
+4. **Vector Search**: Find relevant code chunks using semantic similarity
+5. **Context Retrieval**: Use multi-hop RAG for comprehensive context gathering
+
+### Phase 3: Code Generation
+1. **Context Assembly**: Combine retrieved code contexts with requirements
+2. **LLM Processing**: Generate code using NVIDIA Llama 3.3 Nemotron
+3. **Output Formatting**: Structure generated code for integration
+4. **Result Display**: Show results in VS Code chat interface
+
+### Phase 4: Code Integration (Optional)
+1. **Instruction Processing**: Parse generated code modification instructions
+2. **User Approval**: Interactive approval for each code change
+3. **Code Application**: Apply changes to target codebase
+4. **Formatting**: Ensure proper code organization and style
+
+## 🛠️ Technologies
+
+### Core Technologies
+- **TypeScript/JavaScript**: VS Code extension development
+- **Python**: Backend processing and analysis
+- **Tree-sitter**: Multi-language code parsing
+- **LanceDB**: Vector database for embeddings storage
+- **spaCy**: Natural language processing
+- **CodeBERT**: Code embedding generation
+
+### AI/ML Stack
+- **NVIDIA Llama 3.3 Nemotron**: Large language model for code generation
+- **OpenRouter API**: LLM access and management
+- **RAG (Retrieval-Augmented Generation)**: Context-aware generation
+- **Vector Similarity Search**: Semantic code matching
+
+### Development Tools
+- **LangGraph**: Agentic AI workflow orchestration
+- **NetworkX**: Graph analysis and traversal
+- **Transformers**: Hugging Face model integration
+- **VS Code API**: Extension development framework
+
+## 📁 Project Structure
+
+```
+RepoMind/
+├── extension-v1/                 # VS Code Extension
+│   ├── src/                     # Extension source code
+│   ├── media/                   # UI assets and webviews
+│   └── package.json             # Extension manifest
+├── codebase-analyser/           # Code Analysis System
+│   ├── codebase_analyser/       # Core analysis modules
+│   ├── nlp-analysis/            # NLP processing pipeline
+│   ├── scripts/                 # Analysis scripts
+│   └── tests/                   # Test suites
+├── mergeCodeAgent/              # Code Integration Agent
+│   ├── src/                     # Agent source code
+│   └── examples/                # Usage examples
+├── test-project-employee/       # Sample test project
+├── docs/                        # Documentation
+└── Requirements/                # Uploaded requirement files
+```
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.8 or later
-- Node.js and npm (for VS Code extension)
-- Visual Studio Code
+- **Node.js** (v16 or higher)
+- **Python** (3.8 or higher)
+- **VS Code** (latest version)
+- **Git**
 
 ### Installation
 
-1. Set up the codebase analyser:
+1. **Clone the Repository**
 ```bash
-cd codebase-analyser
-python -m venv venv
-python3 -m venv venv
-
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+git clone https://github.com/your-username/RepoMind.git
+cd RepoMind
 ```
 
-2. Set up the VS Code extension:
+2. **Setup VS Code Extension**
 ```bash
-cd ../extension-v1
+cd extension-v1
 npm install
 npm run compile
 ```
 
-### Primary User Flow: Using the VS Code Extension
-
-The recommended way to use RepoMind is through the VS Code extension:
-
-1. **Open your project in VS Code with the extension**:
-```bash
-# Navigate to the extension directory
-cd extension-v1
-
-# Compile the extension
-npm run compile
-
-# Open VS Code with your project and the extension
-code --extensionDevelopmentPath=$(pwd) /path/to/your/project
-```
-
-2. **Use the extension**:
-   - Look for the RepoMind icon in the activity bar
-   - Click the "Sync" button to analyze your codebase
-   - Wait for the synchronization to complete
-   - Click the "Show Visualizations" button to see code relationships
-   - Use the chat interface to query your codebase
-
-The extension automatically:
-- Detects your project folder
-- Assigns a project ID based on the folder name
-- Runs the codebase analysis
-- Populates the database with code chunks and relationships
-- Provides a chat interface for querying your codebase
-
-### Alternative: Command-Line Codebase Analysis
-
-For advanced users or testing purposes, you can also run the codebase analyzer directly from the command line. Detailed instructions are available in the [Codebase Analyser README](codebase-analyser/README.md).
-
-The codebase analyzer provides scripts for analyzing codebases:
-
+3. **Setup Codebase Analyzer**
 ```bash
 cd codebase-analyser
-python scripts/run_codebase_analysis.py --repo-path <path_to_repo> [options]
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-For more details and options, see the [Codebase Analyser README](codebase-analyser/README.md).
-
-### Accessing the Vector Database (for RAG Implementation)
-
-The system stores code chunks and their embeddings in a LanceDB database. Here's how to access it for RAG implementation:
-
-#### Direct Python Access (Recommended)
-
-```python
-# Import the UnifiedStorage class
-from codebase_analyser.database.unified_storage import UnifiedStorage
-
-# Initialize the database connection
-db = UnifiedStorage()
-
-# Search for code chunks by project ID
-results = db.search_code_chunks(
-    query="interface",  # Search query
-    limit=10,           # Maximum number of results
-    filters={"project_id": "demo"}  # Filter by project ID
-)
-
-# Access the dependency graph
-graph = db._build_graph_from_dependencies()
-
-# Calculate graph-based relevance
-# (For implementing custom relevance scoring combining vector similarity with graph proximity)
-import networkx as nx
-source_node = "class:MyClass"
-target_node = "class:Interface"
-if nx.has_path(graph, source_node, target_node):
-    path_length = nx.shortest_path_length(graph, source_node, target_node)
-    graph_score = 1.0 / (1.0 + path_length)  # Higher score for shorter paths
-```
-
-#### Command-Line Examples
-
+4. **Setup NLP Analysis Pipeline**
 ```bash
-# Navigate to the codebase-analyser directory
-cd codebase-analyser
-
-# List all projects in the database
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); print(table.to_arrow().to_pandas()['project_id'].unique())"
-
-# Count chunks for a specific project
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); print(len(table.to_arrow().to_pandas()[table.to_arrow().to_pandas()['project_id'] == 'demo']))"
-
-# Search for chunks containing a specific term
-python3 -c "import lancedb; db = lancedb.connect('codebase-analyser/.lancedb'); table = db.open_table('code_chunks'); results = table.search('class').limit(5).to_pandas(); print(results[['node_id', 'name', 'project_id']])"
+cd codebase-analyser/nlp-analysis
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
 ```
 
-#### Vector Search Examples
-
-```python
-from codebase_analyser.database.unified_storage import UnifiedStorage
-
-# Initialize database
-db = UnifiedStorage()
-
-# Simple vector search with project filter
-results = db.search_code_chunks(
-    query="interface",  # Search query
-    limit=10,           # Maximum number of results
-    filters={"project_id": "demo2"}  # Filter by project ID
-)
-
-# Access the dependency graph
-graph = db._build_graph_from_dependencies()
-
-# Print node information
-for node_id in graph.nodes():
-    print(f"Node: {node_id}, Type: {graph.nodes[node_id].get('type')}")
-
-# Print edge information
-for source, target, data in graph.edges(data=True):
-    print(f"Edge: {source} -> {target}, Type: {data.get('type')}")
-```
-
-### Running the VS Code Extension
-
-To run the VS Code extension:
-
+5. **Setup Merge Code Agent**
 ```bash
-# Navigate to the extension directory
+cd mergeCodeAgent
+pip install -r requirements.txt
+```
+
+### Configuration
+
+1. **Create Environment Files**
+
+Create `.env` in `codebase-analyser/nlp-analysis/`:
+```env
+LLM_API_KEY=your_nvidia_api_key_here
+LLM_MODEL_NAME=nvidia/llama-3.3-nemotron-super-49b-v1:free
+OUTPUT_DIR=output
+```
+
+Create `.env` in `mergeCodeAgent/`:
+```env
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+2. **Install VS Code Extension**
+```bash
 cd extension-v1
-
-# Compile the extension
-npm run compile
-
-# Run the extension in development mode with your project
-code --extensionDevelopmentPath=$(pwd) /path/to/your/project
+code --install-extension .
 ```
 
-Once VS Code opens with your project:
-1. Look for the RepoMind icon in the activity bar
-2. Click the "Sync" button to analyze your codebase
-3. Wait for the synchronization to complete
-4. Use the chat interface to query your codebase
+## 🧪 Testing
 
-The extension automatically:
-- Detects your project folder
-- Assigns a project ID based on the folder name
-- Runs the codebase analysis
-- Populates the database with code chunks and relationships
+### Test the Complete System
 
-#### Visualization Queries
+1. **Start VS Code** with the extension installed
+2. **Open a project** you want to analyze
+3. **Sync Codebase**: Click the "Sync Codebase" button to index your code
+4. **Upload Requirements**: Use the attach button to upload a requirements file
+5. **Review Results**: Generated code will appear in the chat interface
 
-You can use natural language queries in the chat to display code visualizations. Here are some example queries you can try:
+### Test Individual Components
 
-- "Show me the code relationships"
-- "Visualize the codebase structure"
-- "Show me how files are connected"
-- "Display class relationships"
-- "I want to see the code architecture"
-- "Show me inheritance relationships"
-- "Can you visualize the code dependencies?"
-- "Let's visualize the code structure"
-- "Show me the file dependencies"
-
-Alternatively, you can click the "Show Visualizations" button to display the visualizations directly.
-
-This is the recommended workflow for most users, as it provides a simple and intuitive interface for analyzing and querying your codebase.
-
-## Testing the VS Code Extension
-
-### Quick Verification Flow
-
-To quickly test that the VS Code extension is working correctly:
-
-1. **Open a Java project with the extension**:
-   ```bash
-   cd extension-v1
-   npm run compile
-   code --extensionDevelopmentPath=$(pwd) /path/to/your/java/project
-   ```
-
-2. **Synchronize the codebase**:
-   - Look for the RepoMind icon in the VS Code activity bar
-   - Click the "Sync" button to analyze your codebase
-   - Wait for the synchronization to complete
-
-3. **Verify database population**:
-   - The database should be populated with chunks from your project
-   - You can verify this by checking the LanceDB database:
-   ```bash
-   cd codebase-analyser
-   python -c "import lancedb; db = lancedb.connect('.lancedb'); table = db.open_table('code_chunks'); import pandas as pd; df = table.to_arrow().to_pandas(); print('Project IDs:', df['project_id'].unique()); print('Number of chunks:', len(df))"
-   ```
-
-4. **Check the dependency graph**:
-   - A visualization of the dependency graph should be generated
-   - You can find it at: `data/projects/<project_id>/visualizations/<project_id>_dependency_graph.png`
-
-This simple flow allows you to verify that the extension is correctly analyzing your codebase, populating the database, and generating visualizations.
-
-## Project Structure
-
-```
-RepoMind/
-├── codebase-analyser/           # Codebase analysis system
-│   ├── codebase_analyser/       # Main package
-│   │   ├── parsing/             # Code parsing and chunking
-│   │   ├── database/            # Database integration with LanceDB
-│   │   ├── embeddings/          # Code embedding generation
-│   │   └── visualization/       # Visualization utilities
-│   ├── scripts/                 # Utility scripts
-│   │   ├── analyze_java.py      # Main script for analyzing Java projects
-│   │   ├── visualize_code_relationships.py  # Visualization script
-│   │   ├── update_codebase.py   # Incremental update script
-│   │   └── ...
-│   ├── tests/                   # Test directory
-│   │   ├── parsing/             # Tests for parsing components
-│   │   ├── database/            # Tests for database components
-│   │   └── ...
-│   └── samples/                 # Sample files and outputs
-│       ├── java_test_project/   # Simple Java project
-│       ├── complex_java/        # Complex Java project
-│       └── ...
-│
-├── data/                        # Data storage
-│   └── projects/                # Project-specific data
-│       └── <project_id>/        # Data for each project
-│           ├── chunks/          # Chunked code
-│           ├── embeddings/      # Code embeddings
-│           └── visualizations/  # Code visualizations
-│
-├── extension-v1/                # VS Code extension
-│   ├── src/                     # TypeScript source code
-│   │   ├── ui/                  # UI components
-│   │   └── utils/               # Utility functions
-│   └── media/                   # CSS and other assets
-│
-└── docs/                        # Documentation
-    └── PLAN.MD                  # Project plan and roadmap
+**Codebase Analysis:**
+```bash
+cd codebase-analyser
+python scripts/run_codebase_analysis.py --repo-path ../test-project-employee --clear-db --mock-embeddings
 ```
 
-## Completed Components
+**NLP Pipeline:**
+```bash
+cd codebase-analyser/nlp-analysis
+python src/code_synthesis_workflow.py --input-file data/test/test_requirements.txt --output-dir output
+```
 
-### 1. Tree-sitter Integration
-- Integrated Tree-sitter for AST parsing
-- Added support for multiple programming languages
-- Implemented utility functions for AST traversal and analysis
-- Created specialized Java parser for detailed analysis
+**Merge Agent:**
+```bash
+cd mergeCodeAgent
+python run_agent.py examples/test_instructions.txt ../test-project-employee
+```
 
-### 2. Semantic Code Chunking
-- Designed and implemented semantic chunking algorithm based on AST structure
-- Created hierarchical chunking with fine-grained and container-level chunks
-- Ensured structural integrity and context preservation
-- Added comprehensive metadata for dependency relationships
-- Implemented visualization utilities for chunk hierarchy
+## 📖 Documentation
 
-### 3. Vector Database Integration
-- Installed and configured LanceDB for storing code embeddings
-- Created comprehensive schema for code chunks and dependency relationships
-- Implemented version-compatible database manager with schema validation
-- Added robust error handling and logging
-- Designed flexible schema with minimal and full versions
-- Created database utility scripts for connection management
+- **[Project Plan](docs/PLAN.MD)**: Detailed project roadmap and features
+- **[Codebase Analyzer Guide](docs/README.md)**: Complete analysis system documentation
+- **[NLP Pipeline Guide](codebase-analyser/nlp-analysis/README.md)**: NLP processing documentation
+- **[Extension Guide](extension-v1/README.md)**: VS Code extension documentation
+- **[Merge Agent Guide](mergeCodeAgent/README.md)**: Code integration documentation
 
-### 4. Code Embedding Generation
-- Implemented embedding generation using CodeBERT
-- Added batch processing for efficient embedding generation
-- Implemented caching to avoid regenerating embeddings for the same code
-- Created utility scripts for embedding code chunks and storing them in the database
+## 🤝 Contributing
 
-### 5. Dependency Graph Construction
-- Built dependency graph construction system
-- Implemented visualization utilities for code relationships
-- Created command-line interface for dependency graph operations
-- Added database integration for storing and querying dependencies
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Documentation
+## 📄 License
 
-For more detailed information, see the following documentation:
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- [Project Plan](docs/PLAN.MD) - Detailed project plan and roadmap
-- [Codebase Analyser README](codebase-analyser/README.md) - Detailed documentation for the codebase analyser
+## 🙏 Acknowledgments
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+- **Tree-sitter** for multi-language parsing capabilities
+- **NVIDIA** for Llama 3.3 Nemotron model access
+- **Hugging Face** for CodeBERT and transformer models
+- **LanceDB** for efficient vector storage
+- **VS Code** for the excellent extension API

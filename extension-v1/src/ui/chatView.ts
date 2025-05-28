@@ -42,8 +42,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
             if (message.command === 'sendMessage') {
                 console.log('Received sendMessage command with text:', message.text);
-                // Forward to the command handler in extension.ts
-                vscode.commands.executeCommand('extension-v1.handleSendMessageFromWebview', message.text);
+                // Handle the message directly in the chatView instead of forwarding
+                this._handleUserMessage(webviewView.webview, message.text);
             } else if (message.command === 'syncCodebase') {
                 console.log('Handling syncCodebase command');
                 this._handleSyncCodebase(webviewView.webview);
@@ -82,6 +82,13 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
     private async _handleUserMessage(webview: vscode.Webview, text: string) {
         console.log('_handleUserMessage called with text:', text);
+
+        // First, add the user message to the UI
+        webview.postMessage({
+            command: commands.ADD_MESSAGE,
+            text: text,
+            isUser: true
+        });
 
         // Check for misspellings and suggest corrections
         const correction = suggestCorrection(text);
@@ -129,19 +136,33 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             });
 
             try {
-                // Import the processCodeQuestion function
-                const { processCodeQuestion } = require('../utils/chatAssistant');
+                // Use the original processing directly for now (more reliable)
+                console.log('Processing code question with original method');
 
-                // Process the code question
-                console.log(`Processing code question: ${text}`);
-                const llmResponse = await processCodeQuestion(text);
-                console.log(`Received LLM response of length: ${llmResponse.length}`);
-
-                // Update the processing message with the LLM response
+                // Update message to show processing
                 webview.postMessage({
                     command: commands.UPDATE_MESSAGE,
                     id: processingMessageId,
-                    text: llmResponse
+                    text: 'Searching codebase and generating response...',
+                    isLoading: true,
+                    loadingType: 'llm',
+                    progress: 25,
+                    stage: 'Processing'
+                });
+
+                const { processCodeQuestion } = require('../utils/chatAssistant');
+                const llmResponse = await processCodeQuestion(text);
+
+                console.log(`Received LLM response of length: ${llmResponse.length}`);
+
+                // Update the processing message with the final LLM response
+                webview.postMessage({
+                    command: commands.UPDATE_MESSAGE,
+                    id: processingMessageId,
+                    text: llmResponse,
+                    isLoading: false,
+                    progress: 100,
+                    stage: 'Complete'
                 });
 
                 // Log the conversation for debugging
@@ -149,11 +170,18 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             } catch (error) {
                 console.error(`Error processing code question: ${error}`);
 
-                // Update the processing message with an error
+                // Generate enhanced error response
+                const errorResponse = this._generateEnhancedErrorResponse(text, error as Error);
+
+                // Update the processing message with the enhanced error
                 webview.postMessage({
                     command: commands.UPDATE_MESSAGE,
                     id: processingMessageId,
-                    text: `Error processing your question: ${error instanceof Error ? error.message : String(error)}`
+                    text: errorResponse,
+                    isLoading: false,
+                    isError: true,
+                    progress: 0,
+                    stage: 'Error'
                 });
             }
         } else {
@@ -166,6 +194,50 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
                 });
             }, 500);
         }
+    }
+
+    private _generateEnhancedErrorResponse(_question: string, error: Error): string {
+        const timestamp = new Date().toLocaleString();
+
+        let errorResponse = `## ⚠️ Processing Error\n\n`;
+        errorResponse += `I encountered an issue while processing your question at ${timestamp}.\n\n`;
+
+        // Analyze the error type and provide specific guidance
+        if (error.message.includes('ENOENT') || error.message.includes('not found')) {
+            errorResponse += `**Issue**: Required files or scripts are missing.\n\n`;
+            errorResponse += `**Suggestions**:\n`;
+            errorResponse += `- Ensure the codebase analyzer is properly set up\n`;
+            errorResponse += `- Check that all required scripts are in place\n`;
+            errorResponse += `- Try running the "Sync Codebase" command first\n`;
+        } else if (error.message.includes('API') || error.message.includes('key')) {
+            errorResponse += `**Issue**: LLM API configuration problem.\n\n`;
+            errorResponse += `**Suggestions**:\n`;
+            errorResponse += `- Check your API key configuration in the .env file\n`;
+            errorResponse += `- Verify your internet connection\n`;
+            errorResponse += `- Ensure the API service is available\n`;
+        } else if (error.message.includes('timeout')) {
+            errorResponse += `**Issue**: Request timed out.\n\n`;
+            errorResponse += `**Suggestions**:\n`;
+            errorResponse += `- Try asking a more specific question\n`;
+            errorResponse += `- Check your internet connection\n`;
+            errorResponse += `- The system might be under heavy load, try again later\n`;
+        } else {
+            errorResponse += `**Issue**: Unexpected error occurred.\n\n`;
+            errorResponse += `**Suggestions**:\n`;
+            errorResponse += `- Try rephrasing your question\n`;
+            errorResponse += `- Check the system logs for more details\n`;
+            errorResponse += `- Contact support if the issue persists\n`;
+        }
+
+        errorResponse += `\n**Error Details**: \`${error.message}\`\n\n`;
+        errorResponse += `**What you can try**:\n`;
+        errorResponse += `1. Rephrase your question more specifically\n`;
+        errorResponse += `2. Use the visualization features to explore the code\n`;
+        errorResponse += `3. Check the project documentation\n`;
+        errorResponse += `4. Try again in a few moments\n\n`;
+        errorResponse += `*If this error persists, please check the extension logs or contact support.*`;
+
+        return errorResponse;
     }
 
     private _handleVisualizeRelationships(webview: vscode.Webview) {

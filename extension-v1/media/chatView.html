@@ -111,6 +111,135 @@
             display: block;
             white-space: pre-wrap;
         }
+
+        /* Enhanced progress bar */
+        .progress-container {
+            width: 100%;
+            background-color: var(--vscode-editor-background);
+            border-radius: 4px;
+            margin: 8px 0;
+            overflow: hidden;
+            border: 1px solid var(--vscode-widget-border);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: linear-gradient(90deg, var(--vscode-progressBar-background), var(--vscode-button-background));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-bar.enhanced {
+            background: linear-gradient(90deg, #22c55e, #3b82f6, #8b5cf6);
+            background-size: 200% 100%;
+            animation: progressGradient 2s ease-in-out infinite;
+        }
+
+        @keyframes progressGradient {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .progress-text {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-stage {
+            font-weight: 500;
+            color: var(--vscode-foreground);
+        }
+
+        .progress-percentage {
+            font-family: monospace;
+            color: var(--vscode-button-background);
+        }
+
+        /* Enhanced loading states */
+        .loading-enhanced {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--vscode-widget-border);
+            border-top: 2px solid var(--vscode-button-background);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-spinner.enhanced {
+            border-top-color: #22c55e;
+            border-right-color: #3b82f6;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error states */
+        .message.error {
+            border-left: 4px solid #ef4444;
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .error-icon {
+            color: #ef4444;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        /* Cache indicator */
+        .cache-indicator {
+            font-size: 10px;
+            color: var(--vscode-descriptionForeground);
+            background-color: var(--vscode-badge-background);
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-left: 8px;
+        }
+
+        /* Enhanced text formatting */
+        .assistant-message {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+
+        .assistant-message h1,
+        .assistant-message h2,
+        .assistant-message h3 {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .assistant-message ul,
+        .assistant-message ol {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .assistant-message li {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            text-align: left;
+        }
+
+        .assistant-message p {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -223,8 +352,8 @@
                     messageId
                 );
             } else if (message.command === 'updateMessage' || message.command === 'UPDATE_MESSAGE') {
-                // Find and update an existing message
-                updateMessage(message.id, message.text);
+                // Find and update an existing message with enhanced progress support
+                updateMessage(message.id, message.text, message.isLoading, message.progress, message.stage, message.isError);
             } else if (message.command === 'openImage') {
                 vscode.postMessage({
                     command: 'openImage',
@@ -246,10 +375,7 @@
         function sendMessage() {
             const text = messageInput.value.trim();
             if (text) {
-                // Add message to UI
-                addMessage(text, true);
-
-                // Send message to extension
+                // Send message to extension (don't add to UI here - let the extension handle it)
                 vscode.postMessage({
                     command: 'sendMessage',
                     text: text
@@ -277,35 +403,69 @@
                 textNode.style.marginBottom = '8px';
                 messageElement.appendChild(textNode);
 
-                // Add a simple loading indicator
-                const loadingDiv = document.createElement('div');
-                loadingDiv.style.marginTop = '10px';
-                loadingDiv.style.marginBottom = '10px';
-                loadingDiv.style.fontStyle = 'italic';
-                loadingDiv.style.color = '#666';
+                // Create enhanced loading container
+                const loadingContainer = document.createElement('div');
+                loadingContainer.className = 'loading-enhanced';
+
+                // Add spinner
+                const spinner = document.createElement('div');
+                spinner.className = loadingType === 'enhanced' ? 'loading-spinner enhanced' : 'loading-spinner';
+                loadingContainer.appendChild(spinner);
+
+                // Add loading text
+                const loadingText = document.createElement('div');
+                loadingText.style.flex = '1';
+                loadingText.style.fontStyle = 'italic';
+                loadingText.style.color = '#666';
 
                 // Different loading messages based on the loading type
                 if (loadingType === 'sync') {
-                    loadingDiv.textContent = 'Please wait while the codebase is being analyzed...';
+                    loadingText.textContent = 'Please wait while the codebase is being analyzed...';
                 } else if (loadingType === 'llm') {
-                    loadingDiv.textContent = 'Searching the codebase for relevant information and generating a response...';
+                    loadingText.textContent = 'Searching the codebase for relevant information and generating a response...';
+                } else if (loadingType === 'enhanced') {
+                    loadingText.textContent = 'Processing with enhanced features...';
                 } else {
-                    loadingDiv.textContent = 'Processing your request...';
+                    loadingText.textContent = 'Processing your request...';
                 }
 
-                // Add animated dots
-                const dotsContainer = document.createElement('div');
-                dotsContainer.className = 'loading-dots';
-                dotsContainer.style.marginTop = '8px';
-                dotsContainer.style.textAlign = 'center';
+                loadingContainer.appendChild(loadingText);
 
-                for (let i = 0; i < 3; i++) {
-                    const dot = document.createElement('span');
-                    dotsContainer.appendChild(dot);
+                // Add progress bar for enhanced loading
+                if (loadingType === 'enhanced') {
+                    const progressContainer = document.createElement('div');
+                    progressContainer.className = 'progress-container';
+
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'progress-bar enhanced';
+                    progressBar.style.width = '0%';
+                    progressContainer.appendChild(progressBar);
+
+                    const progressText = document.createElement('div');
+                    progressText.className = 'progress-text';
+                    progressText.innerHTML = `
+                        <span class="progress-stage">Initializing</span>
+                        <span class="progress-percentage">0%</span>
+                    `;
+                    progressContainer.appendChild(progressText);
+
+                    messageElement.appendChild(loadingContainer);
+                    messageElement.appendChild(progressContainer);
+                } else {
+                    // Add animated dots for non-enhanced loading
+                    const dotsContainer = document.createElement('div');
+                    dotsContainer.className = 'loading-dots';
+                    dotsContainer.style.marginTop = '8px';
+                    dotsContainer.style.textAlign = 'center';
+
+                    for (let i = 0; i < 3; i++) {
+                        const dot = document.createElement('span');
+                        dotsContainer.appendChild(dot);
+                    }
+
+                    loadingContainer.appendChild(dotsContainer);
+                    messageElement.appendChild(loadingContainer);
                 }
-
-                loadingDiv.appendChild(dotsContainer);
-                messageElement.appendChild(loadingDiv);
 
                 // Add the message to the history
                 messageHistory.appendChild(messageElement);
@@ -507,8 +667,11 @@
             } else {
                 // Check if this is an assistant message (for Markdown rendering)
                 if (!isUser) {
-                    // Check if the text contains HTML
-                    const containsHTML = text.includes('<') && text.includes('>');
+                    // Check if the text contains actual HTML elements (not markdown)
+                    const containsHTML = text.includes('<div') || text.includes('<h1') || text.includes('<h2') ||
+                                        text.includes('<h3') || text.includes('<p>') || text.includes('<ul') ||
+                                        text.includes('<ol') || text.includes('<li') || text.includes('<table') ||
+                                        text.includes('<pre') || text.includes('<code') || text.includes('<button');
 
                     if (containsHTML) {
                         // If the text already contains HTML, use it directly
@@ -552,39 +715,259 @@
                             });
                         }, 0);
                     } else {
-                        // Enhanced Markdown rendering with support for headings, lists, and code blocks
-                        let formattedText = text
-                            // Handle headings (# Heading 1, ## Heading 2, etc.)
-                            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                        // Comprehensive Markdown rendering for ALL LLM output types
+                        let formattedText = text;
 
-                            // Handle unordered lists
-                            .replace(/^\s*[-*+]\s+(.*$)/gm, '<li>$1</li>')
+                        // 1. Handle code blocks first (protect from other transformations)
+                        formattedText = formattedText.replace(/```(\w+)?\n?([\s\S]*?)```/g, '<pre style="background-color: var(--vscode-textCodeBlock-background); padding: 8px 10px; border-radius: 4px; margin: 8px 0; overflow-x: auto; border-left: 3px solid var(--vscode-textLink-foreground); font-size: 0.9em;"><code style="font-family: \'Courier New\', Consolas, monospace; white-space: pre; line-height: 1.4; color: var(--vscode-textPreformat-foreground);">$2</code></pre>');
 
-                            // Handle ordered lists
-                            .replace(/^\s*(\d+)\.\s+(.*$)/gm, '<li>$2</li>')
+                        // 2. Handle all heading levels with proper hierarchy (compact spacing)
+                        formattedText = formattedText.replace(/^#{6}\s+(.*$)/gm, '<h6 style="margin: 3px 0 1px 0; color: var(--vscode-textLink-foreground); font-weight: 500; font-size: 0.85em; opacity: 0.9;">$1</h6>');
+                        formattedText = formattedText.replace(/^#{5}\s+(.*$)/gm, '<h5 style="margin: 4px 0 1px 0; color: var(--vscode-textLink-foreground); font-weight: 500; font-size: 0.9em; opacity: 0.95;">$1</h5>');
+                        formattedText = formattedText.replace(/^#{4}\s+(.*$)/gm, '<h4 style="margin: 5px 0 2px 0; color: var(--vscode-textLink-foreground); font-weight: 600; font-size: 0.95em; border-bottom: 1px solid var(--vscode-widget-border); padding-bottom: 1px;">$1</h4>');
+                        formattedText = formattedText.replace(/^#{3}\s+(.*$)/gm, '<h3 style="margin: 6px 0 2px 0; color: var(--vscode-textLink-foreground); font-weight: 600; font-size: 1.0em; border-bottom: 1px solid var(--vscode-widget-border); padding-bottom: 2px;">$1</h3>');
+                        formattedText = formattedText.replace(/^#{2}\s+(.*$)/gm, '<h2 style="margin: 8px 0 3px 0; color: var(--vscode-textLink-foreground); font-weight: 700; font-size: 1.1em; border-bottom: 2px solid var(--vscode-textLink-foreground); padding-bottom: 2px;">$1</h2>');
+                        formattedText = formattedText.replace(/^#{1}\s+(.*$)/gm, '<h1 style="margin: 10px 0 4px 0; color: var(--vscode-textLink-foreground); font-weight: 700; font-size: 1.2em; border-bottom: 3px solid var(--vscode-textLink-foreground); padding-bottom: 3px;">$1</h1>');
 
-                            // Handle code blocks
-                            .replace(/```([^`]*?)```/gs, '<pre><code>$1</code></pre>')
+                        // 3. Handle ALL types of lists with proper nesting and formatting
+                        const lines = formattedText.split('\n');
+                        const processedLines = [];
+                        let listStack = []; // Stack to handle nested lists
 
-                            // Handle inline formatting
-                            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-                            .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-                            .replace(/`([^`]+)`/g, '<code>$1</code>')
+                        // Helper function to handle list nesting levels
+                        const handleListLevel = (processedLines, listStack, indent, listType) => {
+                            // Close lists that are at a deeper or equal level
+                            while (listStack.length > 0 && listStack[listStack.length - 1].indent >= indent) {
+                                const closingList = listStack.pop();
+                                processedLines.push(`</${closingList.type}>`);
+                            }
 
-                            // Handle line breaks
-                            .replace(/\n/g, '<br>');
+                            // Open new list if needed
+                            if (listStack.length === 0 || listStack[listStack.length - 1].indent < indent) {
+                                const listStyle = listType === 'ul' ?
+                                    'margin: 2px 0; padding-left: 20px; list-style-type: disc;' :
+                                    'margin: 2px 0; padding-left: 20px;';
+                                processedLines.push(`<${listType} style="${listStyle}">`);
+                                listStack.push({ type: listType, indent: indent });
+                            }
+                        };
 
-                        // Wrap lists in <ul> or <ol> tags
-                        formattedText = formattedText
-                            .replace(/<li>.*?<\/li>/gs, match => {
-                                return '<ul>' + match + '</ul>';
+                        for (let i = 0; i < lines.length; i++) {
+                            const line = lines[i];
+
+                            // Match different list patterns with indentation
+                            const unorderedMatch = line.match(/^(\s*)[-*+]\s+(.*)$/);
+                            const orderedMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
+                            const checkboxMatch = line.match(/^(\s*)[-*+]\s+\[([ xX])\]\s+(.*)$/);
+                            const dashMatch = line.match(/^(\s*)[-–—]\s+(.*)$/);
+
+                            if (checkboxMatch) {
+                                // Handle checkboxes
+                                const indent = checkboxMatch[1].length;
+                                const checked = checkboxMatch[2].toLowerCase() === 'x';
+                                const content = checkboxMatch[3];
+                                const checkIcon = checked ? '☑️' : '☐';
+
+                                handleListLevel(processedLines, listStack, indent, 'ul');
+                                processedLines.push(`<li style="margin: 1px 0; line-height: 1.3; padding: 1px 0; color: var(--vscode-foreground); list-style: none;"><span style="margin-right: 6px;">${checkIcon}</span>${content}</li>`);
+
+                            } else if (unorderedMatch) {
+                                // Handle unordered lists (-, *, +)
+                                const indent = unorderedMatch[1].length;
+                                const content = unorderedMatch[2];
+
+                                handleListLevel(processedLines, listStack, indent, 'ul');
+                                processedLines.push(`<li style="margin: 1px 0; line-height: 1.3; padding: 1px 0; color: var(--vscode-foreground);">${content}</li>`);
+
+                            } else if (orderedMatch) {
+                                // Handle ordered lists (1., 2., etc.)
+                                const indent = orderedMatch[1].length;
+                                const content = orderedMatch[3];
+
+                                handleListLevel(processedLines, listStack, indent, 'ol');
+                                processedLines.push(`<li style="margin: 1px 0; line-height: 1.3; padding: 1px 0; color: var(--vscode-foreground);">${content}</li>`);
+
+                            } else if (dashMatch) {
+                                // Handle em-dash lists
+                                const indent = dashMatch[1].length;
+                                const content = dashMatch[2];
+
+                                handleListLevel(processedLines, listStack, indent, 'ul');
+                                processedLines.push(`<li style="margin: 1px 0; line-height: 1.3; padding: 1px 0; color: var(--vscode-foreground); list-style-type: none;"><span style="margin-right: 6px;">—</span>${content}</li>`);
+
+                            } else {
+                                // Close all open lists when encountering non-list content
+                                while (listStack.length > 0) {
+                                    const listInfo = listStack.pop();
+                                    processedLines.push(`</${listInfo.type}>`);
+                                }
+                                processedLines.push(line);
+                            }
+                        }
+
+                        // Close any remaining open lists
+                        while (listStack.length > 0) {
+                            const listInfo = listStack.pop();
+                            processedLines.push(`</${listInfo.type}>`);
+                        }
+
+                        formattedText = processedLines.join('\n');
+
+                        // 4. Handle ALL table formats (markdown tables, ASCII tables, etc.)
+                        // Handle markdown tables
+                        const tableLines = formattedText.split('\n');
+                        const processedTableLines = [];
+                        let inTable = false;
+                        let tableRows = [];
+
+                        for (let i = 0; i < tableLines.length; i++) {
+                            const line = tableLines[i].trim();
+
+                            // Check if line looks like a table row
+                            if (line.includes('|') && line.split('|').length > 2) {
+                                if (!inTable) {
+                                    inTable = true;
+                                    tableRows = [];
+                                }
+
+                                // Skip separator rows (---|---|---)
+                                if (line.match(/^\|?[\s\-\|:]+\|?$/)) {
+                                    continue;
+                                }
+
+                                const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+                                if (cells.length > 0) {
+                                    tableRows.push(cells);
+                                }
+                            } else {
+                                // End of table
+                                if (inTable && tableRows.length > 0) {
+                                    // Generate table HTML
+                                    let tableHTML = '<table style="border-collapse: collapse; margin: 4px 0; width: 100%; font-size: 0.9em; border: 1px solid var(--vscode-widget-border);">';
+
+                                    tableRows.forEach((row, rowIndex) => {
+                                        const isHeader = rowIndex === 0;
+                                        const cellTag = isHeader ? 'th' : 'td';
+                                        const cellStyle = isHeader ?
+                                            'padding: 4px 8px; border: 1px solid var(--vscode-widget-border); background-color: var(--vscode-textCodeBlock-background); font-weight: 600; color: var(--vscode-textLink-foreground);' :
+                                            'padding: 4px 8px; border: 1px solid var(--vscode-widget-border); background-color: var(--vscode-editor-background);';
+
+                                        const cellElements = row.map(cell => `<${cellTag} style="${cellStyle}">${cell}</${cellTag}>`).join('');
+                                        tableHTML += `<tr>${cellElements}</tr>`;
+                                    });
+
+                                    tableHTML += '</table>';
+                                    processedTableLines.push(tableHTML);
+                                    tableRows = [];
+                                }
+                                inTable = false;
+                                processedTableLines.push(line);
+                            }
+                        }
+
+                        // Handle any remaining table
+                        if (inTable && tableRows.length > 0) {
+                            let tableHTML = '<table style="border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 0.9em; border: 1px solid var(--vscode-widget-border);">';
+                            tableRows.forEach((row, rowIndex) => {
+                                const isHeader = rowIndex === 0;
+                                const cellTag = isHeader ? 'th' : 'td';
+                                const cellStyle = isHeader ?
+                                    'padding: 6px 10px; border: 1px solid var(--vscode-widget-border); background-color: var(--vscode-textCodeBlock-background); font-weight: 600; color: var(--vscode-textLink-foreground);' :
+                                    'padding: 6px 10px; border: 1px solid var(--vscode-widget-border); background-color: var(--vscode-editor-background);';
+
+                                const cellElements = row.map(cell => `<${cellTag} style="${cellStyle}">${cell}</${cellTag}>`).join('');
+                                tableHTML += `<tr>${cellElements}</tr>`;
                             });
+                            tableHTML += '</table>';
+                            processedTableLines.push(tableHTML);
+                        }
 
-                        // Apply some basic styling
+                        formattedText = processedTableLines.join('\n');
+
+                        // 5. Handle ALL inline formatting and special elements
+
+                        // Bold text (** or __)
+                        formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 600; color: var(--vscode-textLink-foreground);">$1</strong>');
+                        formattedText = formattedText.replace(/__(.*?)__/g, '<strong style="font-weight: 600; color: var(--vscode-textLink-foreground);">$1</strong>');
+
+                        // Italic text (* or _)
+                        formattedText = formattedText.replace(/\*(.*?)\*/g, '<em style="font-style: italic; color: var(--vscode-foreground);">$1</em>');
+                        formattedText = formattedText.replace(/_(.*?)_/g, '<em style="font-style: italic; color: var(--vscode-foreground);">$1</em>');
+
+                        // Strikethrough (~~)
+                        formattedText = formattedText.replace(/~~(.*?)~~/g, '<del style="text-decoration: line-through; opacity: 0.7;">$1</del>');
+
+                        // Inline code (`)
+                        formattedText = formattedText.replace(/`([^`]+)`/g, '<code style="background-color: var(--vscode-textCodeBlock-background); padding: 2px 4px; border-radius: 3px; font-family: \'Courier New\', Consolas, monospace; font-size: 0.9em; color: var(--vscode-textPreformat-foreground);">$1</code>');
+
+                        // Links [text](url)
+                        formattedText = formattedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: var(--vscode-textLink-foreground); text-decoration: underline;" target="_blank">$1</a>');
+
+                        // Auto-links (http/https URLs)
+                        formattedText = formattedText.replace(/(https?:\/\/[^\s<>"]+)/g, '<a href="$1" style="color: var(--vscode-textLink-foreground); text-decoration: underline;" target="_blank">$1</a>');
+
+                        // Highlight/mark text (==text==)
+                        formattedText = formattedText.replace(/==(.*?)==/g, '<mark style="background-color: var(--vscode-editor-findMatchHighlightBackground); padding: 1px 2px; border-radius: 2px;">$1</mark>');
+
+                        // Subscript (H~2~O)
+                        formattedText = formattedText.replace(/~([^~]+)~/g, '<sub style="font-size: 0.8em;">$1</sub>');
+
+                        // Superscript (x^2^)
+                        formattedText = formattedText.replace(/\^([^^]+)\^/g, '<sup style="font-size: 0.8em;">$1</sup>');
+
+                        // 6. Handle special formatting patterns and elements
+
+                        // Horizontal rules (---, ***, ===)
+                        formattedText = formattedText.replace(/^={3,}$/gm, '<hr style="border: none; border-top: 2px solid var(--vscode-textLink-foreground); margin: 10px 0;">');
+                        formattedText = formattedText.replace(/^-{3,}$/gm, '<hr style="border: none; border-top: 1px solid var(--vscode-widget-border); margin: 8px 0;">');
+                        formattedText = formattedText.replace(/^\*{3,}$/gm, '<hr style="border: none; border-top: 1px dashed var(--vscode-widget-border); margin: 8px 0;">');
+
+                        // Blockquotes (> text)
+                        formattedText = formattedText.replace(/^>\s+(.*)$/gm, '<blockquote style="border-left: 4px solid var(--vscode-textLink-foreground); margin: 8px 0; padding: 8px 12px; background-color: var(--vscode-textCodeBlock-background); font-style: italic; opacity: 0.9;">$1</blockquote>');
+
+                        // Keyboard keys ([Ctrl], [Alt], etc.)
+                        formattedText = formattedText.replace(/\[([A-Za-z0-9+\-\s]+)\]/g, '<kbd style="background-color: var(--vscode-textCodeBlock-background); border: 1px solid var(--vscode-widget-border); border-radius: 3px; padding: 2px 6px; font-family: monospace; font-size: 0.9em; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">$1</kbd>');
+
+                        // Emoji shortcuts (:warning:, :info:, etc.)
+                        const emojiMap = {
+                            ':warning:': '⚠️', ':info:': 'ℹ️', ':check:': '✅', ':cross:': '❌',
+                            ':star:': '⭐', ':fire:': '🔥', ':rocket:': '🚀', ':bulb:': '💡',
+                            ':gear:': '⚙️', ':lock:': '🔒', ':key:': '🔑', ':shield:': '🛡️',
+                            ':bug:': '🐛', ':wrench:': '🔧', ':hammer:': '🔨', ':package:': '📦',
+                            ':folder:': '📁', ':file:': '📄', ':link:': '🔗', ':arrow:': '➡️'
+                        };
+
+                        Object.entries(emojiMap).forEach(([shortcode, emoji]) => {
+                            formattedText = formattedText.replace(new RegExp(shortcode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), emoji);
+                        });
+
+                        // Handle paragraphs and line breaks with compact spacing
+                        formattedText = formattedText.replace(/\n\n+/g, '</p><p style="margin: 3px 0; line-height: 1.4;">');
+                        formattedText = formattedText.replace(/\n/g, '<br>');
+
+                        // Wrap in paragraph if it doesn't start with a block element
+                        if (!formattedText.match(/^<(h[1-6]|ul|ol|pre|div)/)) {
+                            formattedText = '<p style="margin: 2px 0; line-height: 1.4; color: var(--vscode-foreground);">' + formattedText + '</p>';
+                        }
+
+                        // Post-process to eliminate spacing between consecutive elements
+                        formattedText = formattedText
+                            // Remove ALL spacing between heading and list
+                            .replace(/<\/h[1-6]>\s*<ul/g, '</h3><ul style="margin-top: 0;"')
+                            .replace(/<\/h[1-6]>\s*<ol/g, '</h3><ol style="margin-top: 0;"')
+                            // Remove spacing between lists and headings
+                            .replace(/<\/ul>\s*<h/g, '</ul><h')
+                            .replace(/<\/ol>\s*<h/g, '</ol><h')
+                            // Remove spacing between consecutive lists
+                            .replace(/<\/ul>\s*<ul/g, '</ul><ul style="margin-top: 0;"')
+                            .replace(/<\/ol>\s*<ol/g, '</ol><ol style="margin-top: 0;"')
+                            // Remove spacing between paragraphs and lists
+                            .replace(/<\/p>\s*<ul/g, '</p><ul style="margin-top: 0;"')
+                            .replace(/<\/p>\s*<ol/g, '</p><ol style="margin-top: 0;"');
+
+                        // Apply container styling with compact, professional presentation
                         const styledText = `
-                            <div style="line-height: 1.5; margin-bottom: 10px;">
+                            <div style="line-height: 1.5; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); word-wrap: break-word; overflow-wrap: break-word; max-width: 100%; padding: 6px 8px; background-color: var(--vscode-editor-background); border-radius: 4px; border-left: 3px solid var(--vscode-textLink-foreground);">
                                 ${formattedText}
                             </div>
                         `;
@@ -606,7 +989,7 @@
             messageElement.style.animation = 'slideIn 0.3s';
         }
 
-        function updateMessage(messageId, newText) {
+        function updateMessage(messageId, newText, isLoading, progress, stage, isError) {
             if (!messageId) return;
 
             // Find the message element by its ID
@@ -616,12 +999,66 @@
                 return;
             }
 
+            // Handle error state
+            if (isError) {
+                messageElement.classList.add('error');
+                if (!newText.includes('⚠️')) {
+                    newText = '⚠️ ' + newText;
+                }
+            } else {
+                messageElement.classList.remove('error');
+            }
+
+            // Handle progress updates for enhanced loading
+            if (isLoading && typeof progress === 'number' && stage) {
+                const progressContainer = messageElement.querySelector('.progress-container');
+                if (progressContainer) {
+                    const progressBar = progressContainer.querySelector('.progress-bar');
+                    const progressText = progressContainer.querySelector('.progress-text');
+
+                    if (progressBar) {
+                        progressBar.style.width = progress + '%';
+                    }
+
+                    if (progressText) {
+                        progressText.innerHTML = `
+                            <span class="progress-stage">${stage}</span>
+                            <span class="progress-percentage">${progress}%</span>
+                        `;
+                    }
+
+                    // Update the main text
+                    const textNode = messageElement.querySelector('div:first-child');
+                    if (textNode) {
+                        textNode.textContent = newText;
+                    }
+
+                    return; // Don't proceed with normal text update
+                }
+            }
+
+            // Remove loading indicators if not loading anymore
+            if (!isLoading) {
+                const loadingContainer = messageElement.querySelector('.loading-enhanced');
+                const progressContainer = messageElement.querySelector('.progress-container');
+
+                if (loadingContainer) {
+                    loadingContainer.remove();
+                }
+                if (progressContainer) {
+                    progressContainer.remove();
+                }
+            }
+
             // Update the text content
             // If the message has child elements, we need to be careful not to remove them
             const hasChildren = messageElement.children.length > 0;
 
-            // Check if the new text contains HTML
-            const containsHTML = newText.includes('<') && newText.includes('>');
+            // Check if the new text contains actual HTML elements (not markdown)
+            const containsHTML = newText.includes('<div') || newText.includes('<h1') || newText.includes('<h2') ||
+                                newText.includes('<h3') || newText.includes('<p>') || newText.includes('<ul') ||
+                                newText.includes('<ol') || newText.includes('<li') || newText.includes('<table') ||
+                                newText.includes('<pre') || newText.includes('<code') || newText.includes('<button');
 
             if (containsHTML) {
                 // If the text contains HTML, use innerHTML
@@ -664,24 +1101,265 @@
                         }
                     });
                 }, 0);
-            } else if (hasChildren) {
-                // If it has children (like images), find the text node or first div and update it
-                const textNode = messageElement.childNodes[0];
-                if (textNode && textNode.nodeType === 3) { // 3 is the value of Node.TEXT_NODE
-                    textNode.textContent = newText;
-                } else {
-                    // Try to find the first div that might contain text
-                    const firstDiv = messageElement.querySelector('div:first-child');
-                    if (firstDiv) {
-                        firstDiv.textContent = newText;
+            } else {
+                // Apply the same comprehensive markdown rendering as in addMessage
+                let formattedText = newText;
+
+                // 1. Handle code blocks first (protect from other transformations)
+                formattedText = formattedText.replace(/```(\w+)?\n?([\s\S]*?)```/g, '<pre style="background-color: var(--vscode-textCodeBlock-background); padding: 8px 10px; border-radius: 4px; margin: 8px 0; overflow-x: auto; border-left: 3px solid var(--vscode-textLink-foreground); font-size: 0.9em;"><code style="font-family: \'Courier New\', Consolas, monospace; white-space: pre; line-height: 1.4; color: var(--vscode-textPreformat-foreground);">$2</code></pre>');
+
+                // 2. Handle all heading levels with proper hierarchy (compact spacing)
+                formattedText = formattedText.replace(/^#{6}\s+(.*$)/gm, '<h6 style="margin: 3px 0 1px 0; color: var(--vscode-textLink-foreground); font-weight: 500; font-size: 0.85em; opacity: 0.9;">$1</h6>');
+                formattedText = formattedText.replace(/^#{5}\s+(.*$)/gm, '<h5 style="margin: 4px 0 1px 0; color: var(--vscode-textLink-foreground); font-weight: 500; font-size: 0.9em; opacity: 0.95;">$1</h5>');
+                formattedText = formattedText.replace(/^#{4}\s+(.*$)/gm, '<h4 style="margin: 5px 0 2px 0; color: var(--vscode-textLink-foreground); font-weight: 600; font-size: 0.95em; border-bottom: 1px solid var(--vscode-widget-border); padding-bottom: 1px;">$1</h4>');
+                formattedText = formattedText.replace(/^#{3}\s+(.*$)/gm, '<h3 style="margin: 6px 0 2px 0; color: var(--vscode-textLink-foreground); font-weight: 600; font-size: 1.0em; border-bottom: 1px solid var(--vscode-widget-border); padding-bottom: 2px;">$1</h3>');
+                formattedText = formattedText.replace(/^#{2}\s+(.*$)/gm, '<h2 style="margin: 8px 0 3px 0; color: var(--vscode-textLink-foreground); font-weight: 700; font-size: 1.1em; border-bottom: 2px solid var(--vscode-textLink-foreground); padding-bottom: 2px;">$1</h2>');
+                formattedText = formattedText.replace(/^#{1}\s+(.*$)/gm, '<h1 style="margin: 10px 0 4px 0; color: var(--vscode-textLink-foreground); font-weight: 700; font-size: 1.2em; border-bottom: 3px solid var(--vscode-textLink-foreground); padding-bottom: 3px;">$1</h1>');
+
+                // 3. Handle ALL types of lists with proper nesting and formatting (same as addMessage)
+                const lines = formattedText.split('\n');
+                const processedLines = [];
+                let listStack = []; // Stack to handle nested lists
+
+                // Helper function to handle list nesting levels
+                const handleListLevel = (processedLines, listStack, indent, listType) => {
+                    // Close lists that are at a deeper or equal level
+                    while (listStack.length > 0 && listStack[listStack.length - 1].indent >= indent) {
+                        const closingList = listStack.pop();
+                        processedLines.push(`</${closingList.type}>`);
+                    }
+
+                    // Open new list if needed
+                    if (listStack.length === 0 || listStack[listStack.length - 1].indent < indent) {
+                        const listStyle = listType === 'ul' ?
+                            'margin: 2px 0; padding-left: 20px; list-style-type: disc;' :
+                            'margin: 2px 0; padding-left: 20px;';
+                        processedLines.push(`<${listType} style="${listStyle}">`);
+                        listStack.push({ type: listType, indent: indent });
+                    }
+                };
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+
+                    // Match different list patterns with indentation
+                    const unorderedMatch = line.match(/^(\s*)[-*+]\s+(.*)$/);
+                    const orderedMatch = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
+                    const checkboxMatch = line.match(/^(\s*)[-*+]\s+\[([ xX])\]\s+(.*)$/);
+                    const dashMatch = line.match(/^(\s*)[-–—]\s+(.*)$/);
+
+                    if (checkboxMatch) {
+                        // Handle checkboxes
+                        const indent = checkboxMatch[1].length;
+                        const checked = checkboxMatch[2].toLowerCase() === 'x';
+                        const content = checkboxMatch[3];
+                        const checkIcon = checked ? '☑️' : '☐';
+
+                        handleListLevel(processedLines, listStack, indent, 'ul');
+                        processedLines.push(`<li style="margin: 1px 0; line-height: 1.3; padding: 1px 0; color: var(--vscode-foreground); list-style: none;"><span style="margin-right: 6px;">${checkIcon}</span>${content}</li>`);
+
+                    } else if (unorderedMatch) {
+                        // Handle unordered lists (-, *, +)
+                        const indent = unorderedMatch[1].length;
+                        const content = unorderedMatch[2];
+
+                        handleListLevel(processedLines, listStack, indent, 'ul');
+                        processedLines.push(`<li style="margin: 1px 0; line-height: 1.3; padding: 1px 0; color: var(--vscode-foreground);">${content}</li>`);
+
+                    } else if (orderedMatch) {
+                        // Handle ordered lists (1., 2., etc.)
+                        const indent = orderedMatch[1].length;
+                        const content = orderedMatch[3];
+
+                        handleListLevel(processedLines, listStack, indent, 'ol');
+                        processedLines.push(`<li style="margin: 1px 0; line-height: 1.3; padding: 1px 0; color: var(--vscode-foreground);">${content}</li>`);
+
+                    } else if (dashMatch) {
+                        // Handle em-dash lists
+                        const indent = dashMatch[1].length;
+                        const content = dashMatch[2];
+
+                        handleListLevel(processedLines, listStack, indent, 'ul');
+                        processedLines.push(`<li style="margin: 1px 0; line-height: 1.3; padding: 1px 0; color: var(--vscode-foreground); list-style-type: none;"><span style="margin-right: 6px;">—</span>${content}</li>`);
+
                     } else {
-                        // If we can't find a suitable element, just prepend the text
-                        messageElement.textContent = newText + messageElement.textContent;
+                        // Close all open lists when encountering non-list content
+                        while (listStack.length > 0) {
+                            const listInfo = listStack.pop();
+                            processedLines.push(`</${listInfo.type}>`);
+                        }
+                        processedLines.push(line);
                     }
                 }
-            } else {
-                // If it's just a text message, simply update the content
-                messageElement.textContent = newText;
+
+                // Close any remaining open lists
+                while (listStack.length > 0) {
+                    const listInfo = listStack.pop();
+                    processedLines.push(`</${listInfo.type}>`);
+                }
+
+                formattedText = processedLines.join('\n');
+
+                // 4. Handle ALL table formats (markdown tables, ASCII tables, etc.) - same as addMessage
+                // Handle markdown tables
+                const tableLines = formattedText.split('\n');
+                const processedTableLines = [];
+                let inTable = false;
+                let tableRows = [];
+
+                for (let i = 0; i < tableLines.length; i++) {
+                    const line = tableLines[i].trim();
+
+                    // Check if line looks like a table row
+                    if (line.includes('|') && line.split('|').length > 2) {
+                        if (!inTable) {
+                            inTable = true;
+                            tableRows = [];
+                        }
+
+                        // Skip separator rows (---|---|---)
+                        if (line.match(/^\|?[\s\-\|:]+\|?$/)) {
+                            continue;
+                        }
+
+                        const cells = line.split('|').map(cell => cell.trim()).filter(cell => cell !== '');
+                        if (cells.length > 0) {
+                            tableRows.push(cells);
+                        }
+                    } else {
+                        // End of table
+                        if (inTable && tableRows.length > 0) {
+                            // Generate table HTML
+                            let tableHTML = '<table style="border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 0.9em; border: 1px solid var(--vscode-widget-border);">';
+
+                            tableRows.forEach((row, rowIndex) => {
+                                const isHeader = rowIndex === 0;
+                                const cellTag = isHeader ? 'th' : 'td';
+                                const cellStyle = isHeader ?
+                                    'padding: 6px 10px; border: 1px solid var(--vscode-widget-border); background-color: var(--vscode-textCodeBlock-background); font-weight: 600; color: var(--vscode-textLink-foreground);' :
+                                    'padding: 6px 10px; border: 1px solid var(--vscode-widget-border); background-color: var(--vscode-editor-background);';
+
+                                const cellElements = row.map(cell => `<${cellTag} style="${cellStyle}">${cell}</${cellTag}>`).join('');
+                                tableHTML += `<tr>${cellElements}</tr>`;
+                            });
+
+                            tableHTML += '</table>';
+                            processedTableLines.push(tableHTML);
+                            tableRows = [];
+                        }
+                        inTable = false;
+                        processedTableLines.push(line);
+                    }
+                }
+
+                // Handle any remaining table
+                if (inTable && tableRows.length > 0) {
+                    let tableHTML = '<table style="border-collapse: collapse; margin: 8px 0; width: 100%; font-size: 0.9em; border: 1px solid var(--vscode-widget-border);">';
+                    tableRows.forEach((row, rowIndex) => {
+                        const isHeader = rowIndex === 0;
+                        const cellTag = isHeader ? 'th' : 'td';
+                        const cellStyle = isHeader ?
+                            'padding: 6px 10px; border: 1px solid var(--vscode-widget-border); background-color: var(--vscode-textCodeBlock-background); font-weight: 600; color: var(--vscode-textLink-foreground);' :
+                            'padding: 6px 10px; border: 1px solid var(--vscode-widget-border); background-color: var(--vscode-editor-background);';
+
+                        const cellElements = row.map(cell => `<${cellTag} style="${cellStyle}">${cell}</${cellTag}>`).join('');
+                        tableHTML += `<tr>${cellElements}</tr>`;
+                    });
+                    tableHTML += '</table>';
+                    processedTableLines.push(tableHTML);
+                }
+
+                formattedText = processedTableLines.join('\n');
+
+                // 5. Handle ALL inline formatting and special elements
+
+                // Bold text (** or __)
+                formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong style="font-weight: 600; color: var(--vscode-textLink-foreground);">$1</strong>');
+                formattedText = formattedText.replace(/__(.*?)__/g, '<strong style="font-weight: 600; color: var(--vscode-textLink-foreground);">$1</strong>');
+
+                // Italic text (* or _)
+                formattedText = formattedText.replace(/\*(.*?)\*/g, '<em style="font-style: italic; color: var(--vscode-foreground);">$1</em>');
+                formattedText = formattedText.replace(/_(.*?)_/g, '<em style="font-style: italic; color: var(--vscode-foreground);">$1</em>');
+
+                // Strikethrough (~~)
+                formattedText = formattedText.replace(/~~(.*?)~~/g, '<del style="text-decoration: line-through; opacity: 0.7;">$1</del>');
+
+                // Inline code (`)
+                formattedText = formattedText.replace(/`([^`]+)`/g, '<code style="background-color: var(--vscode-textCodeBlock-background); padding: 2px 4px; border-radius: 3px; font-family: \'Courier New\', Consolas, monospace; font-size: 0.9em; color: var(--vscode-textPreformat-foreground);">$1</code>');
+
+                // Links [text](url)
+                formattedText = formattedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: var(--vscode-textLink-foreground); text-decoration: underline;" target="_blank">$1</a>');
+
+                // Auto-links (http/https URLs)
+                formattedText = formattedText.replace(/(https?:\/\/[^\s<>"]+)/g, '<a href="$1" style="color: var(--vscode-textLink-foreground); text-decoration: underline;" target="_blank">$1</a>');
+
+                // Highlight/mark text (==text==)
+                formattedText = formattedText.replace(/==(.*?)==/g, '<mark style="background-color: var(--vscode-editor-findMatchHighlightBackground); padding: 1px 2px; border-radius: 2px;">$1</mark>');
+
+                // Subscript (H~2~O)
+                formattedText = formattedText.replace(/~([^~]+)~/g, '<sub style="font-size: 0.8em;">$1</sub>');
+
+                // Superscript (x^2^)
+                formattedText = formattedText.replace(/\^([^^]+)\^/g, '<sup style="font-size: 0.8em;">$1</sup>');
+
+                // 6. Handle special formatting patterns and elements
+
+                // Horizontal rules (---, ***, ===)
+                formattedText = formattedText.replace(/^={3,}$/gm, '<hr style="border: none; border-top: 2px solid var(--vscode-textLink-foreground); margin: 10px 0;">');
+                formattedText = formattedText.replace(/^-{3,}$/gm, '<hr style="border: none; border-top: 1px solid var(--vscode-widget-border); margin: 8px 0;">');
+                formattedText = formattedText.replace(/^\*{3,}$/gm, '<hr style="border: none; border-top: 1px dashed var(--vscode-widget-border); margin: 8px 0;">');
+
+                // Blockquotes (> text)
+                formattedText = formattedText.replace(/^>\s+(.*)$/gm, '<blockquote style="border-left: 4px solid var(--vscode-textLink-foreground); margin: 8px 0; padding: 8px 12px; background-color: var(--vscode-textCodeBlock-background); font-style: italic; opacity: 0.9;">$1</blockquote>');
+
+                // Keyboard keys ([Ctrl], [Alt], etc.)
+                formattedText = formattedText.replace(/\[([A-Za-z0-9+\-\s]+)\]/g, '<kbd style="background-color: var(--vscode-textCodeBlock-background); border: 1px solid var(--vscode-widget-border); border-radius: 3px; padding: 2px 6px; font-family: monospace; font-size: 0.9em; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">$1</kbd>');
+
+                // Emoji shortcuts (:warning:, :info:, etc.)
+                const emojiMap = {
+                    ':warning:': '⚠️', ':info:': 'ℹ️', ':check:': '✅', ':cross:': '❌',
+                    ':star:': '⭐', ':fire:': '🔥', ':rocket:': '🚀', ':bulb:': '💡',
+                    ':gear:': '⚙️', ':lock:': '🔒', ':key:': '🔑', ':shield:': '🛡️',
+                    ':bug:': '🐛', ':wrench:': '🔧', ':hammer:': '🔨', ':package:': '📦',
+                    ':folder:': '📁', ':file:': '📄', ':link:': '🔗', ':arrow:': '➡️'
+                };
+
+                Object.entries(emojiMap).forEach(([shortcode, emoji]) => {
+                    formattedText = formattedText.replace(new RegExp(shortcode.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), emoji);
+                });
+
+                // Handle paragraphs and line breaks with compact spacing
+                formattedText = formattedText.replace(/\n\n+/g, '</p><p style="margin: 6px 0; line-height: 1.5;">');
+                formattedText = formattedText.replace(/\n/g, '<br>');
+
+                // Wrap in paragraph if it doesn't start with a block element
+                if (!formattedText.match(/^<(h[1-6]|ul|ol|pre|div)/)) {
+                    formattedText = '<p style="margin: 4px 0; line-height: 1.5; color: var(--vscode-foreground);">' + formattedText + '</p>';
+                }
+
+                // Post-process to eliminate spacing between consecutive elements
+                formattedText = formattedText
+                    // Remove ALL spacing between heading and list
+                    .replace(/<\/h[1-6]>\s*<ul/g, '</h3><ul style="margin-top: 0;"')
+                    .replace(/<\/h[1-6]>\s*<ol/g, '</h3><ol style="margin-top: 0;"')
+                    // Remove spacing between lists and headings
+                    .replace(/<\/ul>\s*<h/g, '</ul><h')
+                    .replace(/<\/ol>\s*<h/g, '</ol><h')
+                    // Remove spacing between consecutive lists
+                    .replace(/<\/ul>\s*<ul/g, '</ul><ul style="margin-top: 0;"')
+                    .replace(/<\/ol>\s*<ol/g, '</ol><ol style="margin-top: 0;"')
+                    // Remove spacing between paragraphs and lists
+                    .replace(/<\/p>\s*<ul/g, '</p><ul style="margin-top: 0;"')
+                    .replace(/<\/p>\s*<ol/g, '</p><ol style="margin-top: 0;"');
+
+                // Apply container styling with compact, professional presentation
+                const styledText = `
+                    <div style="line-height: 1.4; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); word-wrap: break-word; overflow-wrap: break-word; max-width: 100%; padding: 6px 8px; background-color: var(--vscode-editor-background); border-radius: 4px; border-left: 3px solid var(--vscode-textLink-foreground);">
+                        ${formattedText}
+                    </div>
+                `;
+
+                messageElement.innerHTML = styledText;
             }
 
             // Add a subtle animation to show the message has been updated
