@@ -11,7 +11,13 @@ import pathlib
 import requests
 import json
 import re
+import sys
+import time
 
+# Add the path to the current directory to ensure we can import our local modules
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from path_utils import normalize_path
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -66,6 +72,25 @@ class LLMNode:
 
         print(f"Using API URL: {self.api_url}")
         print(f"API type: {self.api_type}")
+        
+        # Define system prompts
+        self.system_prompt_file_modification = """You are an expert code modification assistant. Your task is to analyze a file and determine how to modify it based on the given instruction.
+
+When given a file path, its content, and an instruction, you should:
+1. Carefully analyze the existing file content (if any)
+2. Determine what changes need to be made based on the instruction
+3. If the file is empty or new, provide the complete content for the file
+4. Return a JSON object with the appropriate modification details
+
+For your response, use ONLY the following JSON format:
+
+For replacing the entire file content (use this for new files or when the entire file needs to be replaced):
+{
+  "modification_type": "replace_file",
+  "new_content": "The complete new content of the file"
+}
+
+Your response must be a valid JSON object, nothing else. Do not wrap the JSON in markdown code blocks or any other formatting."""
 
     def read_instructions(self, instructions_path: str) -> str:
         """
@@ -111,9 +136,13 @@ class LLMNode:
             if self.api_type == "openrouter":
                 # Get model name from environment variable
                 model_name = os.environ.get("MODEL_NAME", "")
+                print(f"Using model: {model_name}")
                 if model_name:
                     data["model"] = model_name
 
+
+            data["model"] = os.environ.get("MODEL_NAME", "")
+            print(f"Using model: {data['model']}")
             # Make the API request
             response = requests.post(self.api_url, headers=headers, json=data)
 
@@ -575,17 +604,44 @@ class LLMNode:
             if "/" in path or "." in path:  # Likely a file path
                 file_paths.append(path)
 
+        # Normalize file paths to prevent duplication
+        normalized_paths = []
+        for path in file_paths:
+            # Clean and normalize the path using our utility function
+            normalized_path = normalize_path(path)
+            normalized_paths.append(normalized_path)
+            
+        # Replace the original paths with normalized ones
+        file_paths = normalized_paths
+        print(f"Normalized extracted file paths: {file_paths}")
+
         # If we have file paths from the instruction but the LLM used generic paths
         if file_paths and actions:
             generic_paths = ["new_file.txt", "file.txt", "code.txt", "output.txt", "a"]
 
             for action in actions:
+                # Normalize the action's file path
+                if "file_path" in action and action["file_path"]:
+                    original_path = action["file_path"]
+                    action["file_path"] = normalize_path(original_path)
+                    if original_path != action["file_path"]:
+                        print(f"Normalized action path: {original_path} -> {action['file_path']}")
+                
+                # Replace generic paths with extracted ones
                 if action.get("file_path") in generic_paths and file_paths:
                     # Replace generic path with the first extracted path
                     print(f"Replacing generic path '{action.get('file_path')}' with '{file_paths[0]}'")
                     action["file_path"] = file_paths[0]
                     # Remove this path from the list so we don't reuse it
                     file_paths.pop(0)
+                    
+                # Fix common path issues: fix double slashes, normalize separators
+                if "file_path" in action:
+                    # Replace double slashes with single slashes
+                    action["file_path"] = action["file_path"].replace("//", "/")
+                    # Ensure we're using the platform's path separator consistently
+                    action["file_path"] = normalize_path(action["file_path"])
+                    print(f"Final normalized path: {action['file_path']}")
 
         # Check for code blocks that should be added to files
         code_blocks = re.findall(r"```(?:\w+)?\n(.*?)```", instruction_block, re.DOTALL)
@@ -601,53 +657,291 @@ class LLMNode:
 
         return actions
 
-    def analyze_file_for_modification(self, instruction: str, file_path: str, file_content: str) -> Dict[str, Any]:
+    def _extract_json_from_response(self, response: str) -> Dict[str, Any]:
         """
-        Analyze a file to determine how to modify it based on the instruction.
+        Extract JSON from a response that might be wrapped in code fences.
+        
+        Args:
+            response: The response string from the LLM
+            
+        Returns:
+            Parsed JSON data
+        
+        Raises:
+            ValueError: If JSON cannot be parsed
+        """
+        if not response or response.strip() == "":
+            raise ValueError("Empty response from LLM")
+            
+        print(f"Extracting JSON from response (length: {len(response)}, first 100 chars: {response[:100]}...)")
+        
+        # Try to parse as direct JSON first
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError as e:
+            print(f"Direct JSON parsing failed: {e}")
+            
+            # Response might be wrapped in markdown code fences
+            # Look for patterns like ```json ... ``` or just ``` ... ```
+            json_pattern = r'```(?:json)?\s*([\s\S]*?)\s*```'
+            matches = re.findall(json_pattern, response)
+            
+            if matches:
+                print(f"Found {len(matches)} potential JSON blocks in code fences")
+                for i, potential_json in enumerate(matches):
+                    print(f"Trying potential JSON block {i+1} (length: {len(potential_json)})")
+                    try:
+                        return json.loads(potential_json)
+                    except json.JSONDecodeError as e:
+                        print(f"Failed to parse block {i+1}: {e}")
+                        # Try cleaning the JSON a bit
+                        try:
+                            # Remove common issues
+                            cleaned = potential_json.strip()
+                            cleaned = re.sub(r'\\([^"])', r'\1', cleaned)  # Fix unnecessary escapes
+                            cleaned = re.sub(r'\\\\([^"])', r'\\\1', cleaned)  # Keep legitimate escapes
+                            if cleaned != potential_json:
+                                print(f"Cleaned JSON block, trying again...")
+                                return json.loads(cleaned)
+                        except json.JSONDecodeError:
+                            print("Cleaning did not help, continuing to next block")
+                            continue
+            
+            # Try to find any JSON-like structure in the response
+            # This is a more aggressive approach
+            print("Looking for any JSON-like structure in the response...")
+            try:
+                # First try to find a complete JSON object
+                pattern = r'({[\s\S]*})'
+                match = re.search(pattern, response)
+                if match:
+                    potential_json = match.group(1)
+                    print(f"Found potential JSON object (length: {len(potential_json)})")
+                    try:
+                        return json.loads(potential_json)
+                    except json.JSONDecodeError as e:
+                        print(f"Failed to parse JSON object: {e}")
+                        # Try cleaning the JSON
+                        try:
+                            # Remove common issues
+                            cleaned = potential_json.strip()
+                            cleaned = re.sub(r'\\([^"])', r'\1', cleaned)  # Fix unnecessary escapes
+                            cleaned = re.sub(r'\\\\([^"])', r'\\\1', cleaned)  # Keep legitimate escapes
+                            if cleaned != potential_json:
+                                print(f"Cleaned JSON object, trying again...")
+                                return json.loads(cleaned)
+                        except json.JSONDecodeError:
+                            print("Cleaning did not help")
+                
+                # Try an even more aggressive approach - construct a minimal valid JSON
+                print("Attempting to construct a valid JSON from the response...")
+                # Look for modification_type
+                mod_type_match = re.search(r'"modification_type"\s*:\s*"([^"]*)"', response)
+                if mod_type_match:
+                    mod_type = mod_type_match.group(1)
+                    print(f"Found modification_type: {mod_type}")
+                    
+                    # Look for new_content with better multiline handling
+                    # This pattern handles both escaped sequences and raw multiline content
+                    try:
+                        # First try standard format with escaped content
+                        content_match = re.search(r'"new_content"\s*:\s*"((?:\\.|[^"])*)"', response)
+                        if content_match:
+                            new_content = content_match.group(1)
+                            print(f"Found new_content (length: {len(new_content)})")
+                        else:
+                            # Try to handle raw multiline content between quotes
+                            content_start_match = re.search(r'"new_content"\s*:\s*"', response)
+                            if content_start_match:
+                                start_pos = content_start_match.end()
+                                # Find the end quote that's not escaped
+                                content_end_match = None
+                                for match in re.finditer(r'(?<!\\)"', response[start_pos:]):
+                                    content_end_match = match
+                                    break
+                                
+                                if content_end_match:
+                                    end_pos = start_pos + content_end_match.start()
+                                    new_content = response[start_pos:end_pos]
+                                    print(f"Extracted multiline content (length: {len(new_content)})")
+                                else:
+                                    # If no end quote, try to extract until the end of the string or a closing brace
+                                    brace_match = re.search(r'}', response[start_pos:])
+                                    if brace_match:
+                                        end_pos = start_pos + brace_match.start()
+                                        new_content = response[start_pos:end_pos].strip()
+                                        print(f"Extracted content until closing brace (length: {len(new_content)})")
+                                    else:
+                                        new_content = response[start_pos:].strip()
+                                        print(f"Extracted remaining content (length: {len(new_content)})")
+                            else:
+                                # Try to extract any content between the modification_type and the end
+                                content_extract = response.split('"modification_type"')[1]
+                                if "new_content" in content_extract:
+                                    content_extract = content_extract.split("new_content")[1].strip()
+                                    if content_extract.startswith(":"):
+                                        content_extract = content_extract[1:].strip()
+                                    if content_extract.startswith('"'):
+                                        content_extract = content_extract[1:].strip()
+                                    # Get content until the next closing quote or the end
+                                    end_match = re.search(r'(?<!\\)"', content_extract)
+                                    if end_match:
+                                        new_content = content_extract[:end_match.start()]
+                                    else:
+                                        new_content = content_extract
+                                    
+                                    print(f"Extracted content using split (length: {len(new_content)})")
+                                else:
+                                    raise ValueError("Could not locate new_content")
+                        
+                        # Construct a minimal valid JSON
+                        reconstructed_json = {
+                            "modification_type": mod_type,
+                            "new_content": new_content
+                        }
+                        print("Successfully reconstructed JSON from fragments")
+                        return reconstructed_json
+                    except Exception as e:
+                        print(f"Error extracting new_content: {e}")
+            except Exception as e:
+                print(f"Error in aggressive JSON extraction: {e}")
+                
+            # If we get here, we couldn't parse JSON
+            raise ValueError(f"Could not parse LLM response as JSON: {response}")
+
+    def _chat_with_retry(self, messages: List[Dict[str, str]], temperature: float = 0, max_retries: int = 3) -> str:
+        """
+        Call the LLM API with retry logic.
 
         Args:
-            instruction: The instruction for modifying the file
-            file_path: Path to the file
-            file_content: Current content of the file
+            messages: List of message objects with role and content
+            temperature: Temperature for sampling (0 = deterministic)
+            max_retries: Maximum number of retries on failure
 
         Returns:
-            A dictionary containing the modification details
+            The LLM's response content
         """
-        # Analyze the file to determine how to modify it
-        prompt = f"""
-        You are an expert code modification assistant. Your task is to analyze a file and determine how to modify it based on the given instruction.
+        retry_count = 0
+        while retry_count < max_retries:
+            try:
+                # Prepare the API request
+                headers = {
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json"
+                }
 
-        File Path: {file_path}
-        Current Content:
-        ```
-        {file_content}
-        ```
+                # Prepare the request data
+                data = {
+                    "messages": messages,
+                    "temperature": temperature,
+                    "max_tokens": 2000
+                }
 
-        Instruction:
-        ```
-        {instruction}
-        ```
+                # Add model name from environment variable
+                model_name = os.environ.get("MODEL_NAME", "")
+                if model_name:
+                    data["model"] = model_name
+                    print(f"Using model: {model_name}")
 
-        Please analyze the file and determine the appropriate modifications. If the instruction involves adding a method, ensure it is placed at the appropriate location (e.g., imports at the top, declarations at the top, methods in the appropriate class).
+                # Make the API request
+                response = requests.post(self.api_url, headers=headers, json=data)
 
-        Return a JSON object with the following structure:
-        {{
-            "modification_type": "replace_file",
-            "new_content": "The complete new content of the file after modifications"
-        }}
+                # Check if the request was successful
+                if response.status_code != 200:
+                    error_message = f"API request failed with status code {response.status_code}: {response.text}"
+                    print(error_message)
+                    if retry_count < max_retries - 1:
+                        retry_count += 1
+                        print(f"Retrying... ({retry_count}/{max_retries})")
+                        time.sleep(2 ** retry_count)  # Exponential backoff
+                        continue
+                    else:
+                        raise Exception(error_message)
 
-        Only include the JSON object in your response, nothing else.
+                # Parse the response
+                response_json = response.json()
+
+                # Extract the content from the response
+                try:
+                    # Standard OpenAI API response format
+                    content = response_json["choices"][0]["message"]["content"]
+                except (KeyError, IndexError) as e:
+                    # Try alternative formats if the standard format fails
+                    if "response" in response_json:
+                        # Some API providers use a different format
+                        content = response_json["response"]
+                    else:
+                        # If we can't find the content, raise an error
+                        raise ValueError(f"Could not extract content from API response: {response_json}")
+
+                return content
+
+            except Exception as e:
+                print(f"Error calling LLM API: {str(e)}")
+                if retry_count < max_retries - 1:
+                    retry_count += 1
+                    print(f"Retrying... ({retry_count}/{max_retries})")
+                    time.sleep(2 ** retry_count)  # Exponential backoff
+                else:
+                    print("ERROR: Maximum retry attempts reached")
+                    raise
+
+    def analyze_file_for_modification(self, instruction: str, file_path: str, file_content: str) -> Dict[str, Any]:
         """
+        Analyze a file for modification.
 
-        # Call the LLM API
-        response = self._call_llm_api(prompt)
+        Args:
+            instruction: Instruction for modifying the file
+            file_path: Path to the file
+            file_content: Content of the file
 
-        # Parse the response
+        Returns:
+            A dict describing the modification to be made
+        """
+        print(f"\nAnalyzing file for modification: {file_path}")
+        print(f"Instruction: {instruction}")
+        print(f"File content length: {len(file_content)} characters")
+        
+        instruction_block = "INSTRUCTION:\n{instruction}\n\nFile path: {file_path}\n\nFile content:\n{file_content}".format(
+            instruction=instruction,
+            file_path=file_path,
+            file_content=file_content
+        )
+
+        # For file creation, the content might be empty. Include that in the instruction.
+        if not file_content:
+            print("File is empty, requesting complete content")
+            instruction_block += "\n\nNote: This is a new file with no content yet. Please provide the entire content for this file."
+
+        messages = [
+            {"role": "system", "content": self.system_prompt_file_modification},
+            {"role": "user", "content": instruction_block}
+        ]
+
+        print("\nSending request to LLM API...")
+        response = self._chat_with_retry(messages, temperature=0)
+        print(f"\nReceived response from LLM API (first 100 chars): {response[:100]}...")
+        
         try:
-            modification = json.loads(response)
+            print("Extracting JSON from response...")
+            modification = self._extract_json_from_response(response)
+            print(f"Successfully extracted JSON with modification_type: {modification.get('modification_type', 'UNKNOWN')}")
+            
+            # Validate the modification has the required fields
+            if "modification_type" not in modification:
+                print("ERROR: LLM response missing 'modification_type' field")
+                raise ValueError("LLM response missing 'modification_type' field")
+                
+            # For replace_file, ensure new_content is present
+            if modification["modification_type"] == "replace_file" and "new_content" not in modification:
+                print("ERROR: LLM response missing 'new_content' field for replace_file modification")
+                raise ValueError("LLM response missing 'new_content' field for replace_file modification")
+                
             return modification
-        except json.JSONDecodeError:
-            raise ValueError(f"Could not parse LLM response as JSON: {response}")
+        except Exception as e:
+            print(f"ERROR: Failed to parse LLM response: {str(e)}")
+            print(f"Full response: {response}")
+            raise ValueError(f"Could not parse LLM response as JSON: {response}") from e
 
     def _show_git_diff(self, file_path: str, old_content: str, new_content: str) -> str:
         """
@@ -719,3 +1013,60 @@ class LLMNode:
         """
         # Let the LLM handle the parsing logic entirely
         return self._llm_parse_instruction_block(instruction_block)[0]
+
+    def generate_file_content(self, file_path: str, instruction: str) -> str:
+        """
+        Generate content for a new file.
+        
+        This is a specialized method for when we just need to create a new file
+        with content based on an instruction, avoiding the JSON parsing complexity.
+
+        Args:
+            file_path: Path to the file to create
+            instruction: Instructions for what the file should contain
+
+        Returns:
+            The content for the new file
+        """
+        print(f"\nGenerating content for new file: {file_path}")
+        print(f"Instruction: {instruction}")
+        
+        # Create a simpler system prompt focused on just generating the file content
+        system_prompt = """You are an expert code generation assistant. Your task is to generate 
+        the complete content for a new file based on the given instruction.
+        
+        Return ONLY the file content, nothing else. Do not add any explanations, markdown formatting,
+        or code fences - just the raw file content.
+        """
+        
+        instruction_block = f"""
+        Create a new file at path: {file_path}
+        
+        Instructions for the file content:
+        {instruction}
+        
+        Respond with ONLY the complete file content, nothing else.
+        """
+        
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": instruction_block}
+        ]
+        
+        print("\nSending request to LLM API...")
+        response = self._chat_with_retry(messages, temperature=0)
+        print(f"\nReceived response from LLM API, length: {len(response)} characters")
+        
+        # Clean up the response - remove any potential code fences
+        clean_response = re.sub(r'^```.*$', '', response, flags=re.MULTILINE)
+        clean_response = re.sub(r'^```$', '', clean_response, flags=re.MULTILINE)
+        
+        # If we still suspect there might be markdown or explanations, try to extract just the code
+        if "```" in response:
+            code_blocks = re.findall(r'```(?:\w+)?\n(.*?)```', response, re.DOTALL)
+            if code_blocks:
+                # Use the first code block as the content
+                clean_response = code_blocks[0]
+                print("Extracted code from code block in response")
+        
+        return clean_response

@@ -198,7 +198,7 @@ let conversationHistory: { user: string, assistant: string }[] = [];
 export async function processCodeQuestion(question: string, useHistory: boolean = true): Promise<string> {
     try {
         // Path to the run_code_chat.sh script
-        const scriptPath = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis/run_code_chat.sh';
+        const scriptPath = '/Users/sakshi/Documents/RepoMind/codebase-analyser/nlp-analysis/run_code_chat.sh';
 
         // Check if the script exists
         if (!fs.existsSync(scriptPath)) {
@@ -211,7 +211,7 @@ export async function processCodeQuestion(question: string, useHistory: boolean 
         // Create a temporary file with conversation history if needed
         let historyArg = '';
         if (useHistory && conversationHistory.length > 0) {
-            const outputDir = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output';
+            const outputDir = '/Users/sakshi/Documents/RepoMind/codebase-analyser/output';
 
             // Create the output directory if it doesn't exist
             if (!fs.existsSync(outputDir)) {
@@ -235,7 +235,7 @@ export async function processCodeQuestion(question: string, useHistory: boolean 
         }
 
         // Get the response from the output file
-        const outputDir = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output';
+        const outputDir = '/Users/sakshi/Documents/RepoMind/codebase-analyser/output';
         const responseFile = path.join(outputDir, 'chat-response.txt');
 
         // Check if the response file exists

@@ -6,7 +6,19 @@ This module handles file operations for the Merge Code Agent.
 
 import os
 import re
+import subprocess
+import tempfile
 from typing import Dict, Any, Tuple, List, Optional
+import sys
+import json
+
+# Add the path to the current directory to ensure we can import our local modules
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# Import the normalize_path function from path_utils
+from path_utils import normalize_path
+# Import the Java CAP validator
+from java_cap_validator import validate_java_file
 
 class FilesystemNode:
     """
@@ -41,9 +53,14 @@ class FilesystemNode:
         if not file_path:
             return False, "No file path specified"
 
-        # Handle relative paths
-        if not os.path.isabs(file_path):
-            file_path = os.path.join(self.codebase_path, file_path)
+        # Use the improved normalize_path function to prevent path duplication
+        normalized_path = normalize_path(file_path, self.codebase_path)
+        
+        # Log the path transformation for debugging
+        print(f"Original path: {file_path}")
+        print(f"Normalized path: {normalized_path}")
+        
+        file_path = normalized_path
 
         if action_type == "create_file":
             return self.create_file(file_path, action.get("content", ""))
@@ -78,6 +95,9 @@ class FilesystemNode:
             # Format Java files
             if file_path.endswith(".java"):
                 self.format_java_file(file_path)
+                
+                # Validate and fix CAP SAP Java compliance
+                self._ensure_cap_java_compliance(file_path)
 
             return True, None
         except Exception as e:
@@ -97,17 +117,131 @@ class FilesystemNode:
         try:
             # Check if the file exists
             if not os.path.exists(file_path):
-                return False, f"File not found: {file_path}"
-
-            # Read the file
-            with open(file_path, 'r') as f:
-                file_content = f.read()
+                print(f"\nFile not found: {file_path}")
+                # Create the directory structure if it doesn't exist
+                directory = os.path.dirname(file_path)
+                if not os.path.exists(directory):
+                    print(f"Creating directory: {directory}")
+                    os.makedirs(directory, exist_ok=True)
+                
+                # Ask user if they want to create the file
+                print("\nFile doesn't exist. Do you want to create it? (y/n): ", end='', flush=True)
+                response = input().lower()
+                if response == 'y':
+                    print(f"Creating file: {file_path}")
+                    # Create an empty file
+                    with open(file_path, 'w') as f:
+                        f.write("")
+                    print(f"Created empty file: {file_path}")
+                    # Now proceed with the modification as if it was a newly created file
+                    file_content = ""
+                else:
+                    return False, f"File not found and creation was declined: {file_path}"
+            else:
+                # Read the file
+                with open(file_path, 'r') as f:
+                    file_content = f.read()
 
             # Analyze the file to determine how to modify it
             try:
                 modification = self.llm_node.analyze_file_for_modification(instruction, file_path, file_content)
             except Exception as e:
-                return False, f"Error analyzing file for modification: {str(e)}"
+                error_message = f"Error analyzing file for modification: {str(e)}"
+                print(error_message)
+                
+                # Special handling for empty files we just created
+                if file_content == "" and "replace_file" in str(e):
+                    # First try the direct content generation approach
+                    try:
+                        print("\nTrying direct content generation for empty file...")
+                        file_content = self.llm_node.generate_file_content(file_path, instruction)
+                        
+                        if file_content and len(file_content) > 0:
+                            print(f"\nGenerated content for new file ({len(file_content)} characters):")
+                            print("=" * 80)
+                            print(file_content[:500] + "..." if len(file_content) > 500 else file_content)
+                            print("=" * 80)
+                            
+                            print("\nDo you want to write this content to the file? (y/n): ", end='', flush=True)
+                            response = input().lower()
+                            if response == 'y':
+                                with open(file_path, 'w') as f:
+                                    f.write(file_content)
+                                print(f"Content written to file: {file_path}")
+                                
+                                # Validate and fix CAP SAP Java compliance for Java files
+                                if file_path.endswith(".java"):
+                                    self._ensure_cap_java_compliance(file_path)
+                                    
+                                return True, None
+                            else:
+                                print("User declined to write content to file")
+                    except Exception as gen_error:
+                        print(f"Error generating file content: {str(gen_error)}")
+                
+                    # Fall back to extracting content from the error message if direct generation failed
+                    try:
+                        print("Attempting to extract content from error message for empty file...")
+                        # Get the exception message
+                        error_str = str(e)
+                        print(f"Error message: {error_str[:200]}...")
+                        
+                        # First try to extract with our JSON extraction pattern
+                        json_match = re.search(r'({[\s\S]*})', error_str, re.DOTALL)
+                        if json_match:
+                            json_str = json_match.group(1)
+                            print(f"Found potential JSON: {json_str[:100]}...")
+                            try:
+                                json_data = json.loads(json_str)
+                                print(f"Successfully parsed JSON")
+                            except json.JSONDecodeError:
+                                # Try to clean up the JSON string
+                                print("Initial JSON parse failed, trying to clean up the string...")
+                                # Look for code fences and extract content
+                                code_fence_match = re.search(r'```(?:json)?\s*([\s\S]*?)```', error_str, re.DOTALL)
+                                if code_fence_match:
+                                    json_str = code_fence_match.group(1)
+                                    print(f"Extracted from code fence: {json_str[:100]}...")
+                                    json_data = json.loads(json_str)
+                                    print(f"Successfully parsed JSON from code fence")
+                                else:
+                                    # Try more aggressive cleaning
+                                    json_str = re.sub(r'[^\x00-\x7F]+', '', json_str)  # Remove non-ASCII chars
+                                    json_str = json_str.replace('\\"', '"')  # Fix escaped quotes
+                                    json_str = json_str.replace('\\n', '\n')  # Fix escaped newlines
+                                    print(f"Cleaned JSON string: {json_str[:100]}...")
+                                    json_data = json.loads(json_str)
+                                    print(f"Successfully parsed JSON after cleaning")
+                            
+                            if "new_content" in json_data:
+                                new_content = json_data["new_content"]
+                                print(f"Successfully extracted content, length: {len(new_content)} characters")
+                                print("\nExtracted content for new file:")
+                                print("=" * 80)
+                                print(new_content[:500] + "..." if len(new_content) > 500 else new_content)
+                                print("=" * 80)
+                                
+                                print("\nDo you want to write this content to the file? (y/n): ", end='', flush=True)
+                                response = input().lower()
+                                if response == 'y':
+                                    with open(file_path, 'w') as f:
+                                        f.write(new_content)
+                                    print(f"Content written to file: {file_path}")
+                                    
+                                    # Validate and fix CAP SAP Java compliance for Java files
+                                    if file_path.endswith(".java"):
+                                        self._ensure_cap_java_compliance(file_path)
+                                        
+                                    return True, None
+                        else:
+                            print("No JSON pattern found in error message")
+                    except Exception as extract_error:
+                        print(f"Error extracting content from error message: {str(extract_error)}")
+                        print(f"Error details: {extract_error}")
+                        import traceback
+                        traceback.print_exc()
+                
+                return False, error_message
 
             # If no change is needed, return early
             if modification.get("modification_type") == "no_change":
@@ -134,6 +268,11 @@ class FilesystemNode:
                         f.write(new_content)
 
                     print(f"Replaced entire file: {file_path}")
+                    
+                    # Validate and fix CAP SAP Java compliance for Java files
+                    if file_path.endswith(".java"):
+                        self._ensure_cap_java_compliance(file_path)
+                        
                     return True, None
                 else:
                     print("No changes detected")
@@ -168,6 +307,11 @@ class FilesystemNode:
                         f.write(modified_content)
 
                     print(f"Modified file: {file_path}")
+                    
+                    # Validate and fix CAP SAP Java compliance for Java files
+                    if file_path.endswith(".java"):
+                        self._ensure_cap_java_compliance(file_path)
+                        
                     return True, None
                 else:
                     print("No changes detected")
@@ -189,11 +333,6 @@ class FilesystemNode:
         Returns:
             The diff output as a string, or empty string if no changes
         """
-        import tempfile
-        import subprocess
-        import os
-        import re
-
         # Get the repository root directory
         repo_root = self.codebase_path
 
@@ -233,7 +372,7 @@ class FilesystemNode:
             # Process the diff output to enhance colors
             if result.stdout:
                 # ANSI color codes
-                GREEN = '\033[32m'
+                GREEN = '\033[38;5;46m'  # Bright green for added lines
                 RED = '\033[31m'
                 RESET = '\033[0m'
                 BOLD = '\033[1m'
@@ -244,7 +383,7 @@ class FilesystemNode:
 
                 for line in lines:
                     if line.startswith('+') and not line.startswith('+++'):
-                        # Add green color to added lines
+                        # Add bright green color to added lines
                         enhanced_lines.append(f"{GREEN}{line}{RESET}")
                     elif line.startswith('-') and not line.startswith('---'):
                         # Add red color to removed lines
@@ -284,7 +423,7 @@ class FilesystemNode:
         from difflib import unified_diff
 
         # ANSI color codes
-        GREEN = '\033[32m'
+        GREEN = '\033[38;5;46m'  # Bright green for added lines
         RED = '\033[31m'
         RESET = '\033[0m'
         BOLD = '\033[1m'
@@ -738,3 +877,23 @@ class FilesystemNode:
             code += "\n" + "}" * (open_braces - close_braces)
 
         return code
+
+    def _ensure_cap_java_compliance(self, file_path: str) -> None:
+        """
+        Ensure a Java file complies with CAP SAP standards.
+        
+        Args:
+            file_path: Path to the Java file
+        """
+        if not file_path.endswith(".java"):
+            return
+            
+        print(f"\nValidating CAP SAP Java compliance for: {file_path}")
+        try:
+            success, error_msg = validate_java_file(file_path, self.codebase_path)
+            if success:
+                print("CAP SAP Java validation successful")
+            else:
+                print(f"WARNING: CAP SAP Java validation failed: {error_msg}")
+        except Exception as e:
+            print(f"ERROR in CAP SAP Java validation: {str(e)}")

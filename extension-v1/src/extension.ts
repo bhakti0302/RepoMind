@@ -93,7 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        // Get the project ID
+        // Get the workspace root path
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders || workspaceFolders.length === 0) {
             vscode.window.showErrorMessage('No workspace folder is open. Please open a folder first.');
@@ -101,21 +101,28 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
 
-        const workspaceFolder = workspaceFolders[0].uri.fsPath;
-        const projectId = path.basename(workspaceFolder);
+        const workspaceRoot = workspaceFolders[0].uri.fsPath;
+        const projectId = path.basename(workspaceRoot);
 
-        // Try to find the codebase-analyser path
-        let codebaseAnalyserPath = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser';
-        console.log(`Using hardcoded codebase-analyser path: ${codebaseAnalyserPath}`);
+        // Get the path to the codebase-analyser directory
+        const codebaseAnalyserPath = path.join(workspaceRoot, 'codebase-analyser');
+        console.log(`Using codebase-analyser path: ${codebaseAnalyserPath}`);
 
-        // Define the Requirements directory path - use absolute path
-        const requirementsDir = '/Users/bhaktichindhe/Desktop/Project/RepoMind/Requirements';
+        // Define the Requirements directory path relative to workspace root
+        const requirementsDir = path.join(workspaceRoot, 'Requirements');
         console.log(`Using Requirements directory path: ${requirementsDir}`);
 
         // Create the Requirements directory if it doesn't exist
         if (!fs.existsSync(requirementsDir)) {
-            fs.mkdirSync(requirementsDir, { recursive: true });
-            console.log(`Created Requirements directory: ${requirementsDir}`);
+            try {
+                fs.mkdirSync(requirementsDir, { recursive: true, mode: 0o755 });
+                console.log(`Created Requirements directory: ${requirementsDir}`);
+            } catch (error) {
+                const errorMessage = `Error creating Requirements directory: ${error instanceof Error ? error.message : String(error)}`;
+                vscode.window.showErrorMessage(errorMessage);
+                console.error(errorMessage);
+                return;
+            }
         }
 
         // Check if the path exists
@@ -251,7 +258,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Log detailed information for debugging
         console.log('=== Code Generation Debug Info ===');
-        console.log(`Workspace folder: ${workspaceFolder}`);
+        console.log(`Workspace folder: ${workspaceRoot}`);
         console.log(`Project ID: ${projectId}`);
         console.log(`Codebase analyser path: ${codebaseAnalyserPath}`);
         console.log(`NLP analysis path: ${nlpAnalysisPath}`);
@@ -725,6 +732,15 @@ Error running codebase analysis:
 
     // Attach file command
     let attachFileCommand = vscode.commands.registerCommand('extension-v1.attachFile', async () => {
+        // Get the workspace root path first
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            vscode.window.showErrorMessage('No workspace folder is open. Please open a folder first.');
+            return;
+        }
+        const workspaceRoot = workspaceFolders[0].uri.fsPath;
+        console.log(`Using workspace root: ${workspaceRoot}`);
+
         // Ask the user to select a file
         const files = await vscode.window.showOpenDialog({
             canSelectMany: false,
@@ -738,26 +754,47 @@ Error running codebase analysis:
             const filePath = files[0].fsPath;
             const fileName = path.basename(filePath);
 
+            // Add detailed logging for debugging
+            const requirementsDir = path.join(workspaceRoot, 'Requirements');
+            const requirementsPath = path.join(requirementsDir, fileName);
+            const pipelineScriptPath = path.join(workspaceRoot, 'codebase-analyser', 'nlp-analysis', 'run_fixed_pipeline.sh');
+            console.log('--- Attach File Debug Info ---');
+            console.log(`Workspace root: ${workspaceRoot}`);
+            console.log(`Requirements directory: ${requirementsDir}`);
+            console.log(`Requirements file path: ${requirementsPath}`);
+            console.log(`Pipeline script path: ${pipelineScriptPath}`);
+            console.log(`Original file path: ${filePath}`);
+            console.log(`Current user: ${process.env.USER || process.env.USERNAME}`);
+            try {
+                const stat = fs.statSync(workspaceRoot);
+                console.log(`Workspace root permissions:`, stat.mode.toString(8));
+            } catch (e) {
+                console.log('Could not stat workspace root:', e);
+            }
+
             try {
                 const fileContent = fs.readFileSync(filePath, 'utf8');
 
-                // Get the Requirements directory path
-                const requirementsDir = '/Users/bhaktichindhe/Desktop/Project/RepoMind/Requirements';
-                const requirementsPath = path.join(requirementsDir, fileName);
-
                 // Create the Requirements directory if it doesn't exist
                 if (!fs.existsSync(requirementsDir)) {
-                    fs.mkdirSync(requirementsDir, { recursive: true });
-                    console.log(`Created Requirements directory: ${requirementsDir}`);
+                    try {
+                        fs.mkdirSync(requirementsDir, { recursive: true, mode: 0o755 });
+                        console.log(`Created Requirements directory: ${requirementsDir}`);
+                    } catch (error) {
+                        const errorMessage = `Error creating Requirements directory: ${error instanceof Error ? error.message : String(error)}`;
+                        vscode.window.showErrorMessage(errorMessage);
+                        console.error(errorMessage);
+                        return;
+                    }
                 }
 
-                // Copy the file directly to the Requirements folder
+                // Copy the file to the Requirements directory
                 try {
                     fs.copyFileSync(filePath, requirementsPath);
-                    console.log(`Copied file to Requirements folder: ${requirementsPath}`);
+                    console.log(`Copied file to Requirements directory: ${requirementsPath}`);
 
-                    // Trigger the pipeline script with the uploaded file
-                    const pipelineScriptPath = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis/run_fixed_pipeline.sh';
+                    // Get the pipeline script path
+                    const pipelineScriptPath = path.join(workspaceRoot, 'codebase-analyser', 'nlp-analysis', 'run_fixed_pipeline.sh');
 
                     // Check if the pipeline script exists
                     if (!fs.existsSync(pipelineScriptPath)) {
@@ -772,10 +809,7 @@ Error running codebase analysis:
                     // Add a processing message to the chat view
                     let processingMessageId: string | null = null;
                     if (chatViewProvider) {
-                        // Generate a unique message ID
                         processingMessageId = `processing-${Date.now()}`;
-
-                        // Send initial processing message with the ID
                         chatViewProvider.sendMessageToWebviews({
                             command: 'addMessage',
                             text: `Processing file: ${fileName}...`,
@@ -784,7 +818,7 @@ Error running codebase analysis:
                         });
                     }
 
-                    // Show a progress indicator while the pipeline is running
+                    // Show progress notification
                     vscode.window.withProgress({
                         location: vscode.ProgressLocation.Notification,
                         title: `Running pipeline with file: ${fileName}`,
@@ -792,28 +826,23 @@ Error running codebase analysis:
                     }, async (progress) => {
                         progress.report({ increment: 0, message: "Starting pipeline..." });
 
-                        // Execute the pipeline script
                         return new Promise<void>((resolve, reject) => {
                             const exec = require('child_process').exec;
 
                             // Set up animated dots in chat
                             const updateInterval = setInterval(() => {
                                 if (chatViewProvider && processingMessageId) {
-                                    // Create a message with animated dots using HTML
                                     const processingMessage = `Processing file: ${fileName} <div class="loading-dots" style="display: inline-block;"><span></span><span></span><span></span></div> (still running)`;
-
                                     chatViewProvider.sendMessageToWebviews({
                                         command: 'updateMessage',
                                         id: processingMessageId,
                                         text: processingMessage
                                     });
                                 }
-                            }, 2000); // Update less frequently since animation is handled by CSS
+                            }, 2000);
 
                             const child = exec(`bash "${pipelineScriptPath}" "${requirementsPath}"`, (error: any, stdout: any, stderr: any) => {
-                                // Clear the update interval when the process completes
                                 clearInterval(updateInterval);
-                                // Log the output and error regardless of success or failure
                                 console.log(`Pipeline script output: ${stdout}`);
                                 if (stderr) {
                                     console.error(`Pipeline script error: ${stderr}`);
@@ -821,32 +850,25 @@ Error running codebase analysis:
 
                                 if (error) {
                                     console.error(`Error running pipeline script: ${error}`);
-
-                                    // Update the processing message with the error
                                     if (chatViewProvider && processingMessageId) {
                                         chatViewProvider.sendMessageToWebviews({
                                             command: 'updateMessage',
                                             id: processingMessageId,
                                             text: `Processing failed: ${fileName} <span style="color: #ef4444; font-weight: bold;">✗</span>`
                                         });
-
-                                        // Add a detailed error message
                                         chatViewProvider.sendMessageToWebviews({
                                             command: 'addMessage',
                                             text: `Error running pipeline script: ${error}\n\nCheck the logs for more details.`,
                                             isUser: false
                                         });
                                     }
-
                                     vscode.window.showErrorMessage(`Error running pipeline script: ${error}`);
                                     reject(error);
                                     return;
                                 }
 
-                                // Show a notification that the pipeline has completed
                                 vscode.window.showInformationMessage(`Pipeline completed successfully! Check the output files in the output directory.`);
 
-                                // Update the processing message with completion status
                                 if (chatViewProvider && processingMessageId) {
                                     chatViewProvider.sendMessageToWebviews({
                                         command: 'updateMessage',
@@ -854,11 +876,9 @@ Error running codebase analysis:
                                         text: `Processing completed: ${fileName} <span style="color: #22c55e; font-weight: bold;">✓</span>`
                                     });
 
-                                    // Define output file paths
-                                    const outputDir = '/Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/output';
+                                    const outputDir = path.join(workspaceRoot, 'codebase-analyser', 'output');
                                     let llmInstructionsFile = path.join(outputDir, 'LLM-instructions.txt');
 
-                                    // Check if the file exists, if not, try the alternative file name
                                     if (!fs.existsSync(llmInstructionsFile)) {
                                         const alternativeFile = path.join(outputDir, 'llm-output.txt');
                                         if (fs.existsSync(alternativeFile)) {
@@ -866,19 +886,14 @@ Error running codebase analysis:
                                         }
                                     }
 
-                                    // Create a concise message with just the essential information
                                     let outputMessage = `✅ Requirements have been analyzed successfully!\n\n`;
 
-                                    // Check if the LLM instructions file exists
                                     if (fs.existsSync(llmInstructionsFile)) {
                                         outputMessage += `The code changes have been generated successfully.\n\n`;
-
-                                        // Add information about the Merge Agent
                                         outputMessage += `🔄 The code changes are ready to be applied to the target project.\n\n`;
                                         outputMessage += `Click the "Run Merge Agent" button below to apply the changes interactively.\n`;
                                         outputMessage += `You will be able to approve or reject each change in the terminal.\n\n`;
 
-                                        // Add only the Run Merge Agent button
                                         outputMessage += `<div style="margin-top: 10px; margin-bottom: 10px;">
                                             <button id="open-llm-file" style="background-color: #0078d4; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-right: 10px;"
                                                     data-path="${llmInstructionsFile.replace(/\\/g, '\\\\')}">
@@ -889,38 +904,31 @@ Error running codebase analysis:
                                             </button>
                                         </div>`;
 
-                                        // Add a simplified fallback message
                                         outputMessage += `Click the buttons above to view the instructions or run the Merge Agent.\n\n`;
                                         outputMessage += `You can also run the Merge Agent manually by opening a terminal and running the merge agent script.`;
                                     } else {
                                         outputMessage += `⚠️ LLM instructions file was not generated. Please check the logs for errors.`;
                                     }
 
-                                    // Send the message to the chat view
                                     chatViewProvider.sendMessageToWebviews({
                                         command: 'addMessage',
                                         text: outputMessage,
                                         isUser: false
                                     });
-
-                                    // We no longer need to add a direct message to open the file
-                                    // The button in the main message is sufficient
                                 }
 
                                 resolve();
                             });
 
-                            // Update progress periodically
                             let progressCounter = 0;
                             const progressInterval = setInterval(() => {
                                 progressCounter += 5;
                                 if (progressCounter > 95) {
-                                    progressCounter = 95; // Cap at 95% until complete
+                                    progressCounter = 95;
                                 }
                                 progress.report({ increment: 5, message: `Processing... (${progressCounter}%)` });
-                            }, 5000); // Update every 5 seconds
+                            }, 5000);
 
-                            // Clean up interval when process completes
                             child.on('exit', () => {
                                 clearInterval(progressInterval);
                                 progress.report({ increment: 100 - progressCounter, message: "Completed!" });
@@ -928,31 +936,23 @@ Error running codebase analysis:
                         });
                     });
                 } catch (error) {
-                    console.error(`Error copying file to Requirements folder: ${error}`);
-                    vscode.window.showErrorMessage(`Error copying file to Requirements folder: ${error}`);
+                    console.error(`Error copying file to Requirements directory: ${error}`);
+                    vscode.window.showErrorMessage(`Error copying file to Requirements directory: ${error}`);
                 }
 
                 vscode.window.showInformationMessage(`File attached: ${fileName}`);
 
-                // Focus our chat view without affecting other extensions
                 setTimeout(() => {
                     vscode.commands.executeCommand('workbench.view.extension-v1.chatView');
-
-                    //vscode.commands.executeCommand('workbench.view.extension.repomind-chat-view');
                 }, 100);
 
-                // Send the file content to the chat view
                 if (chatViewProvider) {
-                    // Use the Requirements directory path we already defined
-                    const requirementsPath = path.join(requirementsDir, fileName);
-
                     chatViewProvider.sendMessageToWebviews({
                         command: 'addMessage',
                         text: `Attached file: ${fileName}\nStored in Requirements folder: ${requirementsPath}`,
                         isUser: false
                     });
 
-                    // Trigger code generation process
                     vscode.commands.executeCommand('extension-v1.generateCode', filePath);
                 }
 
@@ -1321,7 +1321,7 @@ Error running codebase analysis:
             terminal.show();
 
             // Change to the nlp-analysis directory
-            terminal.sendText('cd /Users/bhaktichindhe/Desktop/Project/RepoMind/codebase-analyser/nlp-analysis');
+            terminal.sendText('cd /Users/sakshi/Documents/RepoMind/codebase-analyser/nlp-analysis');
 
             // Run the mergeCodeAgent script
             terminal.sendText('./run_merge_agent.sh');
@@ -1640,38 +1640,6 @@ Error running codebase analysis:
 
                         statusBar.setReady('Visualizations created');
                         resolve();
-                    }
-                        // try {
-                        //     // Parse the JSON output to get the visualization paths
-                        //     const result = JSON.parse(stdout);
-
-                        //     // Show success message with links to open the visualizations
-                        //     vscode.window.showInformationMessage(
-                        //         'Visualizations generated successfully!',
-                        //         'Show in Chat', 'Open Multi-File', 'Open Relationship Types'
-                        //     ).then(selection => {
-                        //         if (selection === 'Show in Chat') {
-                        //             vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
-                        //         } else if (selection === 'Open Multi-File') {
-                        //             vscode.env.openExternal(vscode.Uri.file(result.multi_file_relationships));
-                        //         } else if (selection === 'Open Relationship Types') {
-                        //             vscode.env.openExternal(vscode.Uri.file(result.relationship_types));
-                        //         }
-                        //     });
-
-                        //     resolve();
-                        // } catch (parseError) {
-                        //     console.error(`Error parsing visualization result: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
-                        //     vscode.window.showInformationMessage(
-                        //         'Visualizations created, but could not parse the result.',
-                        //         'Show in Chat'
-                        //     ).then(selection => {
-                        //         if (selection === 'Show in Chat') {
-                        //             vscode.commands.executeCommand('extension-v1.showVisualizationsInChat');
-                        //         }
-                        //     });
-                        //     resolve();
-                        // }
                     }
                 });
 
